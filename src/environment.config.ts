@@ -5,12 +5,12 @@ type EnvConfig = {
 const ENV = "local";
 
 const ENVIRONMENT: Record<string, EnvConfig> = {
-  local: { Base_API_URL: "https://bricks-admin-backend.onrender.com/api/auth" },
+  local: {Base_API_URL: process.env.REACT_APP_API_URL || "https://bricks-admin-backend.onrender.com/api/auth", },
   development: {
-    Base_API_URL: "https://bricks-admin-backend.onrender.com/api/auth",
+   Base_API_URL: process.env.REACT_APP_API_URL || "https://bricks-admin-backend.onrender.com/api/auth",
   },
   production: {
-    Base_API_URL: "https://bricks-admin-backend.onrender.com/api/auth",
+    Base_API_URL: process.env.REACT_APP_API_URL || "https://bricks-admin-backend.onrender.com/api/auth",
   },
 };
 
