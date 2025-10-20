@@ -4,7 +4,7 @@ import ENVIRONMENT_VARIABLES from "../../environment.config";
 export const API_AUTH_LOGIN = `${ENVIRONMENT_VARIABLES.Base_API_URL}/auth/login`;
 export const API_AUTH_LOGOUT = `${ENVIRONMENT_VARIABLES.Base_API_URL}/auth/logout`;
 export const API_USER_GET = `${ENVIRONMENT_VARIABLES.Base_API_URL}/users/users`;
-export const API_BALANCE_GET = `${ENVIRONMENT_VARIABLES.Base_API_URL}/getBalance/:userId`;
+export const API_BALANCE_GET = `${ENVIRONMENT_VARIABLES.Base_API_URL}balance/getBalance/:userId`;
 export const API_ADD_USER = `${ENVIRONMENT_VARIABLES.Base_API_URL}/auth/register`;
 export const API_UPDATE_USER = `${ENVIRONMENT_VARIABLES.Base_API_URL}users/update/:userId`;
 export const API_DELETE_USER = `${ENVIRONMENT_VARIABLES.Base_API_URL}users/delete/:userId`;
