@@ -5,9 +5,10 @@ import { toast } from "react-toastify";
 import { LOGOUT } from "./ActionType/auth";
 import store from "./store";
 import { clearAccessToken } from "./AuthToekn";
+import ENVIRONMENT_VARIABLES from "./environment.config";
 
 const api = axios.create({
-  baseURL: "http://localhost:5000/api",
+  baseURL: ENVIRONMENT_VARIABLES.Base_API_URL,withCredentials: true,
 });
 
 // 🔹 Request interceptor — token attach karega
