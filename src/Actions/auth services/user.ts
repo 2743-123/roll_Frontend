@@ -11,8 +11,10 @@ import api from "../../expireToken";
 export const getUserService = async () => {
   const token = getAccessToken();
   const { data } = await api.get(API_USER_GET, {
-    headers: { Authorization: `Bearer ${token}` },
-    withCredentials: true, // <- add this line
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    withCredentials: true,
   });
   return data;
 };
