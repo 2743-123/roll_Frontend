@@ -1,63 +1,55 @@
 import * as React from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { AppDispatch, RootState } from "../../store";
-// import { addBalance, updateBalance, deleteBalance } from "../../../slices/balanceSlice";
-
-import Paper from "@mui/material/Paper";
-import Table from "@mui/material/Table";
-import TableBody from "@mui/material/TableBody";
-import TableCell from "@mui/material/TableCell";
-import TableContainer from "@mui/material/TableContainer";
-import TableHead from "@mui/material/TableHead";
-import TablePagination from "@mui/material/TablePagination";
-import TableRow from "@mui/material/TableRow";
-import Button from "@mui/material/Button";
-import IconButton from "@mui/material/IconButton";
-import TextField from "@mui/material/TextField";
-
+import {
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TablePagination,
+  TableRow,
+  Button,
+  IconButton,
+  TextField,
+} from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import AddBalanceDialog from "./AddBalance";
-import { getBalanceAction } from "../../Actions/Auth/balance";
 
-interface BalanceType {
-  name: string;
-  total: string;
-  used: string;
-  remaining: string;
+import { AppDispatch, RootState } from "../../store";
+import { getBalanceAction } from "../../Actions/Auth/balance";
+import AddBalanceDialog from "./AddBalance";
+
+interface Transaction {
+  id: number;
+  date: string;
+  flyashAmount: string;
+  bedashAmount: string;
+  totalAmount: string;
+  flyashTons: string;
+  bedashTons: string;
+  paymentMode: "cash" | "online";
+  bankName?: string | null;
+  accountHolder?: string | null;
+  referenceNumber?: string | null;
 }
 
-export default function BalanceTable() {
-  // ✅ Get data from Redux reducer
-
+const BalanceTable: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { data } = useSelector((state: RootState) => state.balance);
+  const { data, loading } = useSelector((state: RootState) => state.balance);
   const { selectedUser } = useSelector((state: RootState) => state.user);
-
-  React.useEffect(() => {
-    const userId = selectedUser?.id;
-    if (userId) dispatch(getBalanceAction(userId));
-  }, [selectedUser, dispatch]);
-
-  // Example data structure coming from reducer:
-  // balance = {
-  //   bedash: { total: '250.00', used: '0.00', remaining: '250.00' },
-  //   flyash: { total: '333.33', used: '0.00', remaining: '333.33' },
-  //   user: 6
-  // }
-
-  // Convert reducer data into array for table
-  const balanceList: BalanceType[] = data
-    ? [
-        { name: "Bedash", ...data.bedash },
-        { name: "Flyash", ...data.flyash },
-      ]
-    : [];
 
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
   const [search, setSearch] = React.useState("");
+  const [openAdd, setOpenAdd] = React.useState(false);
+
+  React.useEffect(() => {
+    if (selectedUser?.id) {
+      dispatch(getBalanceAction(selectedUser.id));
+    }
+  }, [selectedUser, dispatch]);
 
   const handleChangePage = (event: unknown, newPage: number) =>
     setPage(newPage);
@@ -73,35 +65,31 @@ export default function BalanceTable() {
     setPage(0);
   };
 
-  const [openAdd, setOpenAdd] = React.useState(false);
-
   const handleAdd = () => setOpenAdd(true);
   const handleCloseAdd = () => setOpenAdd(false);
 
-  // ✅ Button actions
-  // const handleAdd = () => {
-  //   console.log("Add new balance");
-  //   // dispatch(addBalance(...))
-  // };
+  const handleEdit = (tx: Transaction) => console.log("Edit transaction:", tx);
+  const handleDelete = (id: number) => console.log("Delete transaction:", id);
 
-  const handleEdit = (row: BalanceType) => {
-    console.log("Edit balance:", row);
-    // dispatch(updateBalance(...))
-  };
+  const filteredTransactions: Transaction[] =
+    data?.transactions?.filter((tx) => {
+      const query = search.toLowerCase();
+      return (
+        tx.date.toLowerCase().includes(query) ||
+        tx.flyashAmount.toLowerCase().includes(query) ||
+        tx.bedashAmount.toLowerCase().includes(query) ||
+        tx.totalAmount.toLowerCase().includes(query) ||
+        tx.paymentMode.toLowerCase().includes(query) ||
+        tx.accountHolder?.toLowerCase().includes(query) ||
+        tx.bankName?.toLowerCase().includes(query) ||
+        tx.referenceNumber?.toLowerCase().includes(query)
+      );
+    }) || [];
 
-  const handleDelete = (name: string) => {
-    console.log("Delete balance:", name);
-    // dispatch(deleteBalance(name))
-  };
-
-  // ✅ Filter balances
-  const filteredBalances = balanceList.filter((b) =>
-    b.name.toLowerCase().includes(search.toLowerCase())
-  );
+  if (loading) return <p>Loading...</p>;
 
   return (
     <Paper sx={{ width: "100%", padding: 2 }}>
-      {/* 🔍 Search + Add Button */}
       <div
         style={{
           display: "flex",
@@ -110,14 +98,13 @@ export default function BalanceTable() {
         }}
       >
         <TextField
-          label="Search"
+          label="Search Transactions"
           variant="outlined"
           size="small"
           value={search}
           onChange={handleSearchChange}
+          sx={{ width: 300 }}
         />
-        <AddBalanceDialog open={openAdd} onClose={handleCloseAdd} />
-
         <Button
           variant="contained"
           color="primary"
@@ -126,36 +113,55 @@ export default function BalanceTable() {
         >
           Add Balance
         </Button>
+        <AddBalanceDialog open={openAdd} onClose={handleCloseAdd} />
       </div>
 
-      {/* 📋 Table */}
       <TableContainer sx={{ maxHeight: 440 }}>
         <Table stickyHeader aria-label="balance table">
           <TableHead>
             <TableRow>
-              <TableCell>Type</TableCell>
-              <TableCell align="right">Total</TableCell>
-              <TableCell align="right">Used</TableCell>
-              <TableCell align="right">Remaining</TableCell>
+              <TableCell>Date</TableCell>
+              <TableCell align="right">Flyash (₹)</TableCell>
+              <TableCell align="right">Flyash (Tons)</TableCell>
+              <TableCell align="right">Bedash (₹)</TableCell>
+              <TableCell align="right">Bedash (Tons)</TableCell>
+              <TableCell align="right">Total Amount (₹)</TableCell>
+              <TableCell align="center">Payment Mode</TableCell>
+              <TableCell align="center">Bank Name</TableCell>
+              <TableCell align="center">Account Holder</TableCell>
+              <TableCell align="center">Reference No.</TableCell>
               <TableCell align="center">Actions</TableCell>
             </TableRow>
           </TableHead>
+
           <TableBody>
-            {filteredBalances
+            {filteredTransactions
               .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              .map((row) => (
-                <TableRow hover key={row.name}>
-                  <TableCell>{row.name}</TableCell>
-                  <TableCell align="right">{row.total}</TableCell>
-                  <TableCell align="right">{row.used}</TableCell>
-                  <TableCell align="right">{row.remaining}</TableCell>
+              .map((tx) => (
+                <TableRow hover key={tx.id}>
+                  <TableCell>{tx.date}</TableCell>
+                  <TableCell align="right">{tx.flyashAmount}</TableCell>
+                  <TableCell align="right">{tx.flyashTons}</TableCell>
+                  <TableCell align="right">{tx.bedashAmount}</TableCell>
+                  <TableCell align="right">{tx.bedashTons}</TableCell>
+                  <TableCell align="right">{tx.totalAmount}</TableCell>
                   <TableCell align="center">
-                    <IconButton color="primary" onClick={() => handleEdit(row)}>
+                    {tx.paymentMode === "cash" ? "Cash" : "Online"}
+                  </TableCell>
+                  <TableCell align="center">{tx.bankName || "-"}</TableCell>
+                  <TableCell align="center">
+                    {tx.accountHolder || "-"}
+                  </TableCell>
+                  <TableCell align="center">
+                    {tx.referenceNumber || "-"}
+                  </TableCell>
+                  <TableCell align="center">
+                    <IconButton color="primary" onClick={() => handleEdit(tx)}>
                       <EditIcon />
                     </IconButton>
                     <IconButton
                       color="error"
-                      onClick={() => handleDelete(row.name)}
+                      onClick={() => handleDelete(tx.id)}
                     >
                       <DeleteIcon />
                     </IconButton>
@@ -166,11 +172,10 @@ export default function BalanceTable() {
         </Table>
       </TableContainer>
 
-      {/* 📄 Pagination */}
       <TablePagination
         rowsPerPageOptions={[5, 10]}
         component="div"
-        count={filteredBalances.length}
+        count={filteredTransactions.length}
         rowsPerPage={rowsPerPage}
         page={page}
         onPageChange={handleChangePage}
@@ -178,4 +183,6 @@ export default function BalanceTable() {
       />
     </Paper>
   );
-}
+};
+
+export default BalanceTable;

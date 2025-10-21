@@ -1,6 +1,7 @@
 import { ERROR, IN_PROGRESS } from "../../ActionType/auth";
 import { GET_BALANCE } from "../../ActionType/balancetype.ts/balance";
 import { showNotification } from "../../CommonCoponent/Notification/NotificationReduer";
+import { AddBalancePayload } from "../../Component/Balance/AddBalance";
 import { AppDispatch } from "../../store";
 import { addBalanceService, getBalanceService } from "../auth services/balance";
 
@@ -20,7 +21,7 @@ export const getBalanceAction =
     }
   };
 export const addBalanceAction =
-  (payload: { userId: number; flyashAmount: number; bedashAmount: number }) =>
+  (payload: AddBalancePayload) =>
   async (dispatch: AppDispatch) => {
     try {
       const data = await addBalanceService(payload);

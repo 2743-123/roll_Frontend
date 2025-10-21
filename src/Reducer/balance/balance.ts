@@ -5,6 +5,7 @@ import {
 
 const initialState: BalanceState = {
   data: null,
+  loading: false,
   error: null,
 };
 
