@@ -12,9 +12,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  SelectChangeEvent,
-  Switch,
-  FormControlLabel,
+  SelectChangeEvent
 } from "@mui/material";
 import { addUserAction } from "../../../../../Actions/Auth/user";
 import { AppDispatch } from "../../../../../store";
