@@ -23,6 +23,7 @@ import {
   Box,
 } from "@mui/material";
 import { Brightness4, Brightness7 } from "@mui/icons-material";
+import BedashList from "./Component/Bedashmessage/bedashList";
 
 // 🌍 Main App Component
 function App() {
@@ -155,6 +156,7 @@ function App() {
             <Route path="USERS" element={<Users />} />
             <Route path="Balance" element={<Balance />} />
             <Route path="Token" element={<TokenTable />} />
+            <Route path="Bedash" element={<BedashList />} />
           </Route>
         </Routes>
       </BrowserRouter>

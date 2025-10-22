@@ -16,6 +16,7 @@ import balanceReducer from "./balance/balance";
 import userReducer from "./user";
 import { tokenReducer } from "./tokenReducer";
 import Notification from "../CommonCoponent/Notification/NotificationReduer";
+import bedashReducer from "./bedash/bedashReducer";
 
 const appReducer = combineReducers({
   auth: authReducer,
@@ -23,6 +24,7 @@ const appReducer = combineReducers({
   user: userReducer,
   token: tokenReducer,
   notification: Notification,
+  bedash:bedashReducer
 });
 
 const rootReducer = (state: any, action: any) => {

@@ -13,3 +13,8 @@ export const API_CREATE_TOKEN = `${ENVIRONMENT_VARIABLES.Base_API_URL}/token/cre
 export const API_UPDATE_TOKEN = `${ENVIRONMENT_VARIABLES.Base_API_URL}/token/update`;
 export const API_CONFIRM_TOKEN = `${ENVIRONMENT_VARIABLES.Base_API_URL}/token/confirm
 `;
+export const API_GET_BEDASH = `${ENVIRONMENT_VARIABLES.Base_API_URL}/message/all`;
+export const API_CONFIRM_BEDASH = `${ENVIRONMENT_VARIABLES.Base_API_URL}/message/complete/:id`;
+// API endpoint
+export const API_ADD_BEDASH = `${ENVIRONMENT_VARIABLES.Base_API_URL}/message/add`;
+

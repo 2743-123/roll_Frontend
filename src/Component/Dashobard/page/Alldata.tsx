@@ -1,4 +1,5 @@
 import BalanceCard from "./balance";
+import PendingBedash from "./pendingBedash";
 import PendingTokens from "./pendingToken";
 
 const AllData = () => {
@@ -6,6 +7,7 @@ const AllData = () => {
     <div>
       <PendingTokens />
       <BalanceCard />
+      <PendingBedash/>
     </div>
   );
 };

@@ -11,7 +11,6 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../../store";
 import { addBalanceAction } from "../../../Actions/Auth/balance";
-import { User } from "../../../ActionType/user/userTypes";
 
 export interface AddBalancePayload {
   userId: number;
@@ -34,6 +33,11 @@ const AddBalanceDialog: React.FC<AddBalanceDialogProps> = ({
 }) => {
   const dispatch = useDispatch<AppDispatch>();
   const { users } = useSelector((state: RootState) => state.user); // All users
+  const userList = Array.isArray(users) ? users : [users]; // ✅ safe fallback
+
+  const onlyUsers = userList.filter(
+    (u: any) => u.role?.toLowerCase() === "user"
+  );
 
   const [selectedUserId, setSelectedUserId] = useState<number | "">("");
   const [flyashAmount, setFlyashAmount] = useState<number | "">("");
@@ -63,7 +67,9 @@ const AddBalanceDialog: React.FC<AddBalanceDialogProps> = ({
     }
 
     if (paymentMode === "online" && (!accountHolder || !referenceNumber)) {
-      alert("Please fill account holder and reference number for online payment");
+      alert(
+        "Please fill account holder and reference number for online payment"
+      );
       return;
     }
 
@@ -98,20 +104,28 @@ const AddBalanceDialog: React.FC<AddBalanceDialogProps> = ({
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>Add Balance</DialogTitle>
-      <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+      <DialogContent
+        sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}
+      >
         {/* User Dropdown */}
         <TextField
           select
           label="Select User"
+          name="userId"
           value={selectedUserId}
           onChange={(e) => setSelectedUserId(Number(e.target.value))}
           fullWidth
+          margin="normal"
         >
-          {users.map((u: User) => (
-            <MenuItem key={u.id} value={u.id}>
-              {u.name} ({u.email})
-            </MenuItem>
-          ))}
+          {onlyUsers.length > 0 ? (
+            onlyUsers.map((user: any) => (
+              <MenuItem key={user.id} value={user.id}>
+                {user.name}
+              </MenuItem>
+            ))
+          ) : (
+            <MenuItem disabled>No users found</MenuItem>
+          )}
         </TextField>
 
         {/* Flyash & Bedash Amount */}

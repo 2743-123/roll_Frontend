@@ -9,7 +9,9 @@ const ENVIRONMENT: Record<string, EnvConfig> = {
     Base_API_URL: process.env.REACT_APP_API_URL || "http://localhost:5000/api",
   },
   production: {
-    Base_API_URL: process.env.REACT_APP_API_URL || "https://bricks-admin-backend.onrender.com/api",
+    Base_API_URL:
+      process.env.REACT_APP_API_URL ||
+      "https://bricks-admin-backend.onrender.com/api",
   },
 };
 

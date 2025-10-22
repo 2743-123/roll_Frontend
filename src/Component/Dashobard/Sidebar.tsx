@@ -72,6 +72,16 @@ const Sidebar: React.FC = () => {
         <ListItemText primary="Token" />
       </ListItemButton>
 
+      {/* Dashboard - visible to all */}
+      <ListItemButton onClick={() => navigate("/bedash")}>
+        <ListItemIcon>
+          <AccountBalanceWalletOutlinedIcon
+            sx={{ color: "#4caf50", animation: "flash 1.2s infinite" }}
+          />
+        </ListItemIcon>
+        <ListItemText primary="Bedash" />
+      </ListItemButton>
+
       {/* Inbox collapsible */}
       <ListItemButton onClick={handleClick}>
         <ListItemIcon>
