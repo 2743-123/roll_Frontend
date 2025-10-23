@@ -22,6 +22,7 @@ const bedashReducer = (state = initialState, action: any): BedashState => {
         ? { ...item, status: "completed", customDate: action.payload.data.customDate }
         : item
     ),
+    loading:false
   };
 
     case ADD_BEDASH_SUCCESS:

@@ -1,5 +1,5 @@
 import { toast } from "react-toastify";
-import { ERROR, IN_PROGRESS } from "../../ActionType/auth";
+import { ERROR } from "../../ActionType/auth";
 import {
   ADD_USER_SUCCESS,
   DELETE_USER_SUCCESS,
@@ -19,7 +19,6 @@ import { showNotification } from "../../CommonCoponent/Notification/Notification
 
 export const getuserAction = () => async (dispatch: AppDispatch) => {
   try {
-    // dispatch({ type: IN_PROGRESS });
     const data = await getUserService();
     dispatch({ type: GET_USERS_SUCCESS, payload: data });
   } catch (error: any) {
@@ -41,7 +40,6 @@ export const addUserAction =
   }) =>
   async (dispatch: AppDispatch) => {
     try {
-      dispatch({ type: IN_PROGRESS });
       const data = await addUserService(userData);
       dispatch({ type: ADD_USER_SUCCESS, payload: data });
       dispatch(

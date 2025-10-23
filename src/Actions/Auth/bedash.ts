@@ -1,4 +1,4 @@
-import { ERROR, IN_PROGRESS } from "../../ActionType/auth";
+import { ERROR} from "../../ActionType/auth";
 import { CONFIRM_BEDASH_SUCCESS, GET_BEDASH_LIST } from "../../ActionType/bedash/bedash";
 import { showNotification } from "../../CommonCoponent/Notification/NotificationReduer";
 import { AppDispatch } from "../../store";
@@ -6,7 +6,6 @@ import { addBedashService, confirmBedashService, getBedashService } from "../aut
 
 export const getBedashListAction = () => async (dispatch: AppDispatch) => {
   try {
-    dispatch({ type: IN_PROGRESS });
     const data = await getBedashService();
     dispatch({ type: GET_BEDASH_LIST, payload: data });
   } catch (error: any) {

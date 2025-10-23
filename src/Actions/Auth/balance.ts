@@ -1,4 +1,4 @@
-import { ERROR, IN_PROGRESS } from "../../ActionType/auth";
+import { ERROR } from "../../ActionType/auth";
 import { GET_BALANCE } from "../../ActionType/balancetype.ts/balance";
 import { showNotification } from "../../CommonCoponent/Notification/NotificationReduer";
 import { AddBalancePayload } from "../../Component/Balance/AddBalance";
@@ -8,8 +8,6 @@ import { addBalanceService, getBalanceService } from "../auth services/balance";
 export const getBalanceAction =
   (userId: number) => async (dispatch: AppDispatch) => {
     try {
-      dispatch({ type: IN_PROGRESS });
-
       const data = await getBalanceService(userId);
 
       dispatch({ type: GET_BALANCE, payload: data });
@@ -21,8 +19,7 @@ export const getBalanceAction =
     }
   };
 export const addBalanceAction =
-  (payload: AddBalancePayload) =>
-  async (dispatch: AppDispatch) => {
+  (payload: AddBalancePayload) => async (dispatch: AppDispatch) => {
     try {
       const data = await addBalanceService(payload);
       dispatch({ type: "ADD_BALANCE_SUCCESS", payload: data });

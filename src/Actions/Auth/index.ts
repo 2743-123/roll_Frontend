@@ -67,15 +67,9 @@ export const login =
 
 export const logoutAction = () => async (dispatch: AppDispatch) => {
   try {
-    // ✅ Optional: show loader
-    dispatch({ type: IN_PROGRESS });
-
-    // ✅ If logout API exists
     const data = await logoutuserServices(); // wait for API to finish
     console.log("LOGOUT", data);
     clearAccessToken();
-
-    // ✅ Clear redux store
     dispatch({ type: LOGOUT });
     dispatch(
       showNotification({
@@ -83,12 +77,6 @@ export const logoutAction = () => async (dispatch: AppDispatch) => {
         message: "Logout Success successfully!",
       })
     );
-
-    // ✅ Clear token from storage
-
-    // if using redux-persist
-
-    // ✅ Optional: you can return true/false for navigation
     return true;
   } catch (error: any) {
     dispatch(
@@ -97,7 +85,6 @@ export const logoutAction = () => async (dispatch: AppDispatch) => {
         message: error?.response?.data?.msg || error.message,
       })
     );
-    // dispatch({ type: ERROR, payload: error });
     return false;
   }
 };
