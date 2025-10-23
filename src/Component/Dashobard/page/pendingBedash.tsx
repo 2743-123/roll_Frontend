@@ -9,21 +9,26 @@ import {
 } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../../store";
-import { confirmBedashAction, getBedashListAction } from "../../../Actions/Auth/bedash";
-
+import {
+  confirmBedashAction,
+  getBedashListAction,
+} from "../../../Actions/Auth/bedash";
 
 const PendingBedash: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { data, loading, error } = useSelector(
     (state: RootState) => state.bedash
   );
+  const { user } = useSelector((state: RootState) => state.auth);
 
   const [pendingList, setPendingList] = useState<any[]>([]);
 
   // 🔹 Fetch all bedash list on mount
   useEffect(() => {
-    dispatch(getBedashListAction());
-  }, [dispatch]);
+    if (user?.id) {
+      dispatch(getBedashListAction());
+    }
+  }, [dispatch, user?.id]);
 
   // 🔹 Filter only pending items
   useEffect(() => {
@@ -67,7 +72,7 @@ const PendingBedash: React.FC = () => {
       ) : (
         <Grid container spacing={2}>
           {pendingList.map((item) => (
-            <Grid    key={item.id}>
+            <Grid key={item.id}>
               <Paper
                 elevation={3}
                 sx={{
