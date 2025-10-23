@@ -16,14 +16,14 @@ import {
 
 const PendingBedash: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const { user } = useSelector((state: RootState) => state.auth); // ✅ auth user
   const { data, loading, error } = useSelector(
     (state: RootState) => state.bedash
   );
-  const { user } = useSelector((state: RootState) => state.auth);
 
   const [pendingList, setPendingList] = useState<any[]>([]);
 
-  // 🔹 Fetch all bedash list on mount
+  // 🔹 Fetch bedash list only when user is logged in
   useEffect(() => {
     if (user?.id) {
       dispatch(getBedashListAction());
@@ -32,7 +32,7 @@ const PendingBedash: React.FC = () => {
 
   // 🔹 Filter only pending items
   useEffect(() => {
-    if (data?.length) {
+    if (Array.isArray(data)) {
       const filtered = data.filter((item: any) => item.status === "pending");
       setPendingList(filtered);
     }
@@ -44,6 +44,14 @@ const PendingBedash: React.FC = () => {
     await dispatch(confirmBedashAction(item.id));
     dispatch(getBedashListAction()); // refresh list after confirm
   };
+
+  // ✅ Loading / Error / Empty states
+  if (!user?.id)
+    return (
+      <Typography align="center" mt={4}>
+        Please login first.
+      </Typography>
+    );
 
   if (loading)
     return (
