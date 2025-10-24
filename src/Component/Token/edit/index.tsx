@@ -106,7 +106,7 @@ const EditTokenDialog: React.FC<EditTokenDialogProps> = ({
                 label="Rate / Ton"
                 name="ratePerTon"
                 fullWidth
-                value={formData.ratePerTon}
+                value="180"
                 onChange={handleChange}
                 type="number"
               />
