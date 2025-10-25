@@ -3,11 +3,11 @@ import List from "@mui/material/List";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
-import Collapse from "@mui/material/Collapse";
-import InboxIcon from "@mui/icons-material/MoveToInbox";
-import ExpandLess from "@mui/icons-material/ExpandLess";
-import ExpandMore from "@mui/icons-material/ExpandMore";
-import StarBorder from "@mui/icons-material/StarBorder";
+// import Collapse from "@mui/material/Collapse";
+// import InboxIcon from "@mui/icons-material/MoveToInbox";
+// import ExpandLess from "@mui/icons-material/ExpandLess";
+// import ExpandMore from "@mui/icons-material/ExpandMore";
+// import StarBorder from "@mui/icons-material/StarBorder";
 import DashboardSharpIcon from "@mui/icons-material/DashboardSharp";
 import SupervisorAccountSharpIcon from "@mui/icons-material/SupervisorAccountSharp";
 import { useNavigate } from "react-router-dom";
@@ -15,16 +15,16 @@ import { useSelector } from "react-redux";
 import { RootState } from "../../store"; // ✅ adjust path as per your structure
 import AccountBalanceWalletOutlinedIcon from "@mui/icons-material/AccountBalanceWallet";
 import MonetizationOnIcon from "@mui/icons-material/MonetizationOn";
+import ConstructionIcon from "@mui/icons-material/Construction";
 
 const Sidebar: React.FC = () => {
-  const [open, setOpen] = React.useState<boolean>(false);
+  // const [open, setOpen] = React.useState<boolean>(false);
   const navigate = useNavigate();
 
   // ✅ Get logged-in user info from Redux
   const { user } = useSelector((state: RootState) => state.auth);
 
-  // ✅ Toggle Inbox submenu
-  const handleClick = () => setOpen(!open);
+  // const handleClick = () => setOpen(!open);
 
   // ✅ Role check (only admin or superadmin can see Users tab)
   const canSeeUsersTab = user?.role === "admin" || user?.role === "superadmin";
@@ -35,7 +35,7 @@ const Sidebar: React.FC = () => {
       <ListItemButton onClick={() => navigate("/")}>
         <ListItemIcon>
           <DashboardSharpIcon
-            sx={{ color: "#af4c4cff", animation: "flash 1.2s infinite" }}
+            sx={{ color: "#ff0000ff", animation: "flash 1.2s infinite" }}
           />
         </ListItemIcon>
         <ListItemText primary="Dashboard" />
@@ -46,10 +46,10 @@ const Sidebar: React.FC = () => {
         <ListItemButton onClick={() => navigate("/users")}>
           <ListItemIcon>
             <SupervisorAccountSharpIcon
-              sx={{ color: "#6b4cafff", animation: "flash 1.2s infinite" }}
+              sx={{ color: "#5506ffff", animation: "flash 1.2s infinite" }}
             />
           </ListItemIcon>
-          <ListItemText primary="USERS" />
+          <ListItemText primary="Users" />
         </ListItemButton>
       )}
 
@@ -57,7 +57,7 @@ const Sidebar: React.FC = () => {
       <ListItemButton onClick={() => navigate("/balance")}>
         <ListItemIcon>
           <AccountBalanceWalletOutlinedIcon
-            sx={{ color: "#4caf50", animation: "flash 1.2s infinite" }}
+            sx={{ color: "#00ff6eff", animation: "flash 1.2s infinite" }}
           />
         </ListItemIcon>
         <ListItemText primary="Balance" />
@@ -66,7 +66,7 @@ const Sidebar: React.FC = () => {
       <ListItemButton onClick={() => navigate("/Token")}>
         <ListItemIcon>
           <MonetizationOnIcon
-            sx={{ color: "#4caf50", animation: "flash 1.2s infinite" }}
+            sx={{ color: "#ffd500ff", animation: "flash 1.2s infinite" }}
           />
         </ListItemIcon>
         <ListItemText primary="Token" />
@@ -75,15 +75,15 @@ const Sidebar: React.FC = () => {
       {/* Dashboard - visible to all */}
       <ListItemButton onClick={() => navigate("/bedash")}>
         <ListItemIcon>
-          <AccountBalanceWalletOutlinedIcon
-            sx={{ color: "#4caf50", animation: "flash 1.2s infinite" }}
+          <ConstructionIcon
+            sx={{ color: "#ff5e00ff", animation: "flash 1.2s infinite" }}
           />
         </ListItemIcon>
         <ListItemText primary="Bedash" />
       </ListItemButton>
 
       {/* Inbox collapsible */}
-      <ListItemButton onClick={handleClick}>
+      {/* <ListItemButton onClick={handleClick}>
         <ListItemIcon>
           <InboxIcon />
         </ListItemIcon>
@@ -100,7 +100,7 @@ const Sidebar: React.FC = () => {
             <ListItemText primary="Starred" />
           </ListItemButton>
         </List>
-      </Collapse>
+      </Collapse> */}
     </List>
   );
 };
