@@ -29,6 +29,7 @@ const Sidebar: React.FC = () => {
 
   // ✅ Role check (only admin or superadmin can see Users tab)
   const canSeeUsersTab = user?.role === "admin" || user?.role === "superadmin";
+  const canSeeAdminTab =  user?.role === "superadmin";
 
   return (
     <List>
@@ -54,7 +55,7 @@ const Sidebar: React.FC = () => {
         </ListItemButton>
       )}
 
-          {canSeeUsersTab && (
+          {canSeeAdminTab && (
         <ListItemButton onClick={() => navigate("/admin")}>
           <ListItemIcon>
             <PersonIcon
