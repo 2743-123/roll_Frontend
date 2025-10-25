@@ -18,10 +18,10 @@ import {
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import AddUsers from "./Add";
-import EditUser from "./Update";
+import AddUsers from "../Users/Add"
+import EditUser from "../Users/Update";
 import { deleteUserAction } from "../../../../Actions/Auth/user";
-import DeleteUserDialog from "./delete";
+import DeleteUserDialog from "../Users/delete";
 
 export interface User {
   id: number;
@@ -31,7 +31,7 @@ export interface User {
   isActive: boolean;
 }
 
-const Users: React.FC = () => {
+const AdminList: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
 
   // ✅ get users & logged in user from redux
@@ -119,7 +119,7 @@ const Users: React.FC = () => {
 
   // ✅ Apply search filter after role filter
 const filteredUsers = userList
-  .filter((u) => u.role === "user") // <-- only show user role
+  .filter((u) => u.role === "admin" ||u.role === "superadmin") // <-- only show user role
   .filter(
     (u) =>
       (u.name || "").toLowerCase().includes(search.toLowerCase()) ||
@@ -257,4 +257,4 @@ const filteredUsers = userList
   );
 };
 
-export default Users;
+export default AdminList;

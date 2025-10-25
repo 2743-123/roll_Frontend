@@ -9,6 +9,7 @@ import Balance from "./Component/Balance/Balance";
 import TokenTable from "./Component/Token";
 import Notification from "./CommonCoponent/Notification";
 import BedashList from "./Component/Bedashmessage/bedashList";
+import AdminList from "./Component/Dashobard/page/Admin & SuperAdmin";
 
 function App() {
   return (
@@ -36,6 +37,9 @@ function App() {
             <Route path="Balance" element={<Balance />} />
             <Route path="Token" element={<TokenTable />} />
             <Route path="Bedash" element={<BedashList />} />
+            <Route path="admin" element={<AdminList/>}/>
+             
+
           </Route>
         </Routes>
       </BrowserRouter>

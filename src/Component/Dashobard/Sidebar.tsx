@@ -16,6 +16,7 @@ import { RootState } from "../../store"; // ✅ adjust path as per your structur
 import AccountBalanceWalletOutlinedIcon from "@mui/icons-material/AccountBalanceWallet";
 import MonetizationOnIcon from "@mui/icons-material/MonetizationOn";
 import ConstructionIcon from "@mui/icons-material/Construction";
+import PersonIcon from "@mui/icons-material/Person";
 
 const Sidebar: React.FC = () => {
   // const [open, setOpen] = React.useState<boolean>(false);
@@ -52,6 +53,18 @@ const Sidebar: React.FC = () => {
           <ListItemText primary="Users" />
         </ListItemButton>
       )}
+
+          {canSeeUsersTab && (
+        <ListItemButton onClick={() => navigate("/admin")}>
+          <ListItemIcon>
+            <PersonIcon
+              sx={{ color: "#189fe8ff", animation: "flash 1.2s infinite" }}
+            />
+          </ListItemIcon>
+          <ListItemText primary="Admin&Superadmin" />
+        </ListItemButton>
+      )}
+
 
       {/* Dashboard - visible to all */}
       <ListItemButton onClick={() => navigate("/balance")}>
