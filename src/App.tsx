@@ -10,8 +10,22 @@ import TokenTable from "./Component/Token";
 import Notification from "./CommonCoponent/Notification";
 import BedashList from "./Component/Bedashmessage/bedashList";
 import AdminList from "./Component/Dashobard/page/Admin & SuperAdmin";
+import { useDispatch } from "react-redux";
+import { AppDispatch } from "./store";
+import { useEffect } from "react";
 
 function App() {
+  const dispatch = useDispatch<AppDispatch>();
+  useEffect(() => {
+    const token = localStorage.getItem("accessToken");
+    const user = localStorage.getItem("user");
+    if (token && user) {
+      dispatch({
+        type: "LOGIN_SUCCESS",
+        payload: { token, user: JSON.parse(user) },
+      });
+    }
+  }, [dispatch]);
   return (
     <>
       <BrowserRouter>
@@ -37,9 +51,7 @@ function App() {
             <Route path="Balance" element={<Balance />} />
             <Route path="Token" element={<TokenTable />} />
             <Route path="Bedash" element={<BedashList />} />
-            <Route path="admin" element={<AdminList/>}/>
-             
-
+            <Route path="admin" element={<AdminList />} />
           </Route>
         </Routes>
       </BrowserRouter>
