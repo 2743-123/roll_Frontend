@@ -9,18 +9,16 @@ import {
   Button,
   TextField,
   Typography,
-  Paper,
   CircularProgress,
+  Paper,
 } from "@mui/material";
-
-// import Loader from "../../CommonCoponent/Loader";
 
 interface Logindetails {
   email: string;
   password: string;
 }
 
-export default function Login() {
+export default function DashboardLogin() {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const { token, loading } = useSelector((state: RootState) => state.auth);
@@ -42,7 +40,6 @@ export default function Login() {
     const { email, password } = loginDetails;
     if (email && password) {
       dispatch(login(email, password));
-    } else {
     }
   };
 
@@ -53,81 +50,161 @@ export default function Login() {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        background: "linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)", // professional blue gradient
-        p: 2,
+        background: "linear-gradient(135deg, #87b7e4ff 0%, #a6d8f3ff 100%)",
+        overflow: "hidden",
       }}
     >
-      <Paper
-        elevation={8}
+      {/* Subtle glow layers */}
+      <Box
         sx={{
-          maxWidth: 400,
+          position: "absolute",
+          width: 500,
+          height: 500,
+          background:
+            "radial-gradient(circle at center, rgba(255,255,255,0.05), transparent 70%)",
+          top: "-150px",
+          left: "-150px",
+          filter: "blur(120px)",
+        }}
+      />
+      <Box
+        sx={{
+          position: "absolute",
+          width: 500,
+          height: 500,
+          background:
+            "radial-gradient(circle at center, rgba(0,188,212,0.05), transparent 70%)",
+          bottom: "-150px",
+          right: "-150px",
+          filter: "blur(120px)",
+        }}
+      />
+
+      <Paper
+        elevation={10}
+        sx={{
+          p: 6,
+          borderRadius: 4,
           width: "100%",
-          p: 5,
+          maxWidth: 400,
+          background: "rgba(20,20,30,0.9)",
+          backdropFilter: "blur(12px)",
           display: "flex",
           flexDirection: "column",
+          alignItems: "center",
           gap: 3,
-          borderRadius: 4,
-          position: "relative",
-          backgroundColor: "#ffffff", // card white
+          zIndex: 2,
+          boxShadow: "0 0 40px rgba(0,0,0,0.6)",
         }}
       >
-        {/* Title */}
-        <Box textAlign="center">
-          <Typography variant="h4" fontWeight={700} color="primary">
-            Welcome Back 👋
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Login to your admin dashboard
+        {/* Logo / Icon */}
+        <Box
+          sx={{
+            width: 80,
+            height: 80,
+            borderRadius: "50%",
+            background: "linear-gradient(135deg,#2196f3,#00bcd4)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            mb: 1,
+            boxShadow: "0 0 20px rgba(0,188,212,0.5)",
+          }}
+        >
+          <Typography
+            variant="h5"
+            sx={{
+              color: "#fff",
+              fontWeight: "bold",
+              letterSpacing: 2,
+            }}
+          >
+            AD
           </Typography>
         </Box>
 
-        {/* Notification */}
+        {/* Title */}
+        <Typography
+          variant="h5"
+          sx={{ fontWeight: "bold", textAlign: "center", color: "#fff" }}
+        >
+          Admin{" "}
+          <Box component="span" sx={{ color: "#00bcd4" }}>
+            Dashboard
+          </Box>
+        </Typography>
+        <Typography variant="body2" sx={{ color: "#aaa", textAlign: "center" }}>
+          Secure Access Portal
+        </Typography>
 
-        {/* Email Input */}
+        {/* Input Fields */}
         <TextField
           fullWidth
-          label="Email Address"
+          placeholder="Email Address"
           name="email"
           value={loginDetails.email}
           onChange={handleChange}
           variant="outlined"
+          sx={{
+            backgroundColor: "#1a1a25",
+            borderRadius: 2,
+            "& .MuiOutlinedInput-root": {
+              "& fieldset": { borderColor: "#333" },
+              "&:hover fieldset": { borderColor: "#00bcd4" },
+              "&.Mui-focused fieldset": { borderColor: "#00bcd4" },
+              color: "#fff",
+            },
+            input: { color: "#fff" },
+          }}
         />
-
-        {/* Password Input */}
         <TextField
           fullWidth
-          label="Password"
           type="password"
+          placeholder="Password"
           name="password"
           value={loginDetails.password}
           onChange={handleChange}
           variant="outlined"
+          sx={{
+            backgroundColor: "#1a1a25",
+            borderRadius: 2,
+            "& .MuiOutlinedInput-root": {
+              "& fieldset": { borderColor: "#333" },
+              "&:hover fieldset": { borderColor: "#00bcd4" },
+              "&.Mui-focused fieldset": { borderColor: "#00bcd4" },
+              color: "#fff",
+            },
+            input: { color: "#fff" },
+          }}
         />
 
-        {/* Login Button */}
+        {/* Submit Button */}
         <Button
           fullWidth
           variant="contained"
-          color="primary"
           onClick={handleSubmit}
-          sx={{ py: 1.5, mt: 1 }}
           disabled={loading}
+          sx={{
+            mt: 1.5,
+            py: 1.5,
+            borderRadius: 3,
+            fontWeight: "bold",
+            fontSize: 15,
+            background: "linear-gradient(90deg, #00bcd4, #2196f3)",
+            boxShadow: "0 4px 20px rgba(0,188,212,0.4)",
+            "&:hover": {
+              background: "linear-gradient(90deg, #2196f3, #00bcd4)",
+            },
+          }}
         >
-          {loading ? <CircularProgress size={24} color="inherit" /> : "Login"}
+          {loading ? <CircularProgress size={24} color="inherit" /> : "Access"}
         </Button>
 
         {/* Footer */}
-        <Typography variant="body2" color="text.secondary" textAlign="center">
-          Don’t have an account?{" "}
-          <Box
-            component="span"
-            sx={{ color: "primary.main", cursor: "default" }}
-          >
-            Contact Admin
-          </Box>
+        <Typography variant="caption" sx={{ color: "#777", mt: 2 }}>
+          © {new Date().getFullYear()} Admin Dashboard
         </Typography>
       </Paper>
-      {/* <Loader/> */}
     </Box>
   );
 }
