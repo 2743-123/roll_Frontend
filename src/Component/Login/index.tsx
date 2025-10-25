@@ -46,46 +46,55 @@ export default function DashboardLogin() {
   return (
     <Box
       sx={{
-        minHeight: "100vh",
+        width: "100vw",
+        height: "100vh",
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
         background: "linear-gradient(135deg, #87b7e4ff 0%, #a6d8f3ff 100%)",
         overflow: "hidden",
+        position: "relative",
+        margin: 0,
+        padding: 0,
       }}
     >
       {/* Subtle glow layers */}
       <Box
         sx={{
           position: "absolute",
-          width: 500,
-          height: 500,
+          width: 400,
+          height: 400,
           background:
-            "radial-gradient(circle at center, rgba(255,255,255,0.05), transparent 70%)",
-          top: "-150px",
-          left: "-150px",
-          filter: "blur(120px)",
+            "radial-gradient(circle at center, rgba(211, 135, 135, 0.08), transparent 70%)",
+          top: 0,
+          left: 0,
+          transform: "translate(-30%, -30%)",
+          filter: "blur(100px)",
+          pointerEvents: "none",
         }}
       />
       <Box
         sx={{
           position: "absolute",
-          width: 500,
-          height: 500,
+          width: 400,
+          height: 400,
           background:
-            "radial-gradient(circle at center, rgba(0,188,212,0.05), transparent 70%)",
-          bottom: "-150px",
-          right: "-150px",
-          filter: "blur(120px)",
+            "radial-gradient(circle at center, rgba(0,188,212,0.08), transparent 70%)",
+          bottom: 0,
+          right: 0,
+          transform: "translate(30%, 30%)",
+          filter: "blur(100px)",
+          pointerEvents: "none",
         }}
       />
 
+      {/* Login Card */}
       <Paper
         elevation={10}
         sx={{
           p: 6,
           borderRadius: 4,
-          width: "100%",
+          width: "90%",
           maxWidth: 400,
           background: "rgba(20,20,30,0.9)",
           backdropFilter: "blur(12px)",
