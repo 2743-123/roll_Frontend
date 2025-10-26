@@ -14,18 +14,12 @@ import { getuserAction, selectUserAction } from "../../Actions/Auth/user";
 import { AuthState } from "../../ActionType/auth";
 import { userState } from "../../ActionType/user/userTypes";
 
-// ---------------------
-// ✅ Interfaces
-// ---------------------
 export interface User {
   id: number;
   name: string;
   role: "admin" | "superadmin" | "user";
 }
 
-// ---------------------
-// ✅ Component
-// ---------------------
 const DropDownUserList: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { token, user } = useSelector(
@@ -35,18 +29,14 @@ const DropDownUserList: React.FC = () => {
 
   const [selected, setSelected] = useState<string>("");
 
-  // ✅ Fetch users if admin/superadmin
+  // Fetch users if admin/superadmin
   useEffect(() => {
-    if (
-      token &&
-      user &&
-      (user.role === "admin" || user.role === "superadmin")
-    ) {
+    if (token && user && (user.role === "admin" || user.role === "superadmin")) {
       dispatch(getuserAction());
     }
   }, [dispatch, token, user]);
 
-  // ✅ Default selection logic
+  // Default selection logic
   useEffect(() => {
     if (user?.role === "user") {
       setSelected(user.id.toString());
@@ -60,7 +50,6 @@ const DropDownUserList: React.FC = () => {
     }
   }, [user, users, dispatch]);
 
-  // ✅ Handle dropdown change
   const handleChange = (event: SelectChangeEvent) => {
     const selectedId = Number(event.target.value);
     setSelected(event.target.value);
@@ -70,9 +59,6 @@ const DropDownUserList: React.FC = () => {
     }
   };
 
-  // ---------------------
-  // ✅ Styled UI (Sky Blue Theme Friendly)
-  // ---------------------
   return (
     <FormControl
       sx={{
@@ -81,26 +67,27 @@ const DropDownUserList: React.FC = () => {
         "& .MuiInputLabel-root": {
           color: "white",
           fontWeight: 600,
+          transition: "all 0.3s ease",
+          "&.Mui-focused": { color: "#bbdefb" },
         },
         "& .MuiOutlinedInput-root": {
           color: "white",
-          backgroundColor: "rgba(255, 255, 255, 0.2)",
-          borderRadius: "10px",
-          "& fieldset": {
-            borderColor: "white",
-          },
-          "&:hover fieldset": {
-            borderColor: "#e3f2fd", // light blue border on hover
-          },
-          "&.Mui-focused fieldset": {
-            borderColor: "white",
-          },
+          backgroundColor: "rgba(33, 203, 243, 0.15)",
+          borderRadius: "12px",
+          transition: "all 0.3s ease",
+          "& fieldset": { borderColor: "white" },
+          "&:hover fieldset": { borderColor: "#64b5f6" },
+          "&.Mui-focused fieldset": { borderColor: "#2196f3", boxShadow: "0 0 8px rgba(33,203,243,0.4)" },
         },
         "& .MuiSelect-icon": {
           color: "white",
+          transition: "all 0.3s ease",
+          "&:hover": { color: "#bbdefb", transform: "scale(1.2)" },
         },
         "& .MuiFormHelperText-root": {
           color: "#e0f7fa",
+          fontWeight: 500,
+          fontSize: "0.85rem",
         },
       }}
     >
@@ -110,10 +97,26 @@ const DropDownUserList: React.FC = () => {
         value={selected}
         label="Select User"
         onChange={handleChange}
+        MenuProps={{
+          PaperProps: {
+            sx: {
+              backgroundColor: "#f0f4f8",
+              color: "#1976d2",
+              borderRadius: "12px",
+              boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+              "& .MuiMenuItem-root": {
+                transition: "all 0.2s ease",
+                "&:hover": {
+                  backgroundColor: "#bbdefb",
+                  color: "#0d47a1",
+                  transform: "scale(1.03)",
+                },
+              },
+            },
+          },
+        }}
       >
-        {user?.role === "user" && (
-          <MenuItem value={user.id}>{user.name}</MenuItem>
-        )}
+        {user?.role === "user" && <MenuItem value={user.id}>{user.name}</MenuItem>}
 
         {(user?.role === "admin" || user?.role === "superadmin") &&
           (users.length > 0 ? (
@@ -124,11 +127,7 @@ const DropDownUserList: React.FC = () => {
                   key={u.id}
                   value={u.id}
                   sx={{
-                    backgroundColor:
-                      selected === u.id.toString() ? "#bbdefb" : "transparent",
-                    "&:hover": {
-                      backgroundColor: "#e3f2fd",
-                    },
+                    backgroundColor: selected === u.id.toString() ? "#bbdefb" : "transparent",
                   }}
                 >
                   {u.name}
@@ -138,10 +137,7 @@ const DropDownUserList: React.FC = () => {
             <MenuItem disabled>Loading users...</MenuItem>
           ))}
       </Select>
-
-      <FormHelperText>
-        {selected ? "User selected" : "Please select a user"}
-      </FormHelperText>
+      <FormHelperText>{selected ? "User selected" : "Please select a user"}</FormHelperText>
     </FormControl>
   );
 };

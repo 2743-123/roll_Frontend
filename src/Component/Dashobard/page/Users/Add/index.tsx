@@ -12,7 +12,10 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  SelectChangeEvent
+  SelectChangeEvent,
+  Box,
+  Typography,
+  Paper,
 } from "@mui/material";
 import { addUserAction } from "../../../../../Actions/Auth/user";
 import { AppDispatch } from "../../../../../store";
@@ -47,14 +50,8 @@ const AddUsers: React.FC<AddUsersProps> = ({ open, onClose }) => {
     });
   };
 
-  // isActive toggle
-  // const handleActiveChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  //   setForm({ ...form, isActive: e.target.checked });
-  // };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Dispatch AddUser action
     dispatch(
       addUserAction({
         name: form.name,
@@ -64,7 +61,6 @@ const AddUsers: React.FC<AddUsersProps> = ({ open, onClose }) => {
       })
     );
     onClose();
-    // Reset form
     setForm({
       name: "",
       email: "",
@@ -75,12 +71,43 @@ const AddUsers: React.FC<AddUsersProps> = ({ open, onClose }) => {
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Add New User</DialogTitle>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="sm"
+      fullWidth
+      PaperProps={{
+        sx: {
+          borderRadius: 4,
+          background: "linear-gradient(135deg, #1b2735 0%, #090a0f 100%)",
+          color: "#fff",
+          boxShadow: "0 0 30px rgba(0, 188, 212, 0.25)",
+          backdropFilter: "blur(10px)",
+        },
+      }}
+    >
+      <DialogTitle
+        sx={{
+          fontWeight: "bold",
+          textAlign: "center",
+          borderBottom: "1px solid rgba(255,255,255,0.1)",
+          background: "linear-gradient(90deg,#00bcd4,#2196f3)",
+          color: "#fff",
+        }}
+      >
+        Add New User
+      </DialogTitle>
+
       <form onSubmit={handleSubmit}>
-        <DialogContent dividers>
-          <Grid container spacing={2} mt={-1}>
-            <Grid>
+        <DialogContent
+          dividers
+          sx={{
+            background: "rgba(255,255,255,0.02)",
+            p: 4,
+          }}
+        >
+          <Grid container spacing={2}>
+            <Grid >
               <TextField
                 label="Full Name"
                 name="name"
@@ -88,9 +115,20 @@ const AddUsers: React.FC<AddUsersProps> = ({ open, onClose }) => {
                 required
                 value={form.name}
                 onChange={handleChange}
+                variant="outlined"
+                InputLabelProps={{ style: { color: "#bbb" } }}
+                sx={{
+                  input: { color: "#fff" },
+                  "& .MuiOutlinedInput-root": {
+                    "& fieldset": { borderColor: "#333" },
+                    "&:hover fieldset": { borderColor: "#00bcd4" },
+                    "&.Mui-focused fieldset": { borderColor: "#00bcd4" },
+                  },
+                }}
               />
             </Grid>
-            <Grid>
+
+            <Grid >
               <TextField
                 label="Email"
                 name="email"
@@ -99,9 +137,19 @@ const AddUsers: React.FC<AddUsersProps> = ({ open, onClose }) => {
                 required
                 value={form.email}
                 onChange={handleChange}
+                InputLabelProps={{ style: { color: "#bbb" } }}
+                sx={{
+                  input: { color: "#fff" },
+                  "& .MuiOutlinedInput-root": {
+                    "& fieldset": { borderColor: "#333" },
+                    "&:hover fieldset": { borderColor: "#00bcd4" },
+                    "&.Mui-focused fieldset": { borderColor: "#00bcd4" },
+                  },
+                }}
               />
             </Grid>
-            <Grid>
+
+            <Grid >
               <TextField
                 label="Password"
                 name="password"
@@ -110,15 +158,39 @@ const AddUsers: React.FC<AddUsersProps> = ({ open, onClose }) => {
                 required
                 value={form.password}
                 onChange={handleChange}
+                InputLabelProps={{ style: { color: "#bbb" } }}
+                sx={{
+                  input: { color: "#fff" },
+                  "& .MuiOutlinedInput-root": {
+                    "& fieldset": { borderColor: "#333" },
+                    "&:hover fieldset": { borderColor: "#00bcd4" },
+                    "&.Mui-focused fieldset": { borderColor: "#00bcd4" },
+                  },
+                }}
               />
             </Grid>
-            <Grid>
+
+            <Grid >
               <FormControl fullWidth required>
-                <InputLabel id="role-label">Role</InputLabel>
+                <InputLabel id="role-label" sx={{ color: "#bbb" }}>
+                  Role
+                </InputLabel>
                 <Select
                   labelId="role-label"
                   value={form.role}
                   onChange={handleRoleChange}
+                  sx={{
+                    color: "#fff",
+                    "& .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "#333",
+                    },
+                    "&:hover .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "#00bcd4",
+                    },
+                    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "#00bcd4",
+                    },
+                  }}
                 >
                   <MenuItem value="superadmin">Super Admin</MenuItem>
                   <MenuItem value="admin">Admin</MenuItem>
@@ -126,21 +198,40 @@ const AddUsers: React.FC<AddUsersProps> = ({ open, onClose }) => {
                 </Select>
               </FormControl>
             </Grid>
-            {/* <Grid>
-              <FormControlLabel
-                control={
-                  <Switch checked={form.isActive} onChange={handleActiveChange} />
-                }
-                label="Is Active"
-              />
-            </Grid> */}
           </Grid>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={onClose} color="secondary">
+
+        <DialogActions
+          sx={{
+            p: 3,
+            borderTop: "1px solid rgba(255,255,255,0.1)",
+            justifyContent: "space-between",
+          }}
+        >
+          <Button
+            onClick={onClose}
+            variant="outlined"
+            sx={{
+              color: "#00bcd4",
+              borderColor: "#00bcd4",
+              "&:hover": { borderColor: "#2196f3", color: "#2196f3" },
+            }}
+          >
             Cancel
           </Button>
-          <Button type="submit" variant="contained" color="primary">
+          <Button
+            type="submit"
+            variant="contained"
+            sx={{
+              background: "linear-gradient(90deg, #00bcd4, #2196f3)",
+              color: "#fff",
+              fontWeight: "bold",
+              px: 3,
+              "&:hover": {
+                background: "linear-gradient(90deg, #2196f3, #00bcd4)",
+              },
+            }}
+          >
             Add User
           </Button>
         </DialogActions>

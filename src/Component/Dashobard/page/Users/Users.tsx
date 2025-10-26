@@ -14,6 +14,8 @@ import {
   TextField,
   IconButton,
   Box,
+  Typography,
+  Divider,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
@@ -33,8 +35,6 @@ export interface User {
 
 const Users: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
-
-  // ✅ get users & logged in user from redux
   const { users } = useSelector((state: RootState) => state.user);
   const loggedInUser = useSelector((state: RootState) => state.auth.user);
 
@@ -67,21 +67,15 @@ const Users: React.FC = () => {
     setDeleteUserId(userId);
     setDeleteDialogOpen(true);
   };
-
   const handleCloseDelete = () => {
     setDeleteUserId(null);
     setDeleteDialogOpen(false);
   };
-
   const handleConfirmDelete = async () => {
     if (deleteUserId !== null) {
-      try {
-        await dispatch(deleteUserAction(deleteUserId));
-        setDeleteUserId(null);
-        setDeleteDialogOpen(false);
-      } catch (err) {
-        console.error(err);
-      }
+      await dispatch(deleteUserAction(deleteUserId));
+      setDeleteUserId(null);
+      setDeleteDialogOpen(false);
     }
   };
 
@@ -91,70 +85,82 @@ const Users: React.FC = () => {
     setPage(0);
   };
 
-  // ✅ Safe list
   const userList: User[] = Array.isArray(users)
     ? users.filter((u) => u && u.id)
     : [];
 
-  // ✅ Role-based filtering logic
-  const visibleUsers: User[] = React.useMemo(() => {
-    if (!loggedInUser) return [];
+  const filteredUsers = userList
+    .filter((u) => u.role === "user")
+    .filter(
+      (u) =>
+        (u.name || "").toLowerCase().includes(search.toLowerCase()) ||
+        (u.email || "").toLowerCase().includes(search.toLowerCase()) ||
+        (u.role || "").toLowerCase().includes(search.toLowerCase())
+    );
 
-    switch (loggedInUser.role) {
-      case "superadmin":
-        // superadmin can see everyone
-        return userList;
-      case "admin":
-        // admin can see only "user" role (and itself)
-        return userList.filter(
-          (u) => u.role === "user" || u.id === loggedInUser.id
-        );
-      case "user":
-        // normal user sees only itself
-        return userList.filter((u) => u.id === loggedInUser.id);
-      default:
-        return [];
-    }
-  }, [userList, loggedInUser]);
-
-  // ✅ Apply search filter after role filter
-const filteredUsers = userList
-  .filter((u) => u.role === "user") // <-- only show user role
-  .filter(
-    (u) =>
-      (u.name || "").toLowerCase().includes(search.toLowerCase()) ||
-      (u.email || "").toLowerCase().includes(search.toLowerCase()) ||
-      (u.role || "").toLowerCase().includes(search.toLowerCase())
-  );
   return (
-    <Paper sx={{ width: "100%", padding: 2 }}>
-      {/* Header Section */}
-      <div
-        style={{
+    <Paper
+      elevation={3}
+      sx={{
+        width: "100%",
+        borderRadius: 3,
+        overflow: "hidden",
+        background: "linear-gradient(135deg, #f9fafb 0%, #eef2f6 100%)",
+        p: 2,
+      }}
+    >
+      {/* 🔹 Header Section */}
+      <Box
+        sx={{
+          background: "linear-gradient(135deg, #1976d2, #42a5f5)",
+          color: "white",
+          borderRadius: 2,
+          px: 3,
+          py: 2,
+          mb: 2,
           display: "flex",
           justifyContent: "space-between",
-          marginBottom: 16,
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: 2,
         }}
       >
-        <TextField
-          label="Search"
-          variant="outlined"
-          size="small"
-          value={search}
-          onChange={handleSearch}
-        />
-        {loggedInUser?.role !== "user" && (
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<AddIcon />}
-            onClick={handleOpenAdd}
-          >
-            Add User
-          </Button>
-        )}
-      </div>
+        <Typography variant="h6" fontWeight={600}>
+          User Management
+        </Typography>
+        <Box display="flex" alignItems="center" gap={2}>
+          <TextField
+            label="Search Users"
+            variant="outlined"
+            size="small"
+            value={search}
+            onChange={handleSearch}
+            sx={{
+              backgroundColor: "white",
+              borderRadius: 1,
+              width: 250,
+            }}
+          />
+          {loggedInUser?.role !== "user" && (
+            <Button
+              variant="contained"
+              color="inherit"
+              startIcon={<AddIcon />}
+              onClick={handleOpenAdd}
+              sx={{
+                backgroundColor: "white",
+                color: "#1976d2",
+                fontWeight: 600,
+                "&:hover": { backgroundColor: "#e3f2fd" },
+              }}
+            >
+              Add User
+            </Button>
+          )}
+        </Box>
+      </Box>
 
+      {/* 🔹 Add/Edit/Delete Dialogs */}
       <DeleteUserDialog
         open={deleteDialogOpen}
         onClose={handleCloseDelete}
@@ -165,24 +171,31 @@ const filteredUsers = userList
       <AddUsers open={openAdd} onClose={handleCloseAdd} />
 
       {selectedUser && (
-        <EditUser
-          open={openEdit}
-          onClose={handleCloseEdit}
-          user={selectedUser}
-        />
+        <EditUser open={openEdit} onClose={handleCloseEdit} user={selectedUser} />
       )}
 
-      {/* Table Section */}
-      <TableContainer>
+      {/* 🔹 Table Section */}
+      <TableContainer
+        sx={{
+          borderRadius: 2,
+          overflow: "hidden",
+          backgroundColor: "white",
+        }}
+      >
         <Table stickyHeader>
           <TableHead>
-            <TableRow>
+            <TableRow
+              sx={{
+                backgroundColor: "#1976d2",
+                "& th": { color: "blue", fontWeight: 600 },
+              }}
+            >
               <TableCell>ID</TableCell>
               <TableCell>Name</TableCell>
               <TableCell>Email</TableCell>
               <TableCell>Role</TableCell>
-              <TableCell>Is Active</TableCell>
-              <TableCell>Actions</TableCell>
+              <TableCell>Status</TableCell>
+              <TableCell align="center">Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -190,11 +203,22 @@ const filteredUsers = userList
               filteredUsers
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((u) => (
-                  <TableRow key={u.id} hover>
+                  <TableRow
+                    key={u.id}
+                    hover
+                    sx={{
+                      "&:hover": {
+                        backgroundColor: "#f1f5f9",
+                        transition: "0.2s",
+                      },
+                    }}
+                  >
                     <TableCell>{u.id}</TableCell>
                     <TableCell>{u.name}</TableCell>
                     <TableCell>{u.email}</TableCell>
-                    <TableCell>{u.role}</TableCell>
+                    <TableCell sx={{ textTransform: "capitalize" }}>
+                      {u.role}
+                    </TableCell>
                     <TableCell>
                       <Box
                         sx={{
@@ -205,16 +229,18 @@ const filteredUsers = userList
                       >
                         <Box
                           sx={{
-                            width: 12,
-                            height: 12,
+                            width: 10,
+                            height: 10,
                             borderRadius: "50%",
                             bgcolor: u.isActive ? "green" : "red",
                           }}
                         />
-                        {u.isActive ? "Active" : "Inactive"}
+                        <Typography variant="body2">
+                          {u.isActive ? "Active" : "Inactive"}
+                        </Typography>
                       </Box>
                     </TableCell>
-                    <TableCell>
+                    <TableCell align="center">
                       {loggedInUser?.role !== "user" && (
                         <>
                           <IconButton
@@ -237,7 +263,9 @@ const filteredUsers = userList
             ) : (
               <TableRow>
                 <TableCell colSpan={6} align="center">
-                  No users found
+                  <Typography variant="body2" color="text.secondary" py={2}>
+                    No users found
+                  </Typography>
                 </TableCell>
               </TableRow>
             )}
@@ -245,6 +273,8 @@ const filteredUsers = userList
         </Table>
       </TableContainer>
 
+      {/* 🔹 Pagination */}
+      <Divider sx={{ mt: 1 }} />
       <TablePagination
         rowsPerPageOptions={[5, 10, 25]}
         count={filteredUsers.length}
@@ -252,6 +282,8 @@ const filteredUsers = userList
         rowsPerPage={rowsPerPage}
         onPageChange={handleChangePage}
         onRowsPerPageChange={handleChangeRowsPerPage}
+        component="div"
+        sx={{ backgroundColor: "white", borderBottomLeftRadius: 12, borderBottomRightRadius: 12 }}
       />
     </Paper>
   );

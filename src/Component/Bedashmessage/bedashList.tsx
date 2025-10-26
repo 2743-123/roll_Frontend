@@ -11,6 +11,9 @@ import {
   TextField,
   Button,
   Chip,
+  Box,
+  Typography,
+  Divider,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import { useDispatch, useSelector } from "react-redux";
@@ -45,17 +48,14 @@ const BedashList: React.FC = () => {
     dispatch(getBedashListAction());
   }, [dispatch]);
 
-  const handleChangePage = (event: unknown, newPage: number) =>
-    setPage(newPage);
-  const handleChangeRowsPerPage = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setRowsPerPage(+event.target.value);
+  const handleChangePage = (_: unknown, newPage: number) => setPage(newPage);
+  const handleChangeRowsPerPage = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setRowsPerPage(+e.target.value);
     setPage(0);
   };
 
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(event.target.value);
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearch(e.target.value);
     setPage(0);
   };
 
@@ -73,41 +73,97 @@ const BedashList: React.FC = () => {
       );
     }) || [];
 
-  if (loading) return <p>Loading...</p>;
-
-  return (
-    <Paper sx={{ width: "100%", padding: 2 }}>
-      {/* 🔍 Search + Add */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          marginBottom: 16,
+  if (loading) {
+    return (
+      <Box
+        sx={{
+          textAlign: "center",
+          p: 5,
+          fontWeight: 500,
+          color: "text.secondary",
         }}
       >
-        <TextField
-          label="Search Material"
-          variant="outlined"
-          size="small"
-          value={search}
-          onChange={handleSearchChange}
-          sx={{ width: 300 }}
-        />
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<AddIcon />}
-          onClick={() => setOpenAdd(true)}
-        >
-          Add Material
-        </Button>
-      </div>
+        Loading...
+      </Box>
+    );
+  }
 
-      {/* 📋 Table */}
-      <TableContainer sx={{ maxHeight: 440 }}>
+  return (
+    <Paper
+      elevation={3}
+      sx={{
+        width: "100%",
+        borderRadius: 3,
+        overflow: "hidden",
+        background: "linear-gradient(135deg, #f9fafb 0%, #eef2f6 100%)",
+        p: 2,
+      }}
+    >
+      {/* 🔹 Header Section */}
+      <Box
+        sx={{
+          background: "linear-gradient(135deg, #1976d2, #42a5f5)",
+          color: "white",
+          borderRadius: 2,
+          px: 3,
+          py: 2,
+          mb: 2,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: 2,
+        }}
+      >
+        <Typography variant="h6" fontWeight={600}>
+          Bedash Material List
+        </Typography>
+        <Box display="flex" alignItems="center" gap={2}>
+          <TextField
+            label="Search Material"
+            variant="outlined"
+            size="small"
+            value={search}
+            onChange={handleSearchChange}
+            sx={{
+              backgroundColor: "white",
+              borderRadius: 1,
+              width: 250,
+            }}
+          />
+          <Button
+            variant="contained"
+            color="inherit"
+            startIcon={<AddIcon />}
+            onClick={() => setOpenAdd(true)}
+            sx={{
+              backgroundColor: "white",
+              color: "#1976d2",
+              fontWeight: 600,
+              "&:hover": { backgroundColor: "#e3f2fd" },
+            }}
+          >
+            Add Material
+          </Button>
+        </Box>
+      </Box>
+
+      {/* 📋 Table Section */}
+      <TableContainer
+        sx={{
+          borderRadius: 2,
+          overflow: "hidden",
+          backgroundColor: "white",
+        }}
+      >
         <Table stickyHeader aria-label="bedash table">
           <TableHead>
-            <TableRow>
+            <TableRow
+              sx={{
+                backgroundColor: "#1976d2",
+                "& th": { color: "blue", fontWeight: 600 },
+              }}
+            >
               <TableCell>ID</TableCell>
               <TableCell>User Name</TableCell>
               <TableCell>Material Type</TableCell>
@@ -121,60 +177,94 @@ const BedashList: React.FC = () => {
           </TableHead>
 
           <TableBody>
-            {filteredData
-              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              .map((item) => (
-                <TableRow hover key={item.id}>
-                  <TableCell>{item.id}</TableCell>
-                  <TableCell>{item.userName}</TableCell>
-                  <TableCell>{item.materialType}</TableCell>
-                  <TableCell>{item.remainingTons.toFixed(2)}</TableCell>
-                  <TableCell>
-                    <Chip
-                      label={item.status}
-                      color={
-                        item.status === "completed" ? "success" : "warning"
-                      }
-                      size="small"
-                    />
-                  </TableCell>
-                  <TableCell>{item.customDate || "-"}</TableCell>
-                  <TableCell>{item.targetDate}</TableCell>
-                  <TableCell>
-                    {new Date(item.createdAt).toLocaleString()}
-                  </TableCell>
-                  <TableCell align="center">
-                    {item.status === "pending" ? (
-                      <Button
-                        variant="contained"
-                        color="success"
+            {filteredData.length > 0 ? (
+              filteredData
+                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                .map((item) => (
+                  <TableRow
+                    key={item.id}
+                    hover
+                    sx={{
+                      "&:hover": {
+                        backgroundColor: "#f1f5f9",
+                        transition: "0.2s",
+                      },
+                    }}
+                  >
+                    <TableCell>{item.id}</TableCell>
+                    <TableCell>{item.userName}</TableCell>
+                    <TableCell sx={{ textTransform: "capitalize" }}>
+                      {item.materialType}
+                    </TableCell>
+                    <TableCell>{item.remainingTons.toFixed(2)}</TableCell>
+                    <TableCell>
+                      <Chip
+                        label={item.status}
+                        color={
+                          item.status === "completed" ? "success" : "warning"
+                        }
                         size="small"
-                        onClick={() => handleConfirm(item.id)}
-                      >
-                        Confirm
-                      </Button>
-                    ) : (
-                      <Chip label="Completed" color="success" size="small" />
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
+                        sx={{ textTransform: "capitalize" }}
+                      />
+                    </TableCell>
+                    <TableCell>{item.customDate || "-"}</TableCell>
+                    <TableCell>{item.targetDate}</TableCell>
+                    <TableCell>
+                      {new Date(item.createdAt).toLocaleString()}
+                    </TableCell>
+                    <TableCell align="center">
+                      {item.status === "pending" ? (
+                        <Button
+                          variant="contained"
+                          color="success"
+                          size="small"
+                          onClick={() => handleConfirm(item.id)}
+                          sx={{
+                            textTransform: "none",
+                            fontWeight: 600,
+                          }}
+                        >
+                          Confirm
+                        </Button>
+                      ) : (
+                        <Chip label="Completed" color="success" size="small" />
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={9} align="center" sx={{ py: 2 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    No Bedash materials found
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </TableContainer>
 
+      {/* 🔹 Pagination */}
+      <Divider sx={{ mt: 1 }} />
       <TablePagination
-        rowsPerPageOptions={[5, 10]}
+        rowsPerPageOptions={[5, 10, 25]}
         component="div"
         count={filteredData.length}
         rowsPerPage={rowsPerPage}
         page={page}
         onPageChange={handleChangePage}
         onRowsPerPageChange={handleChangeRowsPerPage}
+        sx={{
+          backgroundColor: "white",
+          borderBottomLeftRadius: 12,
+          borderBottomRightRadius: 12,
+        }}
       />
+
+      {/* ➕ Add Dialog */}
       <AddBedashDialog open={openAdd} onClose={() => setOpenAdd(false)} />
     </Paper>
-    
   );
 };
 

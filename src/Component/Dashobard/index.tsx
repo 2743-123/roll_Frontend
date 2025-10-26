@@ -50,7 +50,16 @@ const DrawerHeader = styled("div")(({ theme }) => ({
   paddingTop: theme.spacing(2),
   height: 120,
   backgroundColor: "#f5f5f5",
+  boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
   userSelect: "none",
+  transition: "all 0.3s ease",
+  "& svg": {
+    transition: "all 0.3s ease",
+    transform: "scale(1)",
+  },
+  "&:hover svg": {
+    transform: "scale(1.2) rotate(10deg)",
+  },
 }));
 
 // ---------------- AppBar ----------------
@@ -61,17 +70,22 @@ const AppBar = styled(MuiAppBar, {
   shouldForwardProp: (prop) => prop !== "open",
 })<AppBarProps>(({ theme, open }) => ({
   zIndex: theme.zIndex.drawer + 1,
-  backgroundColor: "#87CEEB",
-  transition: theme.transitions.create(["width", "margin"], {
+  background: "linear-gradient(90deg, #2196f3 0%, #21cbf3 100%)",
+  color: "#fff",
+  boxShadow: "0px 6px 20px rgba(0,0,0,0.12)",
+  transition: theme.transitions.create(["width", "margin", "background"], {
     easing: theme.transitions.easing.sharp,
-    duration: theme.transitions.duration.leavingScreen,
+    duration: theme.transitions.duration.standard,
   }),
+  "&:hover": {
+    background: "linear-gradient(90deg, #21cbf3 0%, #2196f3 100%)",
+  },
   ...(open && {
     marginLeft: drawerWidth,
     width: `calc(100% - ${drawerWidth}px)`,
-    transition: theme.transitions.create(["width", "margin"], {
+    transition: theme.transitions.create(["width", "margin", "background"], {
       easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.enteringScreen,
+      duration: theme.transitions.duration.standard,
     }),
   }),
 }));
@@ -84,6 +98,19 @@ const Drawer = styled(MuiDrawer, {
   flexShrink: 0,
   whiteSpace: "nowrap",
   boxSizing: "border-box",
+  transition: theme.transitions.create("width", {
+    easing: theme.transitions.easing.sharp,
+    duration: theme.transitions.duration.standard,
+  }),
+  "& .MuiDrawer-paper": {
+    backgroundColor: "#ffffff",
+    borderRight: "1px solid #e0e0e0",
+    boxShadow: "2px 0px 8px rgba(0,0,0,0.05)",
+    transition: theme.transitions.create("width", {
+      easing: theme.transitions.easing.sharp,
+      duration: theme.transitions.duration.standard,
+    }),
+  },
   ...(open && {
     ...openedMixin(theme),
     "& .MuiDrawer-paper": openedMixin(theme),
@@ -98,26 +125,19 @@ const Drawer = styled(MuiDrawer, {
 const BreadcrumbPath: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-
-  const redirect = (url: string) => {
-    navigate(url);
-  };
-
   const pathnames = location.pathname.split("/").filter((x) => x);
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        gap: 1,
-        fontSize: "0.9rem",
-        mb: 2,
-      }}
-    >
+    <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
       <Typography
-        sx={{ cursor: "pointer", color: "#1e88e5", fontWeight: 600 }}
-        onClick={() => redirect("/")}
+        sx={{
+          cursor: "pointer",
+          color: "#1e88e5",
+          fontWeight: 600,
+          transition: "all 0.3s ease",
+          "&:hover": { color: "#1976d2", textDecoration: "underline", transform: "scale(1.05)" },
+        }}
+        onClick={() => navigate("/")}
       >
         DASHBOARD
       </Typography>
@@ -126,8 +146,13 @@ const BreadcrumbPath: React.FC = () => {
         return (
           <Typography
             key={index}
-            sx={{ cursor: "pointer", color: "#555" }}
-            onClick={() => redirect(routeTo)}
+            sx={{
+              cursor: "pointer",
+              color: "#555",
+              transition: "all 0.3s ease",
+              "&:hover": { color: "#2196f3", textDecoration: "underline", transform: "scale(1.05)" },
+            }}
+            onClick={() => navigate(routeTo)}
           >
             / {name.toUpperCase()}
           </Typography>
@@ -151,43 +176,29 @@ export default function Dashboard() {
 
       {/* AppBar */}
       <AppBar position="fixed" open={open}>
-        <Toolbar>
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            onClick={handleDrawerOpen}
-            edge="start"
-            sx={{ marginRight: 2, ...(open && { display: "none" }) }}
-          >
-            <MenuIcon />
-          </IconButton>
-
-          {/* Dashboard Title */}
+        <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <IconButton
+              color="inherit"
+              aria-label="open drawer"
+              onClick={handleDrawerOpen}
+              edge="start"
+              sx={{ marginRight: 2, ...(open && { display: "none" }) }}
+            >
+              <MenuIcon />
+            </IconButton>
             <DashboardOutlinedIcon sx={{ fontSize: 32, color: "white" }} />
             <Typography
               variant="h5"
               noWrap
-              sx={{
-                fontWeight: 700,
-                textTransform: "uppercase",
-                color: "white",
-                fontSize: "1.6rem",
-              }}
+              sx={{ fontWeight: 700, textTransform: "uppercase" }}
             >
               Dashboard
             </Typography>
           </Box>
 
           {/* Right Side */}
-          <Box
-            sx={{
-              marginLeft: "auto",
-              display: "flex",
-              alignItems: "center",
-              gap: 1.5,
-            }}
-          >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
             <DropDownUserList />
             <Logout />
           </Box>
@@ -197,14 +208,12 @@ export default function Dashboard() {
       {/* Drawer */}
       <Drawer variant="permanent" open={open}>
         <DrawerHeader>
-          <DashboardOutlinedIcon
-            sx={{ fontSize: 36, color: "#1e90ff", mb: 1 }}
-          />
+          <DashboardOutlinedIcon sx={{ fontSize: 36, color: "#1976d2", mb: 1 }} />
           <Typography
             sx={{
               fontWeight: 800,
               textTransform: "uppercase",
-              color: "#1e90ff",
+              color: "#1976d2",
               letterSpacing: 2,
               fontSize: "1.8rem",
               textAlign: "center",
@@ -219,14 +228,10 @@ export default function Dashboard() {
               position: "absolute",
               top: 8,
               right: 8,
-              color: "#1e90ff",
+              color: "#1976d2",
             }}
           >
-            {theme.direction === "rtl" ? (
-              <ChevronRightIcon />
-            ) : (
-              <ChevronLeftIcon />
-            )}
+            {theme.direction === "rtl" ? <ChevronRightIcon /> : <ChevronLeftIcon />}
           </IconButton>
         </DrawerHeader>
 
@@ -241,6 +246,7 @@ export default function Dashboard() {
           p: 3,
           backgroundColor: "#f9f9f9",
           minHeight: "100vh",
+          transition: "all 0.3s ease",
         }}
       >
         <DrawerHeader /> {/* spacing for toolbar */}

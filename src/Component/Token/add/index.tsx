@@ -9,9 +9,9 @@ import {
   Button,
   MenuItem,
   Box,
+  Paper,
 } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
-
 import { AppDispatch, RootState } from "../../../store";
 import { createTokenAction } from "../../../Actions/Auth/TokenAction";
 
@@ -38,50 +38,110 @@ const AddTokenDialog: React.FC<AddTokenDialogProps> = ({ open, onClose }) => {
     if (!selectedUser) return alert("Please select a user first!");
     dispatch(createTokenAction({ ...form, userId: selectedUser.id }));
     onClose();
+    setForm({ customerName: "", truckNumber: "", materialType: "" });
   };
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>Add New Token</DialogTitle>
-      <DialogContent>
-        <Box display="flex" flexDirection="column" gap={2} mt={1}>
-          <TextField
-            label="Customer Name"
-            name="customerName"
-            value={form.customerName}
-            onChange={handleChange}
-            fullWidth
-          />
-          <TextField
-            label="Truck Number"
-            name="truckNumber"
-            value={form.truckNumber}
-            onChange={handleChange}
-            fullWidth
-          />
-          <TextField
-            select
-            label="Material Type"
-            name="materialType"
-            value={form.materialType}
-            onChange={handleChange}
-            fullWidth
-          >
-            <MenuItem value="flyash">Flyash</MenuItem>
-            <MenuItem value="bedash">Bedash</MenuItem>
-            <MenuItem value="cement">Cement</MenuItem>
-          </TextField>
-        </Box>
-      </DialogContent>
+      <Paper
+        elevation={0}
+        sx={{
+          background: "linear-gradient(135deg, #f8fafc 0%, #eef2f6 100%)",
+          borderRadius: 3,
+        }}
+      >
+        <DialogTitle
+          sx={{
+            backgroundColor: "#1976d2",
+            color: "white",
+            textAlign: "center",
+            fontWeight: 600,
+            fontSize: "1.2rem",
+            py: 1.5,
+            borderTopLeftRadius: 12,
+            borderTopRightRadius: 12,
+          }}
+        >
+          Add New Token
+        </DialogTitle>
 
-      <DialogActions>
-        <Button onClick={onClose} color="inherit">
-          Cancel
-        </Button>
-        <Button variant="contained" onClick={handleSubmit}>
-          Create Token
-        </Button>
-      </DialogActions>
+        <DialogContent
+          dividers
+          sx={{
+            p: 3,
+            backgroundColor: "white",
+          }}
+        >
+          <Box
+            display="flex"
+            flexDirection="column"
+            gap={2}
+            sx={{
+              "& .MuiTextField-root": {
+                backgroundColor: "#f9f9f9",
+                borderRadius: 1,
+              },
+            }}
+          >
+            <TextField
+              label="Customer Name"
+              name="customerName"
+              value={form.customerName}
+              onChange={handleChange}
+              fullWidth
+              required
+            />
+            <TextField
+              label="Truck Number"
+              name="truckNumber"
+              value={form.truckNumber}
+              onChange={handleChange}
+              fullWidth
+              required
+            />
+            <TextField
+              select
+              label="Material Type"
+              name="materialType"
+              value={form.materialType}
+              onChange={handleChange}
+              fullWidth
+              required
+            >
+              <MenuItem value="flyash">Flyash</MenuItem>
+              <MenuItem value="bedash">Bedash</MenuItem>
+              <MenuItem value="cement">Cement</MenuItem>
+            </TextField>
+          </Box>
+        </DialogContent>
+
+        <DialogActions
+          sx={{
+            px: 3,
+            py: 2,
+            backgroundColor: "#f1f5f9",
+            borderBottomLeftRadius: 12,
+            borderBottomRightRadius: 12,
+          }}
+        >
+          <Button
+            onClick={onClose}
+            variant="outlined"
+            color="inherit"
+            sx={{ borderRadius: 2 }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            variant="contained"
+            color="primary"
+            sx={{ borderRadius: 2 }}
+          >
+            Create Token
+          </Button>
+        </DialogActions>
+      </Paper>
     </Dialog>
   );
 };

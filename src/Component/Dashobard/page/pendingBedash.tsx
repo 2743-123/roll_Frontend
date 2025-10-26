@@ -6,20 +6,16 @@ import {
   Paper,
   Grid,
   Button,
+  Chip,
 } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../../store";
-import {
-  confirmBedashAction,
-  getBedashListAction,
-} from "../../../Actions/Auth/bedash";
+import { confirmBedashAction, getBedashListAction } from "../../../Actions/Auth/bedash";
 
 const PendingBedash: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { user } = useSelector((state: RootState) => state.auth); // ✅ auth user
-  const { data, loading, error } = useSelector(
-    (state: RootState) => state.bedash
-  );
+  const { user } = useSelector((state: RootState) => state.auth);
+  const { data, loading, error } = useSelector((state: RootState) => state.bedash);
 
   const [pendingList, setPendingList] = useState<any[]>([]);
 
@@ -45,7 +41,6 @@ const PendingBedash: React.FC = () => {
     dispatch(getBedashListAction()); // refresh list after confirm
   };
 
-  // ✅ Loading / Error / Empty states
   if (!user?.id)
     return (
       <Typography align="center" mt={4}>
@@ -69,7 +64,17 @@ const PendingBedash: React.FC = () => {
 
   return (
     <Box sx={{ p: 3 }}>
-      <Typography variant="h6" gutterBottom>
+      <Typography
+        variant="h6"
+        gutterBottom
+        sx={{
+          background: "linear-gradient(135deg, #1976d2, #42a5f5)",
+          color: "white",
+          p: 2,
+          borderRadius: 2,
+          mb: 3,
+        }}
+      >
         Pending Bedash List
       </Typography>
 
@@ -78,39 +83,50 @@ const PendingBedash: React.FC = () => {
           🎉 All bedash items are completed!
         </Typography>
       ) : (
-        <Grid container spacing={2}>
+        <Grid container spacing={3}>
           {pendingList.map((item) => (
             <Grid key={item.id}>
               <Paper
                 elevation={3}
                 sx={{
                   p: 2,
-                  borderRadius: 2,
-                  backgroundColor: "#fff7e6",
-                  borderLeft: "5px solid orange",
+                  borderRadius: 3,
+                  backgroundColor: "#e3f2fd",
+                  borderLeft: "6px solid #1976d2",
+                  transition: "transform 0.2s, box-shadow 0.2s",
+                  "&:hover": {
+                    transform: "translateY(-5px)",
+                    boxShadow: "0 8px 20px rgba(0,0,0,0.15)",
+                  },
                 }}
               >
-                <Typography variant="subtitle1" fontWeight={600}>
-                  {item.userName}
+                <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+                  <Typography variant="subtitle1" fontWeight={600}>
+                    {item.userName}
+                  </Typography>
+                  <Chip
+                    label={item.status.toUpperCase()}
+                    color="warning"
+                    size="small"
+                    sx={{ fontWeight: 600 }}
+                  />
+                </Box>
+                <Typography variant="body2" mb={0.5}>
+                  Material Type: <strong>{item.materialType}</strong>
                 </Typography>
-                <Typography variant="body2">
-                  Material Type: {item.materialType}
+                <Typography variant="body2" mb={0.5}>
+                  Remaining Tons: <strong>{item.remainingTons.toFixed(2)}</strong>
                 </Typography>
-                <Typography variant="body2">
-                  Remaining Tons: {item.remainingTons.toFixed(2)}
-                </Typography>
-                <Typography variant="body2">
-                  Target Date: {item.targetDate}
-                </Typography>
-                <Typography variant="body2" color="orange">
-                  Status: {item.status.toUpperCase()}
+                <Typography variant="body2" mb={1}>
+                  Target Date: <strong>{item.targetDate}</strong>
                 </Typography>
 
                 <Button
                   size="small"
                   variant="contained"
                   color="success"
-                  sx={{ mt: 1 }}
+                  fullWidth
+                  sx={{ mt: 1, borderRadius: 2 }}
                   onClick={() => handleConfirm(item)}
                 >
                   Confirm

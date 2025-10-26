@@ -6,6 +6,7 @@ import {
   Paper,
   Grid,
   Button,
+  Chip,
 } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../../store";
@@ -73,7 +74,18 @@ const PendingTokens: React.FC = () => {
 
   return (
     <Box sx={{ p: 3 }}>
-      <Typography variant="h6" gutterBottom>
+      {/* 🔹 Header */}
+      <Typography
+        variant="h6"
+        gutterBottom
+        sx={{
+          background: "linear-gradient(135deg, #1976d2, #42a5f5)",
+          color: "white",
+          p: 2,
+          borderRadius: 2,
+          mb: 3,
+        }}
+      >
         Pending Tokens for {selectedUser.name}
       </Typography>
 
@@ -82,42 +94,60 @@ const PendingTokens: React.FC = () => {
           🎉 All tokens are completed!
         </Typography>
       ) : (
-        <Grid container spacing={2}>
+        <Grid container spacing={3}>
           {pendingTokens.map((token) => (
             <Grid key={token.id}>
               <Paper
                 elevation={3}
                 sx={{
                   p: 2,
-                  borderRadius: 2,
-                  backgroundColor: "#fff7e6",
-                  borderLeft: "5px solid orange",
+                  borderRadius: 3,
+                  backgroundColor: "#e3f2fd",
+                  borderLeft: "6px solid #1976d2",
+                  transition: "transform 0.2s, box-shadow 0.2s",
+                  "&:hover": {
+                    transform: "translateY(-5px)",
+                    boxShadow: "0 8px 20px rgba(0,0,0,0.15)",
+                  },
                 }}
               >
-                <Typography variant="subtitle1" fontWeight={600}>
-                  {token.customerName}
+                <Box
+                  display="flex"
+                  justifyContent="space-between"
+                  alignItems="center"
+                  mb={1}
+                >
+                  <Typography variant="subtitle1" fontWeight={600}>
+                    {token.customerName}
+                  </Typography>
+                  <Chip
+                    label={token.status.toUpperCase()}
+                    color={
+                      token.status === "completed" ? "success" : "warning"
+                    }
+                    size="small"
+                    sx={{ fontWeight: 600 }}
+                  />
+                </Box>
+                <Typography variant="body2" mb={0.5}>
+                  Truck: <strong>{token.truckNumber}</strong>
                 </Typography>
-                <Typography variant="body2">
-                  Truck: {token.truckNumber}
+                <Typography variant="body2" mb={0.5}>
+                  Material: <strong>{token.materialType}</strong>
                 </Typography>
-                <Typography variant="body2">
-                  Material: {token.materialType}
+                <Typography variant="body2" mb={0.5}>
+                  Weight: <strong>{token.weight} tons</strong>
                 </Typography>
-                <Typography variant="body2">
-                  Weight: {token.weight} tons
-                </Typography>
-                <Typography variant="body2">
-                  Total Amount: ₹{token.totalAmount}
-                </Typography>
-                <Typography variant="body2" color="orange">
-                  Status: {token.status.toUpperCase()}
+                <Typography variant="body2" mb={1}>
+                  Total Amount: <strong>₹{token.totalAmount}</strong>
                 </Typography>
 
                 <Button
                   size="small"
                   variant="contained"
                   color="success"
-                  sx={{ mt: 1 }}
+                  fullWidth
+                  sx={{ mt: 1, borderRadius: 2 }}
                   onClick={() => handleConfirmClick(token)}
                 >
                   Confirm Payment

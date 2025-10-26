@@ -11,12 +11,15 @@ import {
   TableRow,
   Paper,
   Button,
+  Chip,
+  Divider,
+  TextField,
 } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../store";
 import { getTokenAction } from "../../Actions/Auth/TokenAction";
 import AddTokenDialog from "./add";
-import EditTokenDialog from "./edit"; // Edit dialog import
+import EditTokenDialog from "./edit";
 
 const TokenPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -28,6 +31,7 @@ const TokenPage: React.FC = () => {
   const [openAddDialog, setOpenAddDialog] = useState(false);
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [selectedToken, setSelectedToken] = useState<any>(null);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     if (selectedUser?.id) {
@@ -47,100 +51,191 @@ const TokenPage: React.FC = () => {
   };
 
   if (!selectedUser)
-    return <Typography align="center">Select a user first</Typography>;
+    return (
+      <Typography
+        align="center"
+        sx={{ mt: 5, color: "text.secondary", fontWeight: 500 }}
+      >
+        Please select a user to view tokens.
+      </Typography>
+    );
+
   if (loading)
     return (
-      <Box display="flex" justifyContent="center">
+      <Box display="flex" justifyContent="center" alignItems="center" mt={5}>
         <CircularProgress />
       </Box>
     );
+
   if (error)
     return (
-      <Typography color="error" align="center">
+      <Typography color="error" align="center" sx={{ mt: 5 }}>
         {error}
       </Typography>
     );
 
+  const filteredTokens = tokens?.filter((token: any) => {
+    const query = search.toLowerCase();
+    return (
+      token.customerName?.toLowerCase().includes(query) ||
+      token.truckNumber?.toLowerCase().includes(query) ||
+      token.materialType?.toLowerCase().includes(query) ||
+      token.status?.toLowerCase().includes(query)
+    );
+  });
+
   return (
-    <Box sx={{ p: 4 }}>
+    <Paper
+      elevation={3}
+      sx={{
+        p: 2,
+        borderRadius: 3,
+        background: "linear-gradient(135deg, #f9fafb 0%, #eef2f6 100%)",
+        width: "100%",
+      }}
+    >
+      {/* 🔹 Header Section */}
       <Box
-        display="flex"
-        justifyContent="space-between"
-        alignItems="center"
-        mb={2}
+        sx={{
+          background: "linear-gradient(135deg, #1976d2, #42a5f5)",
+          color: "white",
+          borderRadius: 2,
+          px: 3,
+          py: 2,
+          mb: 2,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: 2,
+        }}
       >
-        <Typography variant="h6">Tokens for: {selectedUser.name}</Typography>
-        <Button variant="contained" onClick={() => setOpenAddDialog(true)}>
-          + Add Token
-        </Button>
+        <Typography variant="h6" fontWeight={600}>
+          Tokens — {selectedUser.name}
+        </Typography>
+
+        <Box display="flex" gap={2} alignItems="center">
+          <TextField
+            label="Search Token"
+            variant="outlined"
+            size="small"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            sx={{
+              backgroundColor: "white",
+              borderRadius: 1,
+              width: 250,
+            }}
+          />
+          <Button
+            variant="contained"
+            color="inherit"
+            onClick={() => setOpenAddDialog(true)}
+            sx={{
+              backgroundColor: "white",
+              color: "#1976d2",
+              fontWeight: 600,
+              "&:hover": { backgroundColor: "#e3f2fd" },
+            }}
+          >
+            + Add Token
+          </Button>
+        </Box>
       </Box>
 
-      <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
+      {/* 📋 Table Section */}
+      <TableContainer
+        sx={{
+          borderRadius: 2,
+          overflow: "hidden",
+          backgroundColor: "white",
+        }}
+      >
         <Table stickyHeader>
           <TableHead>
-            <TableRow sx={{ backgroundColor: "#1976d2" }}>
-              <TableCell sx={{ color: "black" }}>ID</TableCell>
-              <TableCell sx={{ color: "black" }}>Customer</TableCell>
-              <TableCell sx={{ color: "black" }}>Truck No</TableCell>
-              <TableCell sx={{ color: "black" }}>Material</TableCell>
-              <TableCell sx={{ color: "black" }}>Weight</TableCell>
-              <TableCell sx={{ color: "black" }}>Rate</TableCell>
-              <TableCell sx={{ color: "black" }}>Commission</TableCell>
-              <TableCell sx={{ color: "black" }}>Total</TableCell>
-              <TableCell sx={{ color: "black" }}>Paid</TableCell>
-              <TableCell sx={{ color: "black" }}>Carry Forward</TableCell>
-              <TableCell sx={{ color: "black" }}>Status</TableCell>
-              <TableCell sx={{ color: "black" }}>Date</TableCell>
-              <TableCell sx={{ color: "black" }}>Action</TableCell>
+            <TableRow
+              sx={{
+                backgroundColor: "#1976d2",
+                "& th": { color: "blue", fontWeight: 600 },
+              }}
+            >
+              <TableCell>ID</TableCell>
+              <TableCell>Customer</TableCell>
+              <TableCell>Truck No</TableCell>
+              <TableCell>Material</TableCell>
+              <TableCell>Weight</TableCell>
+              <TableCell>Rate</TableCell>
+              <TableCell>Commission</TableCell>
+              <TableCell>Total</TableCell>
+              <TableCell>Paid</TableCell>
+              <TableCell>Carry Forward</TableCell>
+              <TableCell>Status</TableCell>
+              <TableCell>Date</TableCell>
+              <TableCell align="center">Action</TableCell>
             </TableRow>
           </TableHead>
 
           <TableBody>
-            {tokens?.length ? (
-              tokens.map((token: any) => (
+            {filteredTokens?.length ? (
+              filteredTokens.map((token: any) => (
                 <TableRow
                   key={token.id}
                   hover
-                  sx={{ "&:hover": { backgroundColor: "#e3f2fd" } }}
+                  sx={{
+                    "&:hover": { backgroundColor: "#f1f5f9", transition: "0.2s" },
+                  }}
                 >
                   <TableCell>{token.id}</TableCell>
                   <TableCell>{token.customerName}</TableCell>
                   <TableCell>{token.truckNumber}</TableCell>
-                  <TableCell>{token.materialType}</TableCell>
+                  <TableCell sx={{ textTransform: "capitalize" }}>
+                    {token.materialType}
+                  </TableCell>
                   <TableCell>{token.weight}</TableCell>
                   <TableCell>{token.ratePerTon}</TableCell>
                   <TableCell>{token.commission}</TableCell>
                   <TableCell>{token.totalAmount}</TableCell>
                   <TableCell>{token.paidAmount}</TableCell>
                   <TableCell>{token.carryForward}</TableCell>
-                  <TableCell
-                    sx={{
-                      color: token.status === "completed" ? "green" : "orange",
-                      fontWeight: "bold",
-                    }}
-                  >
-                    {token.status.toUpperCase()}
+                  <TableCell>
+                    <Chip
+                      label={token.status}
+                      color={
+                        token.status === "completed" ? "success" : "warning"
+                      }
+                      size="small"
+                      sx={{ textTransform: "capitalize" }}
+                    />
                   </TableCell>
                   <TableCell>
                     {new Date(token.createdAt).toLocaleString()}
                   </TableCell>
-                  <TableCell>
-                    {token.status !== "completed" && (
+                  <TableCell align="center">
+                    {token.status !== "completed" ? (
                       <Button
-                        variant="outlined"
+                        variant="contained"
                         color="success"
+                        size="small"
+                        sx={{
+                          textTransform: "none",
+                          fontWeight: 600,
+                        }}
                         onClick={() => handleEditClick(token)}
                       >
                         Confirm Payment
                       </Button>
+                    ) : (
+                      <Chip label="Completed" color="success" size="small" />
                     )}
                   </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={13} align="center">
-                  No tokens found
+                <TableCell colSpan={13} align="center" sx={{ py: 2 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    No tokens found.
+                  </Typography>
                 </TableCell>
               </TableRow>
             )}
@@ -148,7 +243,9 @@ const TokenPage: React.FC = () => {
         </Table>
       </TableContainer>
 
-      {/* Dialogs */}
+      <Divider sx={{ mt: 2 }} />
+
+      {/* 🔹 Dialogs */}
       <AddTokenDialog
         open={openAddDialog}
         onClose={() => setOpenAddDialog(false)}
@@ -161,7 +258,7 @@ const TokenPage: React.FC = () => {
           onRefresh={handleDataRefresh}
         />
       )}
-    </Box>
+    </Paper>
   );
 };
 

@@ -32,9 +32,9 @@ const AddBalanceDialog: React.FC<AddBalanceDialogProps> = ({
   onClose,
 }) => {
   const dispatch = useDispatch<AppDispatch>();
-  const { users } = useSelector((state: RootState) => state.user); // All users
-  const userList = Array.isArray(users) ? users : [users]; // ✅ safe fallback
+  const { users } = useSelector((state: RootState) => state.user);
 
+  const userList = Array.isArray(users) ? users : [users];
   const onlyUsers = userList.filter(
     (u: any) => u.role?.toLowerCase() === "user"
   );
@@ -48,7 +48,6 @@ const AddBalanceDialog: React.FC<AddBalanceDialogProps> = ({
   const [referenceNumber, setReferenceNumber] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Set first user as default if open
   useEffect(() => {
     if (open && users && users.length > 0) {
       setSelectedUserId(users[0].id);
@@ -86,7 +85,8 @@ const AddBalanceDialog: React.FC<AddBalanceDialogProps> = ({
           referenceNumber: paymentMode === "online" ? referenceNumber : "",
         })
       );
-      // Reset amounts and other fields (keep user fixed)
+
+      // Reset
       setFlyashAmount("");
       setBedashAmount("");
       setBankName("");
@@ -102,20 +102,60 @@ const AddBalanceDialog: React.FC<AddBalanceDialogProps> = ({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>Add Balance</DialogTitle>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth="sm"
+      PaperProps={{
+        sx: {
+          borderRadius: 4,
+          background: "linear-gradient(135deg, #1b2735 0%, #090a0f 100%)",
+          color: "#fff",
+          boxShadow: "0 0 30px rgba(0, 188, 212, 0.25)",
+          backdropFilter: "blur(10px)",
+        },
+      }}
+    >
+      <DialogTitle
+        sx={{
+          fontWeight: "bold",
+          textAlign: "center",
+          borderBottom: "1px solid rgba(255,255,255,0.1)",
+          background: "linear-gradient(90deg,#00bcd4,#2196f3)",
+          color: "#fff",
+        }}
+      >
+        Add Balance
+      </DialogTitle>
+
       <DialogContent
-        sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}
+        dividers
+        sx={{
+          background: "rgba(255,255,255,0.02)",
+          display: "flex",
+          flexDirection: "column",
+          gap: 2,
+          p: 4,
+        }}
       >
         {/* User Dropdown */}
         <TextField
           select
           label="Select User"
-          name="userId"
           value={selectedUserId}
           onChange={(e) => setSelectedUserId(Number(e.target.value))}
           fullWidth
-          margin="normal"
+          InputLabelProps={{ style: { color: "#bbb" } }}
+          sx={{
+            input: { color: "#fff" },
+            "& .MuiOutlinedInput-root": {
+              "& fieldset": { borderColor: "#333" },
+              "&:hover fieldset": { borderColor: "#00bcd4" },
+              "&.Mui-focused fieldset": { borderColor: "#00bcd4" },
+            },
+            "& .MuiSelect-select": { color: "#fff" },
+          }}
         >
           {onlyUsers.length > 0 ? (
             onlyUsers.map((user: any) => (
@@ -135,6 +175,15 @@ const AddBalanceDialog: React.FC<AddBalanceDialogProps> = ({
           value={flyashAmount}
           onChange={(e) => setFlyashAmount(Number(e.target.value))}
           fullWidth
+          InputLabelProps={{ style: { color: "#bbb" } }}
+          sx={{
+            input: { color: "#fff" },
+            "& .MuiOutlinedInput-root": {
+              "& fieldset": { borderColor: "#333" },
+              "&:hover fieldset": { borderColor: "#00bcd4" },
+              "&.Mui-focused fieldset": { borderColor: "#00bcd4" },
+            },
+          }}
         />
         <TextField
           label="Bedash Amount (₹)"
@@ -142,27 +191,54 @@ const AddBalanceDialog: React.FC<AddBalanceDialogProps> = ({
           value={bedashAmount}
           onChange={(e) => setBedashAmount(Number(e.target.value))}
           fullWidth
+          InputLabelProps={{ style: { color: "#bbb" } }}
+          sx={{
+            input: { color: "#fff" },
+            "& .MuiOutlinedInput-root": {
+              "& fieldset": { borderColor: "#333" },
+              "&:hover fieldset": { borderColor: "#00bcd4" },
+              "&.Mui-focused fieldset": { borderColor: "#00bcd4" },
+            },
+          }}
         />
 
-        {/* Payment Mode Dropdown */}
+        {/* Payment Mode */}
         <TextField
           select
           label="Payment Mode"
           value={paymentMode}
           onChange={(e) => setPaymentMode(e.target.value as "cash" | "online")}
           fullWidth
+          InputLabelProps={{ style: { color: "#bbb" } }}
+          sx={{
+            "& .MuiOutlinedInput-root": {
+              "& fieldset": { borderColor: "#333" },
+              "&:hover fieldset": { borderColor: "#00bcd4" },
+              "&.Mui-focused fieldset": { borderColor: "#00bcd4" },
+            },
+            "& .MuiSelect-select": { color: "#fff" },
+          }}
         >
           <MenuItem value="cash">Cash</MenuItem>
           <MenuItem value="online">Online</MenuItem>
         </TextField>
 
-        {/* Conditional fields based on payment mode */}
+        {/* Conditional Fields */}
         {paymentMode === "cash" && (
           <TextField
             label="Bank Name"
             value={bankName}
             onChange={(e) => setBankName(e.target.value)}
             fullWidth
+            InputLabelProps={{ style: { color: "#bbb" } }}
+            sx={{
+              input: { color: "#fff" },
+              "& .MuiOutlinedInput-root": {
+                "& fieldset": { borderColor: "#333" },
+                "&:hover fieldset": { borderColor: "#00bcd4" },
+                "&.Mui-focused fieldset": { borderColor: "#00bcd4" },
+              },
+            }}
           />
         )}
 
@@ -173,27 +249,68 @@ const AddBalanceDialog: React.FC<AddBalanceDialogProps> = ({
               value={accountHolder}
               onChange={(e) => setAccountHolder(e.target.value)}
               fullWidth
+              InputLabelProps={{ style: { color: "#bbb" } }}
+              sx={{
+                input: { color: "#fff" },
+                "& .MuiOutlinedInput-root": {
+                  "& fieldset": { borderColor: "#333" },
+                  "&:hover fieldset": { borderColor: "#00bcd4" },
+                  "&.Mui-focused fieldset": { borderColor: "#00bcd4" },
+                },
+              }}
             />
             <TextField
               label="Reference Number"
               value={referenceNumber}
               onChange={(e) => setReferenceNumber(e.target.value)}
               fullWidth
+              InputLabelProps={{ style: { color: "#bbb" } }}
+              sx={{
+                input: { color: "#fff" },
+                "& .MuiOutlinedInput-root": {
+                  "& fieldset": { borderColor: "#333" },
+                  "&:hover fieldset": { borderColor: "#00bcd4" },
+                  "&.Mui-focused fieldset": { borderColor: "#00bcd4" },
+                },
+              }}
             />
           </>
         )}
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} color="secondary">
+
+      <DialogActions
+        sx={{
+          p: 3,
+          borderTop: "1px solid rgba(255,255,255,0.1)",
+          justifyContent: "space-between",
+        }}
+      >
+        <Button
+          onClick={onClose}
+          variant="outlined"
+          sx={{
+            color: "#00bcd4",
+            borderColor: "#00bcd4",
+            "&:hover": { borderColor: "#2196f3", color: "#2196f3" },
+          }}
+        >
           Cancel
         </Button>
         <Button
           onClick={handleSubmit}
           variant="contained"
-          color="primary"
           disabled={loading}
+          sx={{
+            background: "linear-gradient(90deg, #00bcd4, #2196f3)",
+            color: "#fff",
+            fontWeight: "bold",
+            px: 3,
+            "&:hover": {
+              background: "linear-gradient(90deg, #2196f3, #00bcd4)",
+            },
+          }}
         >
-          {loading ? "Adding..." : "Add"}
+          {loading ? "Adding..." : "Add Balance"}
         </Button>
       </DialogActions>
     </Dialog>

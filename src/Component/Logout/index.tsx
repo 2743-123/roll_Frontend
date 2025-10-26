@@ -27,14 +27,16 @@ const Logout: React.FC = () => {
       <IconButton
         onClick={handleClick}
         sx={{
-          backgroundColor: "rgba(255, 255, 255, 0.25)",
+          background: "linear-gradient(135deg, #2196f3 0%, #f32121ff 100%)",
           color: "white",
           borderRadius: "50%",
           p: 1.2,
           transition: "all 0.3s ease",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
           "&:hover": {
-            backgroundColor: "rgba(255, 255, 255, 0.4)",
-            transform: "scale(1.1)",
+            background: "linear-gradient(135deg, #910606ff 0%, #81d4fa 100%)",
+            transform: "scale(1.15)",
+            boxShadow: "0 6px 16px rgba(0,0,0,0.25)",
           },
         }}
       >
