@@ -33,7 +33,6 @@ export const login =
       const data = await loginUser(email, password);
       const { token } = data;
       const decoded: DecodedToken = jwtDecode(token);
-      console.log("Decoded Token 👉", decoded);
       const user = {
         id: decoded.id,
         name: decoded.name, // or decoded.name if backend encodes it as "name"
