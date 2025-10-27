@@ -17,7 +17,10 @@ import { userState } from "../../ActionType/user/userTypes";
 export interface User {
   id: number;
   name: string;
+  email?: string;
   role: "admin" | "superadmin" | "user";
+  isActive?: boolean;
+  createdBy?: number | null;
 }
 
 const DropDownUserList: React.FC = () => {
@@ -29,9 +32,13 @@ const DropDownUserList: React.FC = () => {
 
   const [selected, setSelected] = useState<string>("");
 
-  // Fetch users if admin/superadmin
+  // Fetch users when admin/superadmin logs in
   useEffect(() => {
-    if (token && user && (user.role === "admin" || user.role === "superadmin")) {
+    if (
+      token &&
+      user &&
+      (user.role === "admin" || user.role === "superadmin")
+    ) {
       dispatch(getuserAction());
     }
   }, [dispatch, token, user]);
@@ -42,10 +49,12 @@ const DropDownUserList: React.FC = () => {
       setSelected(user.id.toString());
       dispatch(selectUserAction(user));
     } else if (user?.role === "admin" || user?.role === "superadmin") {
-      const normalUsers = users.filter((u) => u.role === "user");
-      if (normalUsers.length > 0) {
-        setSelected(normalUsers[0].id.toString());
-        dispatch(selectUserAction(normalUsers[0]));
+      const activeUsers = users.filter(
+        (u) => u.role === "user" && Boolean(u.isActive)
+      );
+      if (activeUsers.length > 0) {
+        setSelected(activeUsers[0].id.toString());
+        dispatch(selectUserAction(activeUsers[0]));
       }
     }
   }, [user, users, dispatch]);
@@ -77,7 +86,10 @@ const DropDownUserList: React.FC = () => {
           transition: "all 0.3s ease",
           "& fieldset": { borderColor: "white" },
           "&:hover fieldset": { borderColor: "#64b5f6" },
-          "&.Mui-focused fieldset": { borderColor: "#2196f3", boxShadow: "0 0 8px rgba(33,203,243,0.4)" },
+          "&.Mui-focused fieldset": {
+            borderColor: "#2196f3",
+            boxShadow: "0 0 8px rgba(33,203,243,0.4)",
+          },
         },
         "& .MuiSelect-icon": {
           color: "white",
@@ -116,18 +128,23 @@ const DropDownUserList: React.FC = () => {
           },
         }}
       >
-        {user?.role === "user" && <MenuItem value={user.id}>{user.name}</MenuItem>}
+        {/* If normal user logged in */}
+        {user?.role === "user" && (
+          <MenuItem value={user.id}>{user.name}</MenuItem>
+        )}
 
+        {/* If admin/superadmin logged in */}
         {(user?.role === "admin" || user?.role === "superadmin") &&
           (users.length > 0 ? (
             users
-              .filter((u) => u.role === "user")
+              .filter((u) => u.role === "user" && Boolean(u.isActive)) // ✅ only active users
               .map((u) => (
                 <MenuItem
                   key={u.id}
                   value={u.id}
                   sx={{
-                    backgroundColor: selected === u.id.toString() ? "#bbdefb" : "transparent",
+                    backgroundColor:
+                      selected === u.id.toString() ? "#bbdefb" : "transparent",
                   }}
                 >
                   {u.name}
@@ -137,7 +154,9 @@ const DropDownUserList: React.FC = () => {
             <MenuItem disabled>Loading users...</MenuItem>
           ))}
       </Select>
-      <FormHelperText>{selected ? "User selected" : "Please select a user"}</FormHelperText>
+      <FormHelperText>
+        {selected ? "User selected" : "Please select a user"}
+      </FormHelperText>
     </FormControl>
   );
 };
