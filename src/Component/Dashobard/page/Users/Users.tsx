@@ -22,8 +22,8 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddUsers from "./Add";
 import EditUser from "./Update";
-import { deleteUserAction } from "../../../../Actions/Auth/user";
 import DeleteUserDialog from "./delete";
+import { deleteUserAction } from "../../../../Actions/Auth/user";
 
 export interface User {
   id: number;
@@ -31,6 +31,7 @@ export interface User {
   email: string;
   role: "user" | "admin" | "superadmin";
   isActive: boolean;
+  createdBy?: number | null; // 🆕 added
 }
 
 const Users: React.FC = () => {
@@ -97,6 +98,24 @@ const Users: React.FC = () => {
         (u.email || "").toLowerCase().includes(search.toLowerCase()) ||
         (u.role || "").toLowerCase().includes(search.toLowerCase())
     );
+
+  // 🆕 Helper to get creator name/email
+  const getCreatorName = (createdById?: number | null): string => {
+    if (!createdById) return "—";
+    const creator = userList.find((u) => u.id === createdById);
+    if (creator) {
+      return creator.email || creator.name || `ID: ${createdById}`;
+    }
+    return `ID: ${createdById}`;
+  };
+  const getCreatorRole = (createdById?: number | null): string => {
+    if (!createdById) return "—";
+    const creator = userList.find((u) => u.id === createdById);
+    if (creator) {
+      return creator.role || creator.name || `ID: ${createdById}`;
+    }
+    return `ID: ${createdById}`;
+  };
 
   return (
     <Paper
@@ -171,7 +190,11 @@ const Users: React.FC = () => {
       <AddUsers open={openAdd} onClose={handleCloseAdd} />
 
       {selectedUser && (
-        <EditUser open={openEdit} onClose={handleCloseEdit} user={selectedUser} />
+        <EditUser
+          open={openEdit}
+          onClose={handleCloseEdit}
+          user={selectedUser}
+        />
       )}
 
       {/* 🔹 Table Section */}
@@ -195,6 +218,12 @@ const Users: React.FC = () => {
               <TableCell>Email</TableCell>
               <TableCell>Role</TableCell>
               <TableCell>Status</TableCell>
+              {loggedInUser?.role === "superadmin" && (
+                <>
+                  <TableCell>Created By</TableCell>
+                  <TableCell>Created By Role</TableCell>
+                </>
+              )}
               <TableCell align="center">Actions</TableCell>
             </TableRow>
           </TableHead>
@@ -221,11 +250,7 @@ const Users: React.FC = () => {
                     </TableCell>
                     <TableCell>
                       <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 1,
-                        }}
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
                       >
                         <Box
                           sx={{
@@ -240,6 +265,13 @@ const Users: React.FC = () => {
                         </Typography>
                       </Box>
                     </TableCell>
+                    {loggedInUser?.role === "superadmin" && (
+                      <>
+                        <TableCell>{getCreatorName(u.createdBy)}</TableCell>
+                        <TableCell>{getCreatorRole(u.createdBy)}</TableCell>
+                      </>
+                    )}
+                    {/* 🆕 */}
                     <TableCell align="center">
                       {loggedInUser?.role !== "user" && (
                         <>
@@ -262,7 +294,7 @@ const Users: React.FC = () => {
                 ))
             ) : (
               <TableRow>
-                <TableCell colSpan={6} align="center">
+                <TableCell colSpan={7} align="center">
                   <Typography variant="body2" color="text.secondary" py={2}>
                     No users found
                   </Typography>
@@ -283,7 +315,11 @@ const Users: React.FC = () => {
         onPageChange={handleChangePage}
         onRowsPerPageChange={handleChangeRowsPerPage}
         component="div"
-        sx={{ backgroundColor: "white", borderBottomLeftRadius: 12, borderBottomRightRadius: 12 }}
+        sx={{
+          backgroundColor: "white",
+          borderBottomLeftRadius: 12,
+          borderBottomRightRadius: 12,
+        }}
       />
     </Paper>
   );

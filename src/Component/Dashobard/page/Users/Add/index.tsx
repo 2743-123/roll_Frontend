@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import {
   Dialog,
   DialogTitle,
@@ -13,12 +13,9 @@ import {
   Select,
   MenuItem,
   SelectChangeEvent,
-  Box,
-  Typography,
-  Paper,
 } from "@mui/material";
 import { addUserAction } from "../../../../../Actions/Auth/user";
-import { AppDispatch } from "../../../../../store";
+import { AppDispatch, RootState } from "../../../../../store";
 
 interface AddUsersProps {
   open: boolean;
@@ -28,6 +25,9 @@ interface AddUsersProps {
 const AddUsers: React.FC<AddUsersProps> = ({ open, onClose }) => {
   const dispatch = useDispatch<AppDispatch>();
 
+  // 🆕 Get logged-in user from Redux
+  const loggedInUser = useSelector((state: RootState) => state.auth.user);
+
   const [form, setForm] = React.useState({
     name: "",
     email: "",
@@ -35,6 +35,21 @@ const AddUsers: React.FC<AddUsersProps> = ({ open, onClose }) => {
     role: "user" as "user" | "admin" | "superadmin",
     isActive: true,
   });
+
+  // 🧠 Generate role options dynamically based on who is logged in
+  const getRoleOptions = () => {
+    if (loggedInUser?.role === "superadmin") {
+      return [
+        { value: "superadmin", label: "Super Admin" },
+        { value: "admin", label: "Admin" },
+        { value: "user", label: "User" },
+      ];
+    }
+    if (loggedInUser?.role === "admin") {
+      return [{ value: "user", label: "User" }];
+    }
+    return [];
+  };
 
   // Input change
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -107,7 +122,7 @@ const AddUsers: React.FC<AddUsersProps> = ({ open, onClose }) => {
           }}
         >
           <Grid container spacing={2}>
-            <Grid >
+            <Grid>
               <TextField
                 label="Full Name"
                 name="name"
@@ -128,7 +143,7 @@ const AddUsers: React.FC<AddUsersProps> = ({ open, onClose }) => {
               />
             </Grid>
 
-            <Grid >
+            <Grid>
               <TextField
                 label="Email"
                 name="email"
@@ -149,7 +164,7 @@ const AddUsers: React.FC<AddUsersProps> = ({ open, onClose }) => {
               />
             </Grid>
 
-            <Grid >
+            <Grid>
               <TextField
                 label="Password"
                 name="password"
@@ -170,7 +185,7 @@ const AddUsers: React.FC<AddUsersProps> = ({ open, onClose }) => {
               />
             </Grid>
 
-            <Grid >
+            <Grid>
               <FormControl fullWidth required>
                 <InputLabel id="role-label" sx={{ color: "#bbb" }}>
                   Role
@@ -192,9 +207,11 @@ const AddUsers: React.FC<AddUsersProps> = ({ open, onClose }) => {
                     },
                   }}
                 >
-                  <MenuItem value="superadmin">Super Admin</MenuItem>
-                  <MenuItem value="admin">Admin</MenuItem>
-                  <MenuItem value="user">User</MenuItem>
+                  {getRoleOptions().map((r) => (
+                    <MenuItem key={r.value} value={r.value}>
+                      {r.label}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Grid>
