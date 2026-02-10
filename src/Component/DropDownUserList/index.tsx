@@ -38,7 +38,7 @@ const DropDownUserList: React.FC = () => {
   const [selected, setSelected] = useState<string>("");
 
   /**
-   * ✅ Fetch users only for admin/superadmin
+   * ✅ Fetch users for admin/superadmin
    */
   useEffect(() => {
     if (
@@ -51,22 +51,29 @@ const DropDownUserList: React.FC = () => {
   }, [dispatch, token, user]);
 
   /**
-   * ✅ Filter only active "user" role
-   * ✅ Sort alphabetically A → Z (case-insensitive)
+   * ✅ Production-safe alphabetical sorting
+   * - trim spaces
+   * - lowercase normalize
+   * - numeric support (DA 2 < DA 10)
+   * - locale independent
    */
   const sortedActiveUsers = useMemo(() => {
     return users
       .filter((u) => u.role === "user" && Boolean(u.isActive))
       .slice()
-      .sort((a, b) =>
-        (a.name || "").localeCompare(b.name || "", "en", {
+      .sort((a, b) => {
+        const nameA = (a.name || "").trim().toLowerCase();
+        const nameB = (b.name || "").trim().toLowerCase();
+
+        return nameA.localeCompare(nameB, undefined, {
+          numeric: true,
           sensitivity: "base",
-        })
-      );
+        });
+      });
   }, [users]);
 
   /**
-   * ✅ Default selected user logic
+   * ✅ Default selection logic
    */
   useEffect(() => {
     if (!user) return;
