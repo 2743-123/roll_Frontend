@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { ToastContainer, toast, ToastOptions } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -11,14 +11,17 @@ const Notification: React.FC = () => {
     (state: RootState) => state.notification
   );
 
-  const options: ToastOptions = {
-    position: "top-right",
-    autoClose: 3000,
-    hideProgressBar: false,
-    closeOnClick: true,
-    pauseOnHover: true,
-    draggable: true,
-  };
+  const options: ToastOptions = useMemo(
+    () => ({
+      position: "top-right",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+    }),
+    []
+  );
 
   useEffect(() => {
     if (message) {
@@ -27,10 +30,9 @@ const Notification: React.FC = () => {
       if (type === "info") toast.info(message, options);
       if (type === "warning") toast.warning(message, options);
 
-      // clear notification after toast
       setTimeout(() => dispatch(clearNotification()), 500);
     }
-  }, [message, type, dispatch]);
+  }, [message, type, dispatch, options]);
 
   return <ToastContainer />;
 };
