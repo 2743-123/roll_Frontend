@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   FormControl,
   InputLabel,
@@ -6,6 +6,7 @@ import {
   Select,
   SelectChangeEvent,
   FormHelperText,
+  ListItemText,
 } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../Reducer";
@@ -25,14 +26,18 @@ export interface User {
 
 const DropDownUserList: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
+
   const { token, user } = useSelector(
     (state: RootState) => state.auth
   ) as AuthState;
-  const { users } = useSelector((state: RootState) => state.user) as userState;
+
+  const { users } = useSelector(
+    (state: RootState) => state.user
+  ) as userState;
 
   const [selected, setSelected] = useState<string>("");
 
-  // Fetch users when admin/superadmin logs in
+  // ✅ Fetch users for admin/superadmin
   useEffect(() => {
     if (
       token &&
@@ -43,26 +48,35 @@ const DropDownUserList: React.FC = () => {
     }
   }, [dispatch, token, user]);
 
-  // Default selection logic
+  // ✅ Sorted active users (A-Z)
+  const sortedActiveUsers = useMemo(() => {
+    return users
+      .filter((u) => u.role === "user" && Boolean(u.isActive))
+      .slice()
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [users]);
+
+  // ✅ Default selection
   useEffect(() => {
     if (user?.role === "user") {
       setSelected(user.id.toString());
       dispatch(selectUserAction(user));
     } else if (user?.role === "admin" || user?.role === "superadmin") {
-      const activeUsers = users.filter(
-        (u) => u.role === "user" && Boolean(u.isActive)
-      );
-      if (activeUsers.length > 0) {
-        setSelected(activeUsers[0].id.toString());
-        dispatch(selectUserAction(activeUsers[0]));
+      if (sortedActiveUsers.length > 0) {
+        setSelected(sortedActiveUsers[0].id.toString());
+        dispatch(selectUserAction(sortedActiveUsers[0]));
       }
     }
-  }, [user, users, dispatch]);
+  }, [user, sortedActiveUsers, dispatch]);
 
+  // ✅ Handle dropdown change
   const handleChange = (event: SelectChangeEvent) => {
     const selectedId = Number(event.target.value);
     setSelected(event.target.value);
-    const selectedUserObj = users.find((u) => u.id === selectedId) || null;
+
+    const selectedUserObj =
+      users.find((u) => u.id === selectedId) || null;
+
     if (selectedUserObj) {
       dispatch(selectUserAction(selectedUserObj));
     }
@@ -72,18 +86,16 @@ const DropDownUserList: React.FC = () => {
     <FormControl
       sx={{
         m: 1,
-        minWidth: 200,
+        minWidth: 220,
         "& .MuiInputLabel-root": {
           color: "white",
           fontWeight: 600,
-          transition: "all 0.3s ease",
           "&.Mui-focused": { color: "#bbdefb" },
         },
         "& .MuiOutlinedInput-root": {
           color: "white",
           backgroundColor: "rgba(33, 203, 243, 0.15)",
           borderRadius: "12px",
-          transition: "all 0.3s ease",
           "& fieldset": { borderColor: "white" },
           "&:hover fieldset": { borderColor: "#64b5f6" },
           "&.Mui-focused fieldset": {
@@ -91,11 +103,7 @@ const DropDownUserList: React.FC = () => {
             boxShadow: "0 0 8px rgba(33,203,243,0.4)",
           },
         },
-        "& .MuiSelect-icon": {
-          color: "white",
-          transition: "all 0.3s ease",
-          "&:hover": { color: "#bbdefb", transform: "scale(1.2)" },
-        },
+        "& .MuiSelect-icon": { color: "white" },
         "& .MuiFormHelperText-root": {
           color: "#e0f7fa",
           fontWeight: 500,
@@ -104,6 +112,7 @@ const DropDownUserList: React.FC = () => {
       }}
     >
       <InputLabel id="user-select-label">Select User</InputLabel>
+
       <Select
         labelId="user-select-label"
         value={selected}
@@ -117,43 +126,42 @@ const DropDownUserList: React.FC = () => {
               borderRadius: "12px",
               boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
               "& .MuiMenuItem-root": {
-                transition: "all 0.2s ease",
                 "&:hover": {
                   backgroundColor: "#bbdefb",
                   color: "#0d47a1",
-                  transform: "scale(1.03)",
                 },
               },
             },
           },
         }}
       >
-        {/* If normal user logged in */}
+        {/* ✅ Normal user */}
         {user?.role === "user" && (
           <MenuItem value={user.id}>{user.name}</MenuItem>
         )}
 
-        {/* If admin/superadmin logged in */}
+        {/* ✅ Admin / Superadmin */}
         {(user?.role === "admin" || user?.role === "superadmin") &&
-          (users.length > 0 ? (
-            users
-              .filter((u) => u.role === "user" && Boolean(u.isActive)) // ✅ only active users
-              .map((u) => (
-                <MenuItem
-                  key={u.id}
-                  value={u.id}
-                  sx={{
-                    backgroundColor:
-                      selected === u.id.toString() ? "#bbdefb" : "transparent",
-                  }}
-                >
-                  {u.name}
-                </MenuItem>
-              ))
+          (sortedActiveUsers.length > 0 ? (
+            sortedActiveUsers.map((u) => (
+              <MenuItem
+                key={u.id}
+                value={u.id}
+                sx={{
+                  backgroundColor:
+                    selected === u.id.toString()
+                      ? "#bbdefb"
+                      : "transparent",
+                }}
+              >
+                <ListItemText primary={u.name} />
+              </MenuItem>
+            ))
           ) : (
             <MenuItem disabled>Loading users...</MenuItem>
           ))}
       </Select>
+
       <FormHelperText>
         {selected ? "User selected" : "Please select a user"}
       </FormHelperText>

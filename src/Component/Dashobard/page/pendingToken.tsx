@@ -17,8 +17,9 @@ const PendingTokens: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { selectedUser } = useSelector((state: RootState) => state.user);
   const { tokens, loading, error } = useSelector(
-    (state: RootState) => state.token
+    (state: RootState) => state.token,
   );
+  const { data } = useSelector((state: RootState) => state.balance);
 
   const [pendingTokens, setPendingTokens] = useState<any[]>([]);
   const [openDialog, setOpenDialog] = useState(false);
@@ -122,9 +123,7 @@ const PendingTokens: React.FC = () => {
                   </Typography>
                   <Chip
                     label={token.status.toUpperCase()}
-                    color={
-                      token.status === "completed" ? "success" : "warning"
-                    }
+                    color={token.status === "completed" ? "success" : "warning"}
                     size="small"
                     sx={{ fontWeight: 600 }}
                   />
@@ -140,6 +139,12 @@ const PendingTokens: React.FC = () => {
                 </Typography>
                 <Typography variant="body2" mb={1}>
                   Total Amount: <strong>₹{token.totalAmount}</strong>
+                </Typography>
+                <Typography variant="body2" mb={1}>
+                  carryForward: <strong>₹{token.carryForward}</strong>
+                </Typography>
+                <Typography variant="body2">
+                  Remaining: <strong>₹{data?.flyash?.remaining ?? 0}</strong>
                 </Typography>
 
                 <Button
