@@ -3,14 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../../Reducer";
 import { AppDispatch } from "../../../store";
 import { getBalanceAction } from "../../../Actions/Auth/balance";
-import {
-  Card,
-  CardContent,
-  Typography,
-  Box,
-  Divider,
-  Grid,
-} from "@mui/material";
+import { Card, Typography, Box, Grid } from "@mui/material";
 import MonetizationOnIcon from "@mui/icons-material/MonetizationOn";
 import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 
@@ -30,6 +23,8 @@ const BalanceCard: React.FC = () => {
     }
   }, [token, user, selectedUser, dispatch]);
 
+  const balance = Array.isArray(data) ? data[0] : data;
+
   return (
     <Card
       sx={{
@@ -40,7 +35,7 @@ const BalanceCard: React.FC = () => {
         background: "linear-gradient(135deg, #e3f2fd 0%, #ffffff 100%)",
       }}
     >
-      {/* 🔹 Header */}
+      {/* Header */}
       <Box
         display="flex"
         alignItems="center"
@@ -60,69 +55,39 @@ const BalanceCard: React.FC = () => {
       </Box>
 
       {loading ? (
-        <Typography
-          variant="body2"
-          sx={{ mt: 2, color: "gray", textAlign: "center" }}
-        >
+        <Typography sx={{ mt: 2, textAlign: "center" }}>
           Loading balance...
         </Typography>
       ) : error ? (
         <Typography color="error" sx={{ mt: 2, textAlign: "center" }}>
           {error}
         </Typography>
-      ) : data ? (
-        <Box mt={1}>
-          <Grid container spacing={2}>
-            {/* 🔹 Flyash Section */}
-            <Grid >
-         
-              
-                <Box display="flex" alignItems="center" mb={1} gap={1}>
-                  <LocalShippingIcon color="success" />
-                  <Typography variant="subtitle1" fontWeight={600}>
-                    Flyash
-                  </Typography>
-                </Box>
-                <Typography variant="body2">
-                  Total: <strong>₹{data.flyash?.total ?? 0}</strong>
-                </Typography>
-                <Typography variant="body2">
-                  Used: <strong>₹{data.flyash?.used ?? 0}</strong>
-                </Typography>
-                <Typography variant="body2">
-                  Remaining: <strong>₹{data.flyash?.remaining ?? 0}</strong>
-                </Typography>
-            
-            </Grid>
-
-            {/* 🔹 Bedash Section */}
-            <Grid >
-          
-              
-                <Box display="flex" alignItems="center" mb={1} gap={1}>
-                  <LocalShippingIcon color="warning" />
-                  <Typography variant="subtitle1" fontWeight={600}>
-                    Bedash
-                  </Typography>
-                </Box>
-                <Typography variant="body2">
-                  Total: <strong>₹{data.bedash?.total ?? 0}</strong>
-                </Typography>
-                <Typography variant="body2">
-                  Used: <strong>₹{data.bedash?.used ?? 0}</strong>
-                </Typography>
-                <Typography variant="body2">
-                  Remaining: <strong>₹{data.bedash?.remaining ?? 0}</strong>
-                </Typography>
-             
-            </Grid>
+      ) : balance ? (
+        <Grid container spacing={2}>
+          {/* Flyash */}
+          <Grid >
+            <Box display="flex" alignItems="center" gap={1}>
+              <LocalShippingIcon color="success" />
+              <Typography fontWeight={600}>Flyash</Typography>
+            </Box>
+            <Typography>Total: ₹{balance.flyash?.total ?? 0}</Typography>
+            <Typography>Used: ₹{balance.flyash?.used ?? 0}</Typography>
+            <Typography>Remaining: ₹{balance.flyash?.remaining ?? 0}</Typography>
           </Grid>
-        </Box>
+
+          {/* Bedash */}
+          <Grid >
+            <Box display="flex" alignItems="center" gap={1}>
+              <LocalShippingIcon color="warning" />
+              <Typography fontWeight={600}>Bedash</Typography>
+            </Box>
+            <Typography>Total: ₹{balance.bedash?.total ?? 0}</Typography>
+            <Typography>Used: ₹{balance.bedash?.used ?? 0}</Typography>
+            <Typography>Remaining: ₹{balance.bedash?.remaining ?? 0}</Typography>
+          </Grid>
+        </Grid>
       ) : (
-        <Typography
-          variant="body2"
-          sx={{ mt: 2, color: "gray", textAlign: "center" }}
-        >
+        <Typography sx={{ mt: 2, textAlign: "center" }}>
           No balance data available.
         </Typography>
       )}
