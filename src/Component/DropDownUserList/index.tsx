@@ -37,7 +37,9 @@ const DropDownUserList: React.FC = () => {
 
   const [selected, setSelected] = useState<string>("");
 
-  // ✅ Fetch users for admin/superadmin
+  /**
+   * ✅ Fetch users only for admin/superadmin
+   */
   useEffect(() => {
     if (
       token &&
@@ -48,34 +50,47 @@ const DropDownUserList: React.FC = () => {
     }
   }, [dispatch, token, user]);
 
-  // ✅ Sorted active users (A-Z)
+  /**
+   * ✅ Filter only active "user" role
+   * ✅ Sort alphabetically A → Z (case-insensitive)
+   */
   const sortedActiveUsers = useMemo(() => {
     return users
       .filter((u) => u.role === "user" && Boolean(u.isActive))
       .slice()
-      .sort((a, b) => a.name.localeCompare(b.name));
+      .sort((a, b) =>
+        (a.name || "").localeCompare(b.name || "", "en", {
+          sensitivity: "base",
+        })
+      );
   }, [users]);
 
-  // ✅ Default selection
+  /**
+   * ✅ Default selected user logic
+   */
   useEffect(() => {
-    if (user?.role === "user") {
+    if (!user) return;
+
+    if (user.role === "user") {
       setSelected(user.id.toString());
       dispatch(selectUserAction(user));
-    } else if (user?.role === "admin" || user?.role === "superadmin") {
-      if (sortedActiveUsers.length > 0) {
-        setSelected(sortedActiveUsers[0].id.toString());
-        dispatch(selectUserAction(sortedActiveUsers[0]));
-      }
+    } else if (
+      (user.role === "admin" || user.role === "superadmin") &&
+      sortedActiveUsers.length > 0
+    ) {
+      setSelected(sortedActiveUsers[0].id.toString());
+      dispatch(selectUserAction(sortedActiveUsers[0]));
     }
   }, [user, sortedActiveUsers, dispatch]);
 
-  // ✅ Handle dropdown change
+  /**
+   * ✅ Handle dropdown change
+   */
   const handleChange = (event: SelectChangeEvent) => {
     const selectedId = Number(event.target.value);
     setSelected(event.target.value);
 
-    const selectedUserObj =
-      users.find((u) => u.id === selectedId) || null;
+    const selectedUserObj = users.find((u) => u.id === selectedId);
 
     if (selectedUserObj) {
       dispatch(selectUserAction(selectedUserObj));
@@ -158,7 +173,7 @@ const DropDownUserList: React.FC = () => {
               </MenuItem>
             ))
           ) : (
-            <MenuItem disabled>Loading users...</MenuItem>
+            <MenuItem disabled>No active users found</MenuItem>
           ))}
       </Select>
 
