@@ -1,10 +1,12 @@
-import axios from "axios";
+import api from "../../expireToken";
 import {
   API_ADMIN_BALANCE,
   API_BALANCE_ADD,
   API_BALANCE_GET,
-} from "../API End point"; // ✅ correct import path
-import api from "../../expireToken";
+  API_BALANCE_EDIT,
+  API_BALANCE_DELETE,
+} from "../API End point";
+
 import { AdminBalanceResponse } from "../../ActionType/balancetype.ts/balance";
 
 interface AddBalancePayload {
@@ -13,99 +15,105 @@ interface AddBalancePayload {
   bedashAmount: number;
 }
 
+/** 🔹 Common token getter */
+const getToken = () => {
+  const accessToken = localStorage.getItem("accessToken");
+  return accessToken && accessToken !== "undefined" ? accessToken : null;
+};
+
+/** 🔹 Common auth header */
+const authHeader = () => ({
+  Authorization: getToken() ? `Bearer ${getToken()}` : "",
+});
+
+/* =======================================================
+   GET USER BALANCE
+======================================================= */
 export const getBalanceService = async (userId: number | string) => {
   try {
-    // 🔹 Get token safely
-    const accessToken = localStorage.getItem("accessToken");
-    const token =
-      accessToken && accessToken !== "undefined" ? accessToken : null;
-
-    // 🔹 Replace :userId in URL
     const url = API_BALANCE_GET.replace(":userId", String(userId));
 
-    // 🔹 Axios request
-    const response = await api.get(url, {
-      headers: {
-        Authorization: token ? `Bearer ${token}` : "",
-        "Content-Type": "application/json",
-      },
+    const { data } = await api.get(url, {
+      headers: authHeader(),
     });
 
-    // 🔹 Return data
-    return response.data;
+    return data;
   } catch (error: any) {
-    console.error(
-      "❌ Error in getBalanceService:",
-      error.response?.data || error.message,
-    );
-
-    // Optionally handle 401 (unauthorized)
-    if (error.response?.status === 401) {
-      console.warn("Token expired or invalid. Redirect to login?");
-      // e.g. window.location.href = '/login';
-    }
-
-    throw error; // rethrow so Redux action can catch it
+    console.error("❌ getBalanceService:", error.response?.data || error.message);
+    throw error;
   }
 };
 
+/* =======================================================
+   ADD BALANCE
+======================================================= */
 export const addBalanceService = async (payload: AddBalancePayload) => {
   try {
-    // 🔹 Get access token safely
-    const accessToken = localStorage.getItem("accessToken");
-    const token =
-      accessToken && accessToken !== "undefined" ? accessToken : null;
-
-    // 🔹 Axios request
-    const response = await axios.post(API_BALANCE_ADD, payload, {
-      headers: {
-        Authorization: token ? `Bearer ${token}` : "",
-        "Content-Type": "application/json",
-      },
+    const { data } = await api.post(API_BALANCE_ADD, payload, {
+      headers: authHeader(),
     });
 
-    // 🔹 Return success data
-    return response.data;
+    return data;
   } catch (error: any) {
-    console.error(
-      "❌ Error in addBalanceService:",
-      error.response?.data || error.message,
-    );
-
-    // 🔸 Optionally handle 401 errors globally
-    if (error.response?.status === 401) {
-      console.warn("Token expired or invalid — redirecting to login...");
-      // window.location.href = "/login";
-    }
-
-    throw error; // let Redux or component handle it
+    console.error("❌ addBalanceService:", error.response?.data || error.message);
+    throw error;
   }
 };
 
-export const getAdminBalanceService = async () => {
+/* =======================================================
+   EDIT BALANCE
+======================================================= */
+export const editBalanceService = async (
+  transactionId: number,
+  payload: Partial<AddBalancePayload>
+) => {
   try {
-    const accessToken = localStorage.getItem("accessToken");
-    const token =
-      accessToken && accessToken !== "undefined" ? accessToken : null;
+    const url = API_BALANCE_EDIT.replace(":transactionId", String(transactionId));
 
-    const response = await api.get(API_ADMIN_BALANCE, {
-      headers: {
-        Authorization: token ? `Bearer ${token}` : "",
-        "Content-Type": "application/json",
-      },
+    const { data } = await api.put(url, payload, {
+      headers: authHeader(),
     });
 
-    return response.data as AdminBalanceResponse;
+    return data;
+  } catch (error: any) {
+    console.error("❌ editBalanceService:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+/* =======================================================
+   DELETE BALANCE
+======================================================= */
+export const deleteBalanceService = async (transactionId: number) => {
+  try {
+    const url = API_BALANCE_DELETE.replace(":transactionId", String(transactionId));
+
+    const { data } = await api.delete(url, {
+      headers: authHeader(),
+    });
+
+    return data;
+  } catch (error: any) {
+    console.error("❌ deleteBalanceService:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+/* =======================================================
+   ADMIN BALANCE REPORT
+======================================================= */
+export const getAdminBalanceService = async () => {
+  try {
+    const { data } = await api.get(API_ADMIN_BALANCE, {
+      headers: authHeader(),
+    });
+
+    return data as AdminBalanceResponse;
   } catch (error: any) {
     console.error(
-      "❌ Error in getAdminBalanceService:",
-      error.response?.data || error.message,
+      "❌ getAdminBalanceService:",
+      error.response?.data || error.message
     );
-
-    if (error.response?.status === 401) {
-      console.warn("Token expired or invalid.");
-    }
-
     throw error;
   }
 };

@@ -17,13 +17,23 @@ import {
   Divider,
   CircularProgress,
   Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
+
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 
 import { AppDispatch, RootState } from "../../store";
-import { getBalanceAction } from "../../Actions/Auth/balance";
+import {
+  getBalanceAction,
+  editBalanceAction,
+  deleteBalanceAction,
+} from "../../Actions/Auth/balance";
+
 import AddBalanceDialog from "./AddBalance";
 
 interface Transaction {
@@ -45,33 +55,70 @@ const BalanceTable: React.FC = () => {
   const { data, loading } = useSelector((state: RootState) => state.balance);
   const { selectedUser } = useSelector((state: RootState) => state.user);
 
+  /** 🔹 Pagination & search */
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
   const [search, setSearch] = React.useState("");
-  const [openAdd, setOpenAdd] = React.useState(false);
 
+  /** 🔹 Dialog states */
+  const [openAdd, setOpenAdd] = React.useState(false);
+  const [editTx, setEditTx] = React.useState<Transaction | null>(null);
+  const [deleteId, setDeleteId] = React.useState<number | null>(null);
+
+  /** 🔄 Fetch balance */
   React.useEffect(() => {
     if (selectedUser?.id) {
       dispatch(getBalanceAction(selectedUser.id));
     }
   }, [selectedUser, dispatch]);
 
+  /** 🔹 Pagination handlers */
   const handleChangePage = (_: unknown, newPage: number) => setPage(newPage);
   const handleChangeRowsPerPage = (e: React.ChangeEvent<HTMLInputElement>) => {
     setRowsPerPage(+e.target.value);
     setPage(0);
   };
+
+  /** 🔹 Search */
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);
     setPage(0);
   };
-  const handleAdd = () => setOpenAdd(true);
-  const handleCloseAdd = () => setOpenAdd(false);
-  const handleEdit = (tx: Transaction) => console.log("Edit transaction:", tx);
-  const handleDelete = (id: number) => console.log("Delete transaction:", id);
 
+  /** 🔹 CRUD handlers */
+  const handleAdd = () => setOpenAdd(true);
+  const handleEdit = (tx: Transaction) => setEditTx(tx);
+  const handleDelete = (id: number) => setDeleteId(id);
+
+  /** 🔹 Confirm delete */
+  const confirmDelete = async () => {
+    if (!selectedUser || !deleteId) return;
+
+    await dispatch(deleteBalanceAction(deleteId, selectedUser.id));
+    setDeleteId(null);
+  };
+
+  /** 🔹 Confirm edit */
+  const confirmEdit = async () => {
+    if (!selectedUser || !editTx) return;
+
+    await dispatch(
+      editBalanceAction(
+        editTx.id,
+        {
+          flyashAmount: Number(editTx.flyashAmount),
+          bedashAmount: Number(editTx.bedashAmount),
+        },
+        selectedUser.id
+      )
+    );
+
+    setEditTx(null);
+  };
+
+  /** 🔹 Filter */
   const filteredTransactions: Transaction[] =
-    data?.transactions?.filter((tx) => {
+    data?.transactions?.filter((tx: Transaction) => {
       const query = search.toLowerCase();
       return (
         tx.date.toLowerCase().includes(query) ||
@@ -85,6 +132,7 @@ const BalanceTable: React.FC = () => {
       );
     }) || [];
 
+  /** 🔹 Loading */
   if (loading)
     return (
       <Box display="flex" justifyContent="center" mt={4}>
@@ -93,17 +141,8 @@ const BalanceTable: React.FC = () => {
     );
 
   return (
-    <Paper
-      elevation={3}
-      sx={{
-        width: "100%",
-        borderRadius: 3,
-        overflow: "hidden",
-        background: "linear-gradient(135deg, #ffffffff 0%, #ffffffff 100%)", // light blue table background
-        p: 2,
-      }}
-    >
-      {/* 🔹 Header */}
+    <Paper elevation={3} sx={{ p: 2, borderRadius: 3 }}>
+      {/* ================= HEADER ================= */}
       <Box
         sx={{
           background: "linear-gradient(135deg, #1976d2, #42a5f5)",
@@ -114,7 +153,6 @@ const BalanceTable: React.FC = () => {
           mb: 2,
           display: "flex",
           justifyContent: "space-between",
-          alignItems: "center",
           flexWrap: "wrap",
           gap: 2,
         }}
@@ -122,119 +160,81 @@ const BalanceTable: React.FC = () => {
         <Typography variant="h6" fontWeight={600}>
           Balance Transactions
         </Typography>
-        <Box display="flex" alignItems="center" gap={2}>
+
+        <Box display="flex" gap={2}>
           <TextField
-            label="Search Transactions"
-            variant="outlined"
+            label="Search"
             size="small"
             value={search}
             onChange={handleSearchChange}
-            sx={{
-              backgroundColor: "white",
-              borderRadius: 1,
-              width: 250,
-            }}
+            sx={{ background: "white", borderRadius: 1 }}
           />
+
           <Button
             variant="contained"
-            color="inherit"
             startIcon={<AddIcon />}
             onClick={handleAdd}
-            sx={{
-              backgroundColor: "white",
-              color: "#1976d2",
-              fontWeight: 600,
-              "&:hover": { backgroundColor: "#e3f2fd" },
-            }}
+            sx={{ background: "white", color: "#1976d2" }}
           >
             Add Balance
           </Button>
         </Box>
       </Box>
 
-      {/* 📋 Table */}
-      <TableContainer
-        sx={{
-          borderRadius: 2,
-          overflow: "hidden",
-          backgroundColor: "#fdfdfdff",
-        }}
-      >
-        <Table stickyHeader aria-label="balance table">
+      {/* ================= TABLE ================= */}
+      <TableContainer>
+        <Table stickyHeader>
           <TableHead>
-            <TableRow
-              sx={{
-                backgroundColor: "#1976d2",
-                "& th": { color: "white", fontWeight: 600 },
-              }}
-            ></TableRow>
-            <TableRow
-              sx={{
-                backgroundColor: "#0f4262ff",
-                "& th": { color: "blue", fontWeight: 500 },
-              }}
-            >
+            <TableRow>
               {[
                 "Date",
-                "Flyash (₹)",
-                "Flyash (Tons)",
-                "Bedash (₹)",
-                "Bedash (Tons)",
-                "Total Amount (₹)",
-                "Payment Mode",
-                "Bank Name",
-                "Account Holder",
-                "Reference No.",
+                "Flyash ₹",
+                "Flyash Tons",
+                "Bedash ₹",
+                "Bedash Tons",
+                "Total ₹",
+                "Mode",
+                "Bank",
+                "Holder",
+                "Ref No",
                 "Actions",
-              ].map((head) => (
-                <TableCell key={head}>{head}</TableCell>
+              ].map((h) => (
+                <TableCell key={h}>{h}</TableCell>
               ))}
             </TableRow>
           </TableHead>
+
           <TableBody>
             {filteredTransactions.length > 0 ? (
               filteredTransactions
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((tx) => (
-                  <TableRow
-                    key={tx.id}
-                    hover
-                    sx={{ "&:hover": { backgroundColor: "#2d79a2ff" } }}
-                  >
+                  <TableRow key={tx.id} hover>
                     <TableCell>{tx.date}</TableCell>
-                    <TableCell align="right">{tx.flyashAmount}</TableCell>
-                    <TableCell align="right">{tx.flyashTons}</TableCell>
-                    <TableCell align="right">{tx.bedashAmount}</TableCell>
-                    <TableCell align="right">{tx.bedashTons}</TableCell>
-                    <TableCell align="right">{tx.totalAmount}</TableCell>
-                    <TableCell align="center">
+                    <TableCell>{tx.flyashAmount}</TableCell>
+                    <TableCell>{tx.flyashTons}</TableCell>
+                    <TableCell>{tx.bedashAmount}</TableCell>
+                    <TableCell>{tx.bedashTons}</TableCell>
+                    <TableCell>{tx.totalAmount}</TableCell>
+
+                    <TableCell>
                       <Chip
                         label={tx.paymentMode}
-                        color={
-                          tx.paymentMode === "cash" ? "warning" : "success"
-                        }
+                        color={tx.paymentMode === "cash" ? "warning" : "success"}
                         size="small"
-                        sx={{ textTransform: "capitalize" }}
                       />
                     </TableCell>
-                    <TableCell align="center">{tx.bankName || "-"}</TableCell>
-                    <TableCell align="center">
-                      {tx.accountHolder || "-"}
-                    </TableCell>
-                    <TableCell align="center">
-                      {tx.referenceNumber || "-"}
-                    </TableCell>
-                    <TableCell align="center">
-                      <IconButton
-                        color="secondary"
-                        onClick={() => handleEdit(tx)}
-                      >
+
+                    <TableCell>{tx.bankName || "-"}</TableCell>
+                    <TableCell>{tx.accountHolder || "-"}</TableCell>
+                    <TableCell>{tx.referenceNumber || "-"}</TableCell>
+
+                    <TableCell>
+                      <IconButton onClick={() => handleEdit(tx)}>
                         <EditIcon />
                       </IconButton>
-                      <IconButton
-                        color="error"
-                        onClick={() => handleDelete(tx.id)}
-                      >
+
+                      <IconButton color="error" onClick={() => handleDelete(tx.id)}>
                         <DeleteIcon />
                       </IconButton>
                     </TableCell>
@@ -251,25 +251,65 @@ const BalanceTable: React.FC = () => {
         </Table>
       </TableContainer>
 
-      {/* 🔹 Pagination */}
+      {/* ================= PAGINATION ================= */}
       <Divider sx={{ mt: 1 }} />
       <TablePagination
-        rowsPerPageOptions={[5, 10, 25]}
         component="div"
         count={filteredTransactions.length}
-        rowsPerPage={rowsPerPage}
         page={page}
+        rowsPerPage={rowsPerPage}
         onPageChange={handleChangePage}
         onRowsPerPageChange={handleChangeRowsPerPage}
-        sx={{
-          backgroundColor: "#e3f2fd",
-          borderBottomLeftRadius: 12,
-          borderBottomRightRadius: 12,
-        }}
       />
 
-      {/* ➕ Add Dialog */}
-      <AddBalanceDialog open={openAdd} onClose={handleCloseAdd} />
+      {/* ================= ADD DIALOG ================= */}
+      <AddBalanceDialog open={openAdd} onClose={() => setOpenAdd(false)} />
+
+      {/* ================= EDIT DIALOG ================= */}
+      <Dialog open={!!editTx} onClose={() => setEditTx(null)}>
+        <DialogTitle>Edit Balance</DialogTitle>
+        <DialogContent>
+          <TextField
+            label="Flyash Amount"
+            fullWidth
+            margin="dense"
+            value={editTx?.flyashAmount || ""}
+            onChange={(e) =>
+              setEditTx((prev) =>
+                prev ? { ...prev, flyashAmount: e.target.value } : prev
+              )
+            }
+          />
+          <TextField
+            label="Bedash Amount"
+            fullWidth
+            margin="dense"
+            value={editTx?.bedashAmount || ""}
+            onChange={(e) =>
+              setEditTx((prev) =>
+                prev ? { ...prev, bedashAmount: e.target.value } : prev
+              )
+            }
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditTx(null)}>Cancel</Button>
+          <Button variant="contained" onClick={confirmEdit}>
+            Save
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ================= DELETE CONFIRM ================= */}
+      <Dialog open={!!deleteId} onClose={() => setDeleteId(null)}>
+        <DialogTitle>Delete this transaction?</DialogTitle>
+        <DialogActions>
+          <Button onClick={() => setDeleteId(null)}>Cancel</Button>
+          <Button color="error" variant="contained" onClick={confirmDelete}>
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Paper>
   );
 };
