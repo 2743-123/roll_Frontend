@@ -41,18 +41,23 @@ const AddTokenDialog: React.FC<AddTokenDialogProps> = ({ open, onClose }) => {
     }
   }, [open, selectedUser?.id, dispatch]);
 
-  /** 🔍 Unique customer names */
+  /** 🔍 Unique customer names (ES5 safe) */
   const customerOptions = useMemo(() => {
     if (!tokens) return [];
 
-    const names = tokens.map((t: any) => t.customerName).filter(Boolean);
+    const names = tokens
+      .map((t: any) => t.customerName)
+      .filter((name: string) => !!name);
 
-    return Array.from(new Set(names));
+    return Array.from(new Set(names)); // ✅ ES5 compatible
   }, [tokens]);
 
   /** 📝 Submit */
   const handleSubmit = () => {
-    if (!selectedUser) return alert("Please select a user first!");
+    if (!selectedUser) {
+      alert("Please select a user first!");
+      return;
+    }
 
     dispatch(createTokenAction({ ...form, userId: selectedUser.id }));
     onClose();
@@ -89,6 +94,7 @@ const AddTokenDialog: React.FC<AddTokenDialogProps> = ({ open, onClose }) => {
         {/* Content */}
         <DialogContent dividers sx={{ p: 3, backgroundColor: "white" }}>
           <Box display="flex" flexDirection="column" gap={2}>
+            
             {/* ⭐ Customer Autocomplete */}
             <Autocomplete
               freeSolo
@@ -114,7 +120,10 @@ const AddTokenDialog: React.FC<AddTokenDialogProps> = ({ open, onClose }) => {
               name="materialType"
               value={form.materialType}
               onChange={(e) =>
-                setForm((prev) => ({ ...prev, materialType: e.target.value }))
+                setForm((prev) => ({
+                  ...prev,
+                  materialType: e.target.value,
+                }))
               }
               fullWidth
               required
