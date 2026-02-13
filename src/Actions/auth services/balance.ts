@@ -1,5 +1,9 @@
 import axios from "axios";
-import { API_ADMIN_BALANCE, API_BALANCE_ADD, API_BALANCE_GET } from "../API End point"; // ✅ correct import path
+import {
+  API_ADMIN_BALANCE,
+  API_BALANCE_ADD,
+  API_BALANCE_GET,
+} from "../API End point"; // ✅ correct import path
 import api from "../../expireToken";
 import { AdminBalanceResponse } from "../../ActionType/balancetype.ts/balance";
 
@@ -32,7 +36,7 @@ export const getBalanceService = async (userId: number | string) => {
   } catch (error: any) {
     console.error(
       "❌ Error in getBalanceService:",
-      error.response?.data || error.message
+      error.response?.data || error.message,
     );
 
     // Optionally handle 401 (unauthorized)
@@ -65,7 +69,7 @@ export const addBalanceService = async (payload: AddBalancePayload) => {
   } catch (error: any) {
     console.error(
       "❌ Error in addBalanceService:",
-      error.response?.data || error.message
+      error.response?.data || error.message,
     );
 
     // 🔸 Optionally handle 401 errors globally
@@ -95,7 +99,7 @@ export const getAdminBalanceService = async () => {
   } catch (error: any) {
     console.error(
       "❌ Error in getAdminBalanceService:",
-      error.response?.data || error.message
+      error.response?.data || error.message,
     );
 
     if (error.response?.status === 401) {

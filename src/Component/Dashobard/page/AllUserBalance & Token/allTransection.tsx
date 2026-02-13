@@ -19,7 +19,7 @@ const AllTransection: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
 
   const { data, loading, error } = useSelector(
-    (state: RootState) => state.adminBalanceReducer
+    (state: RootState) => state.adminBalanceReducer,
   );
 
   useEffect(() => {
@@ -66,9 +66,7 @@ const AllTransection: React.FC = () => {
                 <TableRow key={t.id} hover>
                   <TableCell>{u.userName}</TableCell>
 
-                  <TableCell>
-                    {new Date(t.date).toLocaleString()}
-                  </TableCell>
+                  <TableCell>{new Date(t.date).toLocaleString()}</TableCell>
 
                   <TableCell>₹{t.flyashAmount}</TableCell>
                   <TableCell>₹{t.bedashAmount}</TableCell>
@@ -84,7 +82,7 @@ const AllTransection: React.FC = () => {
                   <TableCell>{t.paymentMode}</TableCell>
                   <TableCell>{t.referenceNumber ?? "-"}</TableCell>
                 </TableRow>
-              ))
+              )),
             )}
 
             {users.length === 0 && !loading && (

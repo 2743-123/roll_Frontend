@@ -19,7 +19,7 @@ const notificationSlice = createSlice({
       action: PayloadAction<{
         type: NotificationState["type"];
         message: string;
-      }>
+      }>,
     ) => {
       state.type = action.payload.type;
       state.message = action.payload.message;

@@ -8,7 +8,8 @@ import { clearAccessToken } from "./AuthToekn";
 import ENVIRONMENT_VARIABLES from "./environment.config";
 
 const api = axios.create({
-  baseURL: ENVIRONMENT_VARIABLES.Base_API_URL,withCredentials: true,
+  baseURL: ENVIRONMENT_VARIABLES.Base_API_URL,
+  withCredentials: true,
 });
 
 // 🔹 Request interceptor — token attach karega
@@ -37,7 +38,7 @@ api.interceptors.response.use(
       window.location.href = "/login";
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 export default api;

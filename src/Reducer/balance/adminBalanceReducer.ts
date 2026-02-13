@@ -45,7 +45,7 @@ type AdminBalanceAction =
  */
 const adminBalanceReducer = (
   state = initialState,
-  action: AdminBalanceAction
+  action: AdminBalanceAction,
 ): AdminBalanceState => {
   switch (action.type) {
     case GET_ADMIN_BALANCE:

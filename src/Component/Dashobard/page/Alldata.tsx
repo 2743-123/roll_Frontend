@@ -19,18 +19,17 @@ const AllData: React.FC = () => {
 
       <Grid container spacing={3}>
         {/* 🔹 Pending Tokens */}
-        <Grid >
+        <Grid>
           <BalanceCard />
-          
         </Grid>
 
         {/* 🔹 Balance Card */}
-        <Grid >
+        <Grid>
           <PendingTokens />
         </Grid>
 
         {/* 🔹 Pending Bedash */}
-        <Grid >
+        <Grid>
           <PendingBedash />
         </Grid>
       </Grid>

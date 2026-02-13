@@ -8,7 +8,7 @@ import { clearNotification } from "./NotificationReduer";
 const Notification: React.FC = () => {
   const dispatch = useDispatch();
   const { type, message } = useSelector(
-    (state: RootState) => state.notification
+    (state: RootState) => state.notification,
   );
 
   const options: ToastOptions = useMemo(
@@ -20,7 +20,7 @@ const Notification: React.FC = () => {
       pauseOnHover: true,
       draggable: true,
     }),
-    []
+    [],
   );
 
   useEffect(() => {

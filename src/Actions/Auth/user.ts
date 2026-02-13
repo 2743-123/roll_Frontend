@@ -46,7 +46,7 @@ export const addUserAction =
         showNotification({
           type: "success",
           message: "User added successfully!",
-        })
+        }),
       );
     } catch (error: any) {
       dispatch({
@@ -72,14 +72,14 @@ export const updateUserAction =
         showNotification({
           type: "success",
           message: "User update successfully!",
-        })
+        }),
       );
 
       return updatedUser;
     } catch (error: any) {
       console.error("Update failed:", error);
       dispatch(
-        showNotification({ type: "error", message: "User update fail!" })
+        showNotification({ type: "error", message: "User update fail!" }),
       );
       // toast.error(error.response?.data?.message || "Update failed");
       throw error;
@@ -96,7 +96,7 @@ export const deleteUserAction =
       dispatch({ type: DELETE_USER_SUCCESS, payload: id });
 
       dispatch(
-        showNotification({ type: "success", message: "Delete  successfully!" })
+        showNotification({ type: "success", message: "Delete  successfully!" }),
       );
     } catch (error: any) {
       console.error("Delete failed:", error);

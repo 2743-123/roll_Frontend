@@ -6,8 +6,6 @@ export const TOKEN_UPDATE_SUCCESS = "TOKEN_UPDATE_SUCCESS";
 export const GET_ADMIN_TOKENS = "GET_ADMIN_TOKENS";
 export const TOKEN_DELETE_SUCCESS = "TOKEN_DELETE_SUCCESS";
 
-
-
 // types/tokenTypes.ts
 export interface User {
   id: number;

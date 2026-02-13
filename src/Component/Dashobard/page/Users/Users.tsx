@@ -96,7 +96,7 @@ const Users: React.FC = () => {
       (u) =>
         (u.name || "").toLowerCase().includes(search.toLowerCase()) ||
         (u.email || "").toLowerCase().includes(search.toLowerCase()) ||
-        (u.role || "").toLowerCase().includes(search.toLowerCase())
+        (u.role || "").toLowerCase().includes(search.toLowerCase()),
     );
 
   // 🆕 Helper to get creator name/email

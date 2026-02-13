@@ -30,7 +30,7 @@ const AddBedashDialog: React.FC<AddBedashDialogProps> = ({ open, onClose }) => {
 
   const userList = Array.isArray(users) ? users : [users];
   const onlyUsers = userList.filter(
-    (u: any) => u.role?.toLowerCase() === "user"
+    (u: any) => u.role?.toLowerCase() === "user",
   );
 
   const [form, setForm] = React.useState({
@@ -47,7 +47,7 @@ const AddBedashDialog: React.FC<AddBedashDialogProps> = ({ open, onClose }) => {
   }, [dispatch]);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));

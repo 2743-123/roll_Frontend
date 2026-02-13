@@ -44,9 +44,7 @@ const AddTokenDialog: React.FC<AddTokenDialogProps> = ({ open, onClose }) => {
 
   /** ✅ Button disable condition */
   const isFormInvalid =
-    !form.customerName.trim() ||
-    !form.materialType ||
-    !selectedUser;
+    !form.customerName.trim() || !form.materialType || !selectedUser;
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">

@@ -10,12 +10,17 @@ import {
 } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../../store";
-import { confirmBedashAction, getBedashListAction } from "../../../Actions/Auth/bedash";
+import {
+  confirmBedashAction,
+  getBedashListAction,
+} from "../../../Actions/Auth/bedash";
 
 const PendingBedash: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { user } = useSelector((state: RootState) => state.auth);
-  const { data, loading, error } = useSelector((state: RootState) => state.bedash);
+  const { data, loading, error } = useSelector(
+    (state: RootState) => state.bedash,
+  );
 
   const [pendingList, setPendingList] = useState<any[]>([]);
 
@@ -100,7 +105,12 @@ const PendingBedash: React.FC = () => {
                   },
                 }}
               >
-                <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+                <Box
+                  display="flex"
+                  justifyContent="space-between"
+                  alignItems="center"
+                  mb={1}
+                >
                   <Typography variant="subtitle1" fontWeight={600}>
                     {item.userName}
                   </Typography>
@@ -115,7 +125,8 @@ const PendingBedash: React.FC = () => {
                   Material Type: <strong>{item.materialType}</strong>
                 </Typography>
                 <Typography variant="body2" mb={0.5}>
-                  Remaining Tons: <strong>{item.remainingTons.toFixed(2)}</strong>
+                  Remaining Tons:{" "}
+                  <strong>{item.remainingTons.toFixed(2)}</strong>
                 </Typography>
                 <Typography variant="body2" mb={1}>
                   Target Date: <strong>{item.targetDate}</strong>

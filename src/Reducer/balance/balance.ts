@@ -14,7 +14,7 @@ const balanceReducer = (state = initialState, action: any): BalanceState => {
     case GET_BALANCE:
       return {
         ...state,
-        loading:false,
+        loading: false,
         data: action.payload,
         error: action.payload.error,
       };
@@ -24,7 +24,7 @@ const balanceReducer = (state = initialState, action: any): BalanceState => {
         ...state,
         data: {
           ...state.data,
-          loading:true,
+          loading: true,
           ...action.payload.data, // merge updated balances
         },
       };

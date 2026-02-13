@@ -135,7 +135,11 @@ const BreadcrumbPath: React.FC = () => {
           color: "#1e88e5",
           fontWeight: 600,
           transition: "all 0.3s ease",
-          "&:hover": { color: "#1976d2", textDecoration: "underline", transform: "scale(1.05)" },
+          "&:hover": {
+            color: "#1976d2",
+            textDecoration: "underline",
+            transform: "scale(1.05)",
+          },
         }}
         onClick={() => navigate("/")}
       >
@@ -150,7 +154,11 @@ const BreadcrumbPath: React.FC = () => {
               cursor: "pointer",
               color: "#555",
               transition: "all 0.3s ease",
-              "&:hover": { color: "#2196f3", textDecoration: "underline", transform: "scale(1.05)" },
+              "&:hover": {
+                color: "#2196f3",
+                textDecoration: "underline",
+                transform: "scale(1.05)",
+              },
             }}
             onClick={() => navigate(routeTo)}
           >
@@ -208,7 +216,9 @@ export default function Dashboard() {
       {/* Drawer */}
       <Drawer variant="permanent" open={open}>
         <DrawerHeader>
-          <DashboardOutlinedIcon sx={{ fontSize: 36, color: "#1976d2", mb: 1 }} />
+          <DashboardOutlinedIcon
+            sx={{ fontSize: 36, color: "#1976d2", mb: 1 }}
+          />
           <Typography
             sx={{
               fontWeight: 800,
@@ -231,7 +241,11 @@ export default function Dashboard() {
               color: "#1976d2",
             }}
           >
-            {theme.direction === "rtl" ? <ChevronRightIcon /> : <ChevronLeftIcon />}
+            {theme.direction === "rtl" ? (
+              <ChevronRightIcon />
+            ) : (
+              <ChevronLeftIcon />
+            )}
           </IconButton>
         </DrawerHeader>
 

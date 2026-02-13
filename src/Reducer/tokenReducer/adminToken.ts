@@ -1,7 +1,6 @@
 import { ERROR } from "../../ActionType/auth";
 import { AdminToken, GET_ADMIN_TOKENS } from "../../ActionType/UserTokenTypes";
 
-
 export interface AdminTokenState {
   data: AdminToken[];
   totalTokens: number;
@@ -18,12 +17,15 @@ const initialState: AdminTokenState = {
 
 type Action =
   | { type: "GET_ADMIN_TOKENS_REQUEST" }
-  | { type: typeof GET_ADMIN_TOKENS; payload: { data: AdminToken[]; totalTokens: number } }
+  | {
+      type: typeof GET_ADMIN_TOKENS;
+      payload: { data: AdminToken[]; totalTokens: number };
+    }
   | { type: typeof ERROR; payload: { msg: string } };
 
 const adminTokenReducer = (
   state = initialState,
-  action: Action
+  action: Action,
 ): AdminTokenState => {
   switch (action.type) {
     case "GET_ADMIN_TOKENS_REQUEST":

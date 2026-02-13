@@ -14,7 +14,6 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../../../store";
 import { getAdminTokensAction } from "../../../../Actions/Auth/TokenAction";
 
-
 /** 🔹 Token type (API ke exact hisaab se) */
 interface AdminToken {
   tokenId: number;
@@ -35,7 +34,7 @@ const AllUserTokens: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
 
   const { data, totalTokens, loading, error } = useSelector(
-    (state: RootState) => state.adminTokenReducer
+    (state: RootState) => state.adminTokenReducer,
   );
 
   useEffect(() => {
@@ -93,9 +92,7 @@ const AllUserTokens: React.FC = () => {
                 <TableCell>{t.remainingTons}</TableCell>
 
                 {/* Created date */}
-                <TableCell>
-                  {new Date(t.createdAt).toLocaleString()}
-                </TableCell>
+                <TableCell>{new Date(t.createdAt).toLocaleString()}</TableCell>
 
                 {/* Confirmed date */}
                 <TableCell>

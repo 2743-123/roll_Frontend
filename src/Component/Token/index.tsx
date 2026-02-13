@@ -17,7 +17,10 @@ import {
 } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../store";
-import { getTokenAction, deleteTokenAction } from "../../Actions/Auth/TokenAction";
+import {
+  getTokenAction,
+  deleteTokenAction,
+} from "../../Actions/Auth/TokenAction";
 import AddTokenDialog from "./add";
 import EditTokenDialog from "./edit";
 
@@ -25,7 +28,7 @@ const TokenPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { selectedUser } = useSelector((state: RootState) => state.user);
   const { tokens, loading, error } = useSelector(
-    (state: RootState) => state.token
+    (state: RootState) => state.token,
   );
 
   const [openAddDialog, setOpenAddDialog] = useState(false);
@@ -51,7 +54,7 @@ const TokenPage: React.FC = () => {
     if (!selectedUser?.id) return;
 
     const confirmDelete = window.confirm(
-      "Are you sure you want to delete this pending token?"
+      "Are you sure you want to delete this pending token?",
     );
 
     if (confirmDelete) {
@@ -202,7 +205,10 @@ const TokenPage: React.FC = () => {
                   key={token.id}
                   hover
                   sx={{
-                    "&:hover": { backgroundColor: "#f1f5f9", transition: "0.2s" },
+                    "&:hover": {
+                      backgroundColor: "#f1f5f9",
+                      transition: "0.2s",
+                    },
                   }}
                 >
                   <TableCell>{token.id}</TableCell>

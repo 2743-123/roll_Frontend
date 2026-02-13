@@ -41,7 +41,7 @@ export const addUserService = async (userData: {
 export const updateUserService = async (
   id: number,
   userData: any,
-  token: string
+  token: string,
 ) => {
   // Replace :userId with actual ID
   const url = API_UPDATE_USER.replace(":userId", id.toString());

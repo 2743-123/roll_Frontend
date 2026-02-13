@@ -2,8 +2,6 @@ export const GET_BEDASH_LIST = "GET_BEDASH_LIST";
 export const CONFIRM_BEDASH_SUCCESS = "CONFIRM_BEDASH_SUCCESS";
 export const ADD_BEDASH_SUCCESS = "ADD_BEDASH_SUCCESS";
 
-
-
 interface BedashItem {
   id: number;
   userName: string;
@@ -15,7 +13,7 @@ interface BedashItem {
   createdAt: string;
 }
 
-export  interface BedashState {
+export interface BedashState {
   data: BedashItem[];
   loading: boolean;
   error: string | null;

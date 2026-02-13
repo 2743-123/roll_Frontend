@@ -26,9 +26,9 @@ const appReducer = combineReducers({
   user: userReducer,
   token: tokenReducer,
   notification: Notification,
-  bedash:bedashReducer,
+  bedash: bedashReducer,
   adminBalanceReducer,
-  adminTokenReducer
+  adminTokenReducer,
 });
 
 const rootReducer = (state: any, action: any) => {

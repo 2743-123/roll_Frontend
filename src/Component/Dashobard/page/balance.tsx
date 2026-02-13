@@ -13,7 +13,7 @@ const BalanceCard: React.FC = () => {
   const { token, user } = useSelector((state: RootState) => state.auth);
   const { selectedUser } = useSelector((state: RootState) => state.user);
   const { data, error, loading } = useSelector(
-    (state: RootState) => state.balance
+    (state: RootState) => state.balance,
   );
 
   useEffect(() => {
@@ -65,25 +65,29 @@ const BalanceCard: React.FC = () => {
       ) : balance ? (
         <Grid container spacing={2}>
           {/* Flyash */}
-          <Grid >
+          <Grid>
             <Box display="flex" alignItems="center" gap={1}>
               <LocalShippingIcon color="success" />
               <Typography fontWeight={600}>Flyash</Typography>
             </Box>
             <Typography>Total: ₹{balance.flyash?.total ?? 0}</Typography>
             <Typography>Used: ₹{balance.flyash?.used ?? 0}</Typography>
-            <Typography>Remaining: ₹{balance.flyash?.remaining ?? 0}</Typography>
+            <Typography>
+              Remaining: ₹{balance.flyash?.remaining ?? 0}
+            </Typography>
           </Grid>
 
           {/* Bedash */}
-          <Grid >
+          <Grid>
             <Box display="flex" alignItems="center" gap={1}>
               <LocalShippingIcon color="warning" />
               <Typography fontWeight={600}>Bedash</Typography>
             </Box>
             <Typography>Total: ₹{balance.bedash?.total ?? 0}</Typography>
             <Typography>Used: ₹{balance.bedash?.used ?? 0}</Typography>
-            <Typography>Remaining: ₹{balance.bedash?.remaining ?? 0}</Typography>
+            <Typography>
+              Remaining: ₹{balance.bedash?.remaining ?? 0}
+            </Typography>
           </Grid>
         </Grid>
       ) : (

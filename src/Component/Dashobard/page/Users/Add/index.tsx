@@ -73,7 +73,7 @@ const AddUsers: React.FC<AddUsersProps> = ({ open, onClose }) => {
         email: form.email,
         password: form.password,
         role: form.role,
-      })
+      }),
     );
     onClose();
     setForm({

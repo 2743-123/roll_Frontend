@@ -47,7 +47,7 @@ const userReducer = (state = initialState, action: userAction): userState => {
         users: state.users.map((u) =>
           u.id === action.payload.user.id
             ? { ...u, ...action.payload.user } // ✅ note the .user
-            : u
+            : u,
         ),
       };
 

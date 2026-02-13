@@ -94,7 +94,7 @@ const AdminList: React.FC = () => {
       (u) =>
         (u.name || "").toLowerCase().includes(search.toLowerCase()) ||
         (u.email || "").toLowerCase().includes(search.toLowerCase()) ||
-        (u.role || "").toLowerCase().includes(search.toLowerCase())
+        (u.role || "").toLowerCase().includes(search.toLowerCase()),
     );
 
   return (
@@ -148,7 +148,8 @@ const AdminList: React.FC = () => {
                 textTransform: "none",
                 "&:hover": {
                   transform: "scale(1.05)",
-                  background: "linear-gradient(90deg, #42a5f5 0%, #64b5f6 100%)",
+                  background:
+                    "linear-gradient(90deg, #42a5f5 0%, #64b5f6 100%)",
                 },
                 transition: "all 0.3s ease",
               }}
@@ -168,7 +169,11 @@ const AdminList: React.FC = () => {
       />
       <AddUsers open={openAdd} onClose={handleCloseAdd} />
       {selectedUser && (
-        <EditUser open={openEdit} onClose={handleCloseEdit} user={selectedUser} />
+        <EditUser
+          open={openEdit}
+          onClose={handleCloseEdit}
+          user={selectedUser}
+        />
       )}
 
       {/* Table */}
@@ -200,7 +205,7 @@ const AdminList: React.FC = () => {
                   >
                     {header}
                   </TableCell>
-                )
+                ),
               )}
             </TableRow>
           </TableHead>
@@ -228,7 +233,9 @@ const AdminList: React.FC = () => {
                       {u.role}
                     </TableCell>
                     <TableCell>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
                         <Box
                           sx={{
                             width: 10,

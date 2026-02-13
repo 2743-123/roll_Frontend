@@ -54,8 +54,8 @@ function App() {
             <Route path="Token" element={<TokenTable />} />
             <Route path="Bedash" element={<BedashList />} />
             <Route path="admin" element={<AdminList />} />
-            <Route path="AllUserToken" element={<AllUserToken/>} />
-            <Route path="AllTransection" element={<AllTransection/>} />
+            <Route path="AllUserToken" element={<AllUserToken />} />
+            <Route path="AllTransection" element={<AllTransection />} />
           </Route>
         </Routes>
       </BrowserRouter>

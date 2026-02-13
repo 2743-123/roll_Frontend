@@ -36,7 +36,7 @@ const AddBalanceDialog: React.FC<AddBalanceDialogProps> = ({
 
   const userList = Array.isArray(users) ? users : [users];
   const onlyUsers = userList.filter(
-    (u: any) => u.role?.toLowerCase() === "user"
+    (u: any) => u.role?.toLowerCase() === "user",
   );
 
   const [selectedUserId, setSelectedUserId] = useState<number | "">("");
@@ -67,7 +67,7 @@ const AddBalanceDialog: React.FC<AddBalanceDialogProps> = ({
 
     if (paymentMode === "online" && (!accountHolder || !referenceNumber)) {
       alert(
-        "Please fill account holder and reference number for online payment"
+        "Please fill account holder and reference number for online payment",
       );
       return;
     }
@@ -83,7 +83,7 @@ const AddBalanceDialog: React.FC<AddBalanceDialogProps> = ({
           bankName: paymentMode === "cash" ? bankName : "",
           accountHolder: paymentMode === "online" ? accountHolder : "",
           referenceNumber: paymentMode === "online" ? referenceNumber : "",
-        })
+        }),
       );
 
       // Reset

@@ -71,7 +71,7 @@ const EditTokenDialog: React.FC<EditTokenDialogProps> = ({
         weight: formData.weight,
         commission: formData.commission,
         userId: token.user.id,
-      })
+      }),
     );
 
     setTokenStatus("updated");
@@ -84,7 +84,7 @@ const EditTokenDialog: React.FC<EditTokenDialogProps> = ({
       confirmPaymentAction({
         tokenId: token.id,
         paidAmount: formData.paidAmount,
-      })
+      }),
     );
 
     onClose();
@@ -121,7 +121,7 @@ const EditTokenDialog: React.FC<EditTokenDialogProps> = ({
         <Box sx={{ mt: 2 }}>
           <Grid container spacing={2}>
             {/* 🚛 Truck Number */}
-            <Grid >
+            <Grid>
               <TextField
                 label="Truck Number"
                 name="truckNumber"
@@ -132,7 +132,7 @@ const EditTokenDialog: React.FC<EditTokenDialogProps> = ({
             </Grid>
 
             {/* ⚖ Weight */}
-            <Grid >
+            <Grid>
               <TextField
                 label="Weight (tons)"
                 name="weight"
@@ -144,7 +144,7 @@ const EditTokenDialog: React.FC<EditTokenDialogProps> = ({
             </Grid>
 
             {/* 💵 Rate (Fixed 180) */}
-            <Grid >
+            <Grid>
               <TextField
                 label="Rate / Ton"
                 fullWidth
@@ -155,7 +155,7 @@ const EditTokenDialog: React.FC<EditTokenDialogProps> = ({
             </Grid>
 
             {/* 🧾 Commission */}
-            <Grid >
+            <Grid>
               <TextField
                 label="Commission"
                 name="commission"
@@ -167,7 +167,7 @@ const EditTokenDialog: React.FC<EditTokenDialogProps> = ({
             </Grid>
 
             {/* 💰 Paid Amount */}
-            <Grid >
+            <Grid>
               <TextField
                 label="Paid Amount"
                 name="paidAmount"
