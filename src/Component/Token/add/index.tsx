@@ -1,5 +1,5 @@
 // src/Component/Token/AddTokenDialog.tsx
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -14,7 +14,10 @@ import {
 } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../../store";
-import { createTokenAction } from "../../../Actions/Auth/TokenAction";
+import {
+  createTokenAction,
+  getTokenAction,
+} from "../../../Actions/Auth/TokenAction";
 
 interface AddTokenDialogProps {
   open: boolean;
@@ -31,12 +34,23 @@ const AddTokenDialog: React.FC<AddTokenDialogProps> = ({ open, onClose }) => {
     materialType: "",
   });
 
-  /** 🔍 Unique customer names from previous tokens */
+  /** 🔄 Fetch tokens when dialog opens */
+  useEffect(() => {
+    if (open && selectedUser?.id) {
+      dispatch(getTokenAction(selectedUser.id));
+    }
+  }, [open, selectedUser?.id, dispatch]);
+
+  /** 🔍 Unique customer names */
   const customerOptions = useMemo(() => {
-    const names = tokens?.map((t: any) => t.customerName) || [];
-    return Array.from(new Set(names)); // remove duplicates
+    if (!tokens) return [];
+
+    const names = tokens.map((t: any) => t.customerName).filter(Boolean);
+
+    return Array.from(new Set(names));
   }, [tokens]);
 
+  /** 📝 Submit */
   const handleSubmit = () => {
     if (!selectedUser) return alert("Please select a user first!");
 
@@ -46,7 +60,7 @@ const AddTokenDialog: React.FC<AddTokenDialogProps> = ({ open, onClose }) => {
     setForm({ customerName: "", materialType: "" });
   };
 
-  /** ✅ Button disable condition */
+  /** ❌ Disable button */
   const isFormInvalid =
     !form.customerName.trim() || !form.materialType || !selectedUser;
 
@@ -59,6 +73,7 @@ const AddTokenDialog: React.FC<AddTokenDialogProps> = ({ open, onClose }) => {
           borderRadius: 3,
         }}
       >
+        {/* Header */}
         <DialogTitle
           sx={{
             backgroundColor: "#1976d2",
@@ -71,19 +86,24 @@ const AddTokenDialog: React.FC<AddTokenDialogProps> = ({ open, onClose }) => {
           Add New Token
         </DialogTitle>
 
+        {/* Content */}
         <DialogContent dividers sx={{ p: 3, backgroundColor: "white" }}>
           <Box display="flex" flexDirection="column" gap={2}>
-            
             {/* ⭐ Customer Autocomplete */}
             <Autocomplete
               freeSolo
               options={customerOptions}
-              value={form.customerName}
+              inputValue={form.customerName}
               onInputChange={(_, value) =>
                 setForm((prev) => ({ ...prev, customerName: value }))
               }
               renderInput={(params) => (
-                <TextField {...params} label="Customer Name" fullWidth required />
+                <TextField
+                  {...params}
+                  label="Customer Name"
+                  fullWidth
+                  required
+                />
               )}
             />
 
@@ -106,6 +126,7 @@ const AddTokenDialog: React.FC<AddTokenDialogProps> = ({ open, onClose }) => {
           </Box>
         </DialogContent>
 
+        {/* Actions */}
         <DialogActions sx={{ px: 3, py: 2, backgroundColor: "#f1f5f9" }}>
           <Button onClick={onClose} variant="outlined">
             Cancel
