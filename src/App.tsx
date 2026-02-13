@@ -13,6 +13,8 @@ import AdminList from "./Component/Dashobard/page/Admin & SuperAdmin";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "./store";
 import { useEffect } from "react";
+import AllUserToken from "./Component/Dashobard/page/AllUserBalance & Token/index";
+import AllTransection from "./Component/Dashobard/page/AllUserBalance & Token/allTransection";
 
 function App() {
   const dispatch = useDispatch<AppDispatch>();
@@ -52,6 +54,8 @@ function App() {
             <Route path="Token" element={<TokenTable />} />
             <Route path="Bedash" element={<BedashList />} />
             <Route path="admin" element={<AdminList />} />
+            <Route path="AllUserToken" element={<AllUserToken/>} />
+            <Route path="AllTransection" element={<AllTransection/>} />
           </Route>
         </Routes>
       </BrowserRouter>

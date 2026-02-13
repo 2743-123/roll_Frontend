@@ -26,7 +26,6 @@ const AddTokenDialog: React.FC<AddTokenDialogProps> = ({ open, onClose }) => {
 
   const [form, setForm] = useState({
     customerName: "",
-    truckNumber: "",
     materialType: "",
   });
 
@@ -36,10 +35,18 @@ const AddTokenDialog: React.FC<AddTokenDialogProps> = ({ open, onClose }) => {
 
   const handleSubmit = () => {
     if (!selectedUser) return alert("Please select a user first!");
+
     dispatch(createTokenAction({ ...form, userId: selectedUser.id }));
     onClose();
-    setForm({ customerName: "", truckNumber: "", materialType: "" });
+
+    setForm({ customerName: "", materialType: "" });
   };
+
+  /** ✅ Button disable condition */
+  const isFormInvalid =
+    !form.customerName.trim() ||
+    !form.materialType ||
+    !selectedUser;
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
@@ -91,14 +98,7 @@ const AddTokenDialog: React.FC<AddTokenDialogProps> = ({ open, onClose }) => {
               fullWidth
               required
             />
-            <TextField
-              label="Truck Number"
-              name="truckNumber"
-              value={form.truckNumber}
-              onChange={handleChange}
-              fullWidth
-              required
-            />
+
             <TextField
               select
               label="Material Type"
@@ -132,10 +132,12 @@ const AddTokenDialog: React.FC<AddTokenDialogProps> = ({ open, onClose }) => {
           >
             Cancel
           </Button>
+
           <Button
             onClick={handleSubmit}
             variant="contained"
             color="primary"
+            disabled={isFormInvalid}
             sx={{ borderRadius: 2 }}
           >
             Create Token

@@ -28,12 +28,10 @@ const DropDownUserList: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
 
   const { token, user } = useSelector(
-    (state: RootState) => state.auth
+    (state: RootState) => state.auth,
   ) as AuthState;
 
-  const { users } = useSelector(
-    (state: RootState) => state.user
-  ) as userState;
+  const { users } = useSelector((state: RootState) => state.user) as userState;
 
   const [selected, setSelected] = useState<string>("");
 
@@ -171,9 +169,7 @@ const DropDownUserList: React.FC = () => {
                 value={u.id}
                 sx={{
                   backgroundColor:
-                    selected === u.id.toString()
-                      ? "#bbdefb"
-                      : "transparent",
+                    selected === u.id.toString() ? "#bbdefb" : "transparent",
                 }}
               >
                 <ListItemText primary={u.name} />

@@ -1,5 +1,6 @@
-import { ERROR} from "../../ActionType/auth";
+import { ERROR } from "../../ActionType/auth";
 import {
+  GET_ADMIN_TOKENS,
   TOKEN_CLEAR,
   TOKEN_CONFIRM_SUCCESS,
   TOKEN_CREATE_SUCCESS,
@@ -11,6 +12,8 @@ import { AppDispatch } from "../../store";
 import {
   confirmPaymentService,
   createTokenService,
+  deleteTokenService,
+  getAdminTokensService,
   getTokensService,
   updateTokenService,
 } from "../auth services/tokenServices";
@@ -37,7 +40,7 @@ export const createTokenAction =
         showNotification({
           type: "success",
           message: "Token Create successfully!",
-        })
+        }),
       );
     } catch (err: any) {
       dispatch({
@@ -56,7 +59,7 @@ export const updateTokenAction =
         showNotification({
           type: "success",
           message: "Token Update successfully!",
-        })
+        }),
       );
     } catch (err: any) {
       dispatch({
@@ -75,7 +78,7 @@ export const confirmPaymentAction =
         showNotification({
           type: "success",
           message: "Token Confirm successfully!",
-        })
+        }),
       );
     } catch (err: any) {
       dispatch({
@@ -84,3 +87,44 @@ export const confirmPaymentAction =
       });
     }
   };
+
+export const getAdminTokensAction = () => async (dispatch: AppDispatch) => {
+  try {
+    dispatch({ type: "GET_ADMIN_TOKENS_REQUEST" });
+
+    const data = await getAdminTokensService();
+
+    dispatch({
+      type: GET_ADMIN_TOKENS,
+      payload: data,
+    });
+  } catch (error: any) {
+    dispatch({
+      type: ERROR,
+      payload: { msg: error?.response?.data?.msg || "Token fetch failed" },
+    });
+  }
+};
+
+export const deleteTokenAction =
+  (tokenId: number, userId: number) => async (dispatch: AppDispatch) => {
+    try {
+      await deleteTokenService(tokenId);
+
+      // refresh token list after delete
+      dispatch(getTokenAction(userId));
+
+      dispatch(
+        showNotification({
+          type: "success",
+          message: "Token deleted successfully!",
+        }),
+      );
+    } catch (err: any) {
+      dispatch({
+        type: ERROR,
+        payload: err.response?.data?.msg || "Delete failed",
+      });
+    }
+  };
+

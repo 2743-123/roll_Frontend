@@ -6,7 +6,7 @@ const ENV = "local";
 
 const ENVIRONMENT: Record<string, EnvConfig> = {
   local: {
-    Base_API_URL:   process.env.REACT_APP_API_URL || "http://localhost:5000/api",
+    Base_API_URL: process.env.REACT_APP_API_URL || "http://localhost:5000/api",
   },
   production: {
     Base_API_URL:

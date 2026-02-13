@@ -12,6 +12,8 @@ import AccountBalanceWalletOutlinedIcon from "@mui/icons-material/AccountBalance
 import MonetizationOnIcon from "@mui/icons-material/MonetizationOn";
 import ConstructionIcon from "@mui/icons-material/Construction";
 import PersonIcon from "@mui/icons-material/Person";
+import TokenIcon from "@mui/icons-material/Token";
+import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
 
 const Sidebar: React.FC = () => {
   const navigate = useNavigate();
@@ -19,6 +21,7 @@ const Sidebar: React.FC = () => {
 
   const canSeeUsersTab = user?.role === "admin" || user?.role === "superadmin";
   const canSeeAdminTab = user?.role === "superadmin";
+  const canSeeOnlyAdmin = user?.role === "admin";
 
   // 🔹 Flash animation keyframes for icons
   React.useEffect(() => {
@@ -40,7 +43,9 @@ const Sidebar: React.FC = () => {
       {/* Dashboard */}
       <ListItemButton onClick={() => navigate("/")}>
         <ListItemIcon>
-          <DashboardSharpIcon sx={{ color: "#ff0000ff", animation: "flash 1.2s infinite" }} />
+          <DashboardSharpIcon
+            sx={{ color: "#ff0000ff", animation: "flash 1.2s infinite" }}
+          />
         </ListItemIcon>
         <ListItemText primary="Dashboard" />
       </ListItemButton>
@@ -49,7 +54,9 @@ const Sidebar: React.FC = () => {
       {canSeeUsersTab && (
         <ListItemButton onClick={() => navigate("/users")}>
           <ListItemIcon>
-            <SupervisorAccountSharpIcon sx={{ color: "#5506ffff", animation: "flash 1.2s infinite" }} />
+            <SupervisorAccountSharpIcon
+              sx={{ color: "#5506ffff", animation: "flash 1.2s infinite" }}
+            />
           </ListItemIcon>
           <ListItemText primary="Users" />
         </ListItemButton>
@@ -59,32 +66,65 @@ const Sidebar: React.FC = () => {
       {canSeeAdminTab && (
         <ListItemButton onClick={() => navigate("/admin")}>
           <ListItemIcon>
-            <PersonIcon sx={{ color: "#189fe8ff", animation: "flash 1.2s infinite" }} />
+            <PersonIcon
+              sx={{ color: "#189fe8ff", animation: "flash 1.2s infinite" }}
+            />
           </ListItemIcon>
           <ListItemText primary="Admin & Superadmin" />
+        </ListItemButton>
+      )}
+
+      {/* Token */}
+      <ListItemButton onClick={() => navigate("/token")}>
+        <ListItemIcon>
+          <MonetizationOnIcon
+            sx={{ color: "#ffd500ff", animation: "flash 1.2s infinite" }}
+          />
+        </ListItemIcon>
+        <ListItemText primary="Token" />
+      </ListItemButton>
+
+      {canSeeOnlyAdmin && (
+        <ListItemButton onClick={() => navigate("/AllUserToken")}>
+          <ListItemIcon>
+            <TokenIcon
+              sx={{ color: "#189fe8ff", animation: "flash 1.2s infinite" }}
+            />
+          </ListItemIcon>
+          <ListItemText primary="All User Token" />
         </ListItemButton>
       )}
 
       {/* Balance */}
       <ListItemButton onClick={() => navigate("/balance")}>
         <ListItemIcon>
-          <AccountBalanceWalletOutlinedIcon sx={{ color: "#00ff6eff", animation: "flash 1.2s infinite" }} />
+          <AccountBalanceWalletOutlinedIcon
+            sx={{ color: "#00ff6eff", animation: "flash 1.2s infinite" }}
+          />
         </ListItemIcon>
         <ListItemText primary="Balance" />
       </ListItemButton>
 
-      {/* Token */}
-      <ListItemButton onClick={() => navigate("/token")}>
-        <ListItemIcon>
-          <MonetizationOnIcon sx={{ color: "#ffd500ff", animation: "flash 1.2s infinite" }} />
-        </ListItemIcon>
-        <ListItemText primary="Token" />
-      </ListItemButton>
+      {canSeeOnlyAdmin && (
+        <ListItemButton onClick={() => navigate("/AllTransection")}>
+          <ListItemIcon>
+            <AccountBalanceIcon
+              sx={{
+                color: "rgb(131, 232, 24)",
+                animation: "flash 1.2s infinite",
+              }}
+            />
+          </ListItemIcon>
+          <ListItemText primary="All User Balance" />
+        </ListItemButton>
+      )}
 
       {/* Bedash */}
       <ListItemButton onClick={() => navigate("/bedash")}>
         <ListItemIcon>
-          <ConstructionIcon sx={{ color: "#ff5e00ff", animation: "flash 1.2s infinite" }} />
+          <ConstructionIcon
+            sx={{ color: "#ff5e00ff", animation: "flash 1.2s infinite" }}
+          />
         </ListItemIcon>
         <ListItemText primary="Bedash" />
       </ListItemButton>

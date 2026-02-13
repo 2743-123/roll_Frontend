@@ -1,6 +1,7 @@
 import axios from "axios";
-import { API_BALANCE_ADD, API_BALANCE_GET } from "../API End point"; // ✅ correct import path
+import { API_ADMIN_BALANCE, API_BALANCE_ADD, API_BALANCE_GET } from "../API End point"; // ✅ correct import path
 import api from "../../expireToken";
+import { AdminBalanceResponse } from "../../ActionType/balancetype.ts/balance";
 
 interface AddBalancePayload {
   userId: number | string;
@@ -74,5 +75,33 @@ export const addBalanceService = async (payload: AddBalancePayload) => {
     }
 
     throw error; // let Redux or component handle it
+  }
+};
+
+export const getAdminBalanceService = async () => {
+  try {
+    const accessToken = localStorage.getItem("accessToken");
+    const token =
+      accessToken && accessToken !== "undefined" ? accessToken : null;
+
+    const response = await api.get(API_ADMIN_BALANCE, {
+      headers: {
+        Authorization: token ? `Bearer ${token}` : "",
+        "Content-Type": "application/json",
+      },
+    });
+
+    return response.data as AdminBalanceResponse;
+  } catch (error: any) {
+    console.error(
+      "❌ Error in getAdminBalanceService:",
+      error.response?.data || error.message
+    );
+
+    if (error.response?.status === 401) {
+      console.warn("Token expired or invalid.");
+    }
+
+    throw error;
   }
 };

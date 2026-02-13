@@ -32,39 +32,53 @@ const EditTokenDialog: React.FC<EditTokenDialogProps> = ({
 }) => {
   const dispatch = useDispatch<AppDispatch>();
 
+  /** 📦 Form State */
   const [formData, setFormData] = useState({
-    weight: token.weight || "",
-    ratePerTon: token.ratePerTon || 180,
-    commission: token.commission || 0,
-    paidAmount: token.paidAmount || 0,
+    truckNumber: "",
+    weight: "",
+    ratePerTon: 180, // ⭐ fixed rate
+    commission: 0,
+    paidAmount: 0,
   });
 
   const [tokenStatus, setTokenStatus] = useState(token.status);
 
+  /** 🔄 Load token data when dialog opens */
   useEffect(() => {
     setTokenStatus(token.status);
-  }, [token.status]);
 
+    setFormData({
+      truckNumber: token.truckNumber || "",
+      weight: token.weight || "",
+      ratePerTon: 180, // ⭐ always fixed
+      commission: token.commission || 0,
+      paidAmount: token.paidAmount || 0,
+    });
+  }, [token]);
+
+  /** ✏️ Handle input change */
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  /** 🔄 Update token (truck + billing) */
   const handleUpdate = async () => {
     await dispatch(
       updateTokenAction({
         tokenId: token.id,
+        truckNumber: formData.truckNumber,
         weight: formData.weight,
-        ratePerTon: formData.ratePerTon,
         commission: formData.commission,
-        paidAmount: formData.paidAmount,
         userId: token.user.id,
       })
     );
+
     setTokenStatus("updated");
     onRefresh();
   };
 
+  /** 💰 Confirm payment */
   const handleConfirmPayment = async () => {
     await dispatch(
       confirmPaymentAction({
@@ -72,15 +86,17 @@ const EditTokenDialog: React.FC<EditTokenDialogProps> = ({
         paidAmount: formData.paidAmount,
       })
     );
+
     onClose();
     onRefresh();
   };
 
+  /** 🧮 Total calculation */
   const totalAmount =
-    Number(formData.weight) * Number(formData.ratePerTon) +
-    Number(formData.commission);
+    Number(formData.weight) * 180 + Number(formData.commission);
 
-  const isConfirmDisabled = tokenStatus === "pending";
+  /** 🔒 Paid field rule */
+  const isPaidDisabled = tokenStatus !== "updated";
 
   return (
     <Dialog
@@ -104,6 +120,18 @@ const EditTokenDialog: React.FC<EditTokenDialogProps> = ({
       <DialogContent>
         <Box sx={{ mt: 2 }}>
           <Grid container spacing={2}>
+            {/* 🚛 Truck Number */}
+            <Grid >
+              <TextField
+                label="Truck Number"
+                name="truckNumber"
+                fullWidth
+                value={formData.truckNumber}
+                onChange={handleChange}
+              />
+            </Grid>
+
+            {/* ⚖ Weight */}
             <Grid >
               <TextField
                 label="Weight (tons)"
@@ -114,16 +142,19 @@ const EditTokenDialog: React.FC<EditTokenDialogProps> = ({
                 type="number"
               />
             </Grid>
+
+            {/* 💵 Rate (Fixed 180) */}
             <Grid >
               <TextField
                 label="Rate / Ton"
-                name="ratePerTon"
                 fullWidth
-                value={formData.ratePerTon}
-                onChange={handleChange}
+                value={180}
+                disabled
                 type="number"
               />
             </Grid>
+
+            {/* 🧾 Commission */}
             <Grid >
               <TextField
                 label="Commission"
@@ -134,6 +165,8 @@ const EditTokenDialog: React.FC<EditTokenDialogProps> = ({
                 type="number"
               />
             </Grid>
+
+            {/* 💰 Paid Amount */}
             <Grid >
               <TextField
                 label="Paid Amount"
@@ -142,20 +175,25 @@ const EditTokenDialog: React.FC<EditTokenDialogProps> = ({
                 value={formData.paidAmount}
                 onChange={handleChange}
                 type="number"
+                disabled={isPaidDisabled} // ⭐ disabled until updated
               />
             </Grid>
           </Grid>
 
+          {/* 💰 Total Display */}
           <Box sx={{ mt: 3, textAlign: "center" }}>
             <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
               💰 Total Amount:{" "}
-              <span style={{ color: "#43a047" }}>₹{totalAmount.toFixed(2)}</span>
+              <span style={{ color: "#43a047" }}>
+                ₹{totalAmount.toFixed(2)}
+              </span>
             </Typography>
           </Box>
         </Box>
       </DialogContent>
 
       <DialogActions sx={{ justifyContent: "space-between", p: 2 }}>
+        {/* Cancel */}
         <Button
           variant="outlined"
           color="error"
@@ -170,6 +208,7 @@ const EditTokenDialog: React.FC<EditTokenDialogProps> = ({
         </Button>
 
         <Box>
+          {/* Update */}
           <Button
             variant="contained"
             color="primary"
@@ -178,16 +217,13 @@ const EditTokenDialog: React.FC<EditTokenDialogProps> = ({
               borderRadius: 2,
               px: 3,
               background: "linear-gradient(90deg, #2196f3 0%, #21cbf3 100%)",
-              "&:hover": {
-                background: "linear-gradient(90deg, #64b5f6 0%, #81d4fa 100%)",
-                transform: "scale(1.05)",
-              },
             }}
             onClick={handleUpdate}
           >
             Update Token
           </Button>
 
+          {/* Confirm */}
           <Button
             variant="contained"
             color="success"
@@ -195,13 +231,9 @@ const EditTokenDialog: React.FC<EditTokenDialogProps> = ({
               borderRadius: 2,
               px: 3,
               background: "linear-gradient(90deg, #43a047 0%, #66bb6a 100%)",
-              "&:hover": {
-                background: "linear-gradient(90deg, #66bb6a 0%, #81c784 100%)",
-                transform: "scale(1.05)",
-              },
             }}
             onClick={handleConfirmPayment}
-            disabled={isConfirmDisabled}
+            disabled={tokenStatus !== "updated"}
           >
             Confirm Payment
           </Button>

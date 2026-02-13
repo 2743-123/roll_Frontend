@@ -44,7 +44,7 @@ export const login =
         showNotification({
           type: "success",
           message: "Login Success successfully!",
-        })
+        }),
       );
 
       localStorage.setItem("user", JSON.stringify(user));
@@ -59,7 +59,7 @@ export const login =
         showNotification({
           type: "error",
           message: error?.response?.data?.msg || error.message,
-        })
+        }),
       );
     }
   };
@@ -74,7 +74,7 @@ export const logoutAction = () => async (dispatch: AppDispatch) => {
       showNotification({
         type: "success",
         message: "Logout Success successfully!",
-      })
+      }),
     );
     return true;
   } catch (error: any) {
@@ -82,7 +82,7 @@ export const logoutAction = () => async (dispatch: AppDispatch) => {
       showNotification({
         type: "error",
         message: error?.response?.data?.msg || error.message,
-      })
+      }),
     );
     return false;
   }
