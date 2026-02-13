@@ -1,5 +1,5 @@
 // src/Component/Token/AddTokenDialog.tsx
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -10,6 +10,7 @@ import {
   MenuItem,
   Box,
   Paper,
+  Autocomplete,
 } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../../store";
@@ -23,15 +24,18 @@ interface AddTokenDialogProps {
 const AddTokenDialog: React.FC<AddTokenDialogProps> = ({ open, onClose }) => {
   const dispatch = useDispatch<AppDispatch>();
   const { selectedUser } = useSelector((state: RootState) => state.user);
+  const { tokens } = useSelector((state: RootState) => state.token);
 
   const [form, setForm] = useState({
     customerName: "",
     materialType: "",
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  /** 🔍 Unique customer names from previous tokens */
+  const customerOptions = useMemo(() => {
+    const names = tokens?.map((t: any) => t.customerName) || [];
+    return Array.from(new Set(names)); // remove duplicates
+  }, [tokens]);
 
   const handleSubmit = () => {
     if (!selectedUser) return alert("Please select a user first!");
@@ -61,48 +65,37 @@ const AddTokenDialog: React.FC<AddTokenDialogProps> = ({ open, onClose }) => {
             color: "white",
             textAlign: "center",
             fontWeight: 600,
-            fontSize: "1.2rem",
             py: 1.5,
-            borderTopLeftRadius: 12,
-            borderTopRightRadius: 12,
           }}
         >
           Add New Token
         </DialogTitle>
 
-        <DialogContent
-          dividers
-          sx={{
-            p: 3,
-            backgroundColor: "white",
-          }}
-        >
-          <Box
-            display="flex"
-            flexDirection="column"
-            gap={2}
-            sx={{
-              "& .MuiTextField-root": {
-                backgroundColor: "#f9f9f9",
-                borderRadius: 1,
-              },
-            }}
-          >
-            <TextField
-              label="Customer Name"
-              name="customerName"
+        <DialogContent dividers sx={{ p: 3, backgroundColor: "white" }}>
+          <Box display="flex" flexDirection="column" gap={2}>
+            
+            {/* ⭐ Customer Autocomplete */}
+            <Autocomplete
+              freeSolo
+              options={customerOptions}
               value={form.customerName}
-              onChange={handleChange}
-              fullWidth
-              required
+              onInputChange={(_, value) =>
+                setForm((prev) => ({ ...prev, customerName: value }))
+              }
+              renderInput={(params) => (
+                <TextField {...params} label="Customer Name" fullWidth required />
+              )}
             />
 
+            {/* Material Type */}
             <TextField
               select
               label="Material Type"
               name="materialType"
               value={form.materialType}
-              onChange={handleChange}
+              onChange={(e) =>
+                setForm((prev) => ({ ...prev, materialType: e.target.value }))
+              }
               fullWidth
               required
             >
@@ -113,30 +106,15 @@ const AddTokenDialog: React.FC<AddTokenDialogProps> = ({ open, onClose }) => {
           </Box>
         </DialogContent>
 
-        <DialogActions
-          sx={{
-            px: 3,
-            py: 2,
-            backgroundColor: "#f1f5f9",
-            borderBottomLeftRadius: 12,
-            borderBottomRightRadius: 12,
-          }}
-        >
-          <Button
-            onClick={onClose}
-            variant="outlined"
-            color="inherit"
-            sx={{ borderRadius: 2 }}
-          >
+        <DialogActions sx={{ px: 3, py: 2, backgroundColor: "#f1f5f9" }}>
+          <Button onClick={onClose} variant="outlined">
             Cancel
           </Button>
 
           <Button
             onClick={handleSubmit}
             variant="contained"
-            color="primary"
             disabled={isFormInvalid}
-            sx={{ borderRadius: 2 }}
           >
             Create Token
           </Button>
