@@ -16,14 +16,17 @@ import { AppDispatch, RootState } from "../../../../store";
 import { getAdminBalanceAction } from "../../../../Actions/Auth/balance";
 import { AdminUserBalance } from "../../../../ActionType/balancetype.ts/balance";
 
+type SortField = "none" | "flyash" | "bedash";
+
 const AllTransection: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
 
   const { data, loading, error } = useSelector(
-    (state: RootState) => state.adminBalanceReducer,
+    (state: RootState) => state.adminBalanceReducer
   );
 
   const [search, setSearch] = useState("");
+  const [sortField, setSortField] = useState<SortField>("none");
 
   useEffect(() => {
     dispatch(getAdminBalanceAction());
@@ -31,15 +34,14 @@ const AllTransection: React.FC = () => {
 
   const users: AdminUserBalance[] = data ?? [];
 
-  /** 🔹 safe string helper (null crash fix) */
+  /** null safe helper */
   const safe = (v: any) => (v ?? "").toString().toLowerCase();
 
-  /** 🔍 Filtered transactions */
-  const filteredRows = users.flatMap((u) =>
+  /** ================= FILTER ================= */
+  let rows = users.flatMap((u) =>
     u.transactions
       .filter((t) => {
         const q = search.toLowerCase();
-
         return (
           safe(u.userName).includes(q) ||
           safe(t.date).includes(q) ||
@@ -52,8 +54,40 @@ const AllTransection: React.FC = () => {
           safe(t.referenceNumber).includes(q)
         );
       })
-      .map((t) => ({ user: u, tx: t })),
+      .map((t) => ({ user: u, tx: t }))
   );
+
+  /** ================= DEFAULT DATE SORT ================= */
+  rows = rows.sort(
+    (a, b) =>
+      new Date(b.tx.date).getTime() - new Date(a.tx.date).getTime()
+  );
+
+  /** ================= REMAINING SORT ================= */
+  if (sortField !== "none") {
+    rows = [...rows].sort((a, b) => {
+      const aVal =
+        sortField === "flyash"
+          ? Number(a.user.flyash.remaining)
+          : Number(a.user.bedash.remaining);
+
+      const bVal =
+        sortField === "flyash"
+          ? Number(b.user.flyash.remaining)
+          : Number(b.user.bedash.remaining);
+
+      return bVal - aVal; // ⭐ highest → lowest
+    });
+  }
+
+  /** toggle */
+  const toggleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortField("none"); // back to date sort
+    } else {
+      setSortField(field); // highest → lowest
+    }
+  };
 
   return (
     <Box p={3}>
@@ -61,12 +95,12 @@ const AllTransection: React.FC = () => {
         All Transactions
       </Typography>
 
-      {/* 🔍 Search Box */}
+      {/* SEARCH */}
       <Box mb={2}>
         <TextField
           fullWidth
           size="small"
-          label="Search by User, Amount, Tons, Payment, Reference..."
+          label="Search..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -81,16 +115,26 @@ const AllTransection: React.FC = () => {
             <TableRow sx={{ background: "#1976d2" }}>
               <TableCell sx={{ color: "#fff" }}>User</TableCell>
               <TableCell sx={{ color: "#fff" }}>Date</TableCell>
-
               <TableCell sx={{ color: "#fff" }}>Flyash ₹</TableCell>
               <TableCell sx={{ color: "#fff" }}>Bedash ₹</TableCell>
               <TableCell sx={{ color: "#fff" }}>Total ₹</TableCell>
-
               <TableCell sx={{ color: "#fff" }}>Flyash Tons</TableCell>
               <TableCell sx={{ color: "#fff" }}>Bedash Tons</TableCell>
 
-              <TableCell sx={{ color: "#fff" }}>Flyash Remaining</TableCell>
-              <TableCell sx={{ color: "#fff" }}>Bedash Remaining</TableCell>
+              {/* SORTABLE */}
+              <TableCell
+                sx={{ color: "#fff", cursor: "pointer" }}
+                onClick={() => toggleSort("flyash")}
+              >
+                Flyash Remaining {sortField === "flyash" ? "🔽" : ""}
+              </TableCell>
+
+              <TableCell
+                sx={{ color: "#fff", cursor: "pointer" }}
+                onClick={() => toggleSort("bedash")}
+              >
+                Bedash Remaining {sortField === "bedash" ? "🔽" : ""}
+              </TableCell>
 
               <TableCell sx={{ color: "#fff" }}>Payment</TableCell>
               <TableCell sx={{ color: "#fff" }}>Reference</TableCell>
@@ -98,28 +142,23 @@ const AllTransection: React.FC = () => {
           </TableHead>
 
           <TableBody>
-            {filteredRows.map(({ user, tx }) => (
+            {rows.map(({ user, tx }) => (
               <TableRow key={tx.id} hover>
                 <TableCell>{user.userName}</TableCell>
-
                 <TableCell>{new Date(tx.date).toLocaleString()}</TableCell>
-
                 <TableCell>₹{tx.flyashAmount}</TableCell>
                 <TableCell>₹{tx.bedashAmount}</TableCell>
                 <TableCell>₹{tx.totalAmount}</TableCell>
-
                 <TableCell>{tx.flyashTons}</TableCell>
                 <TableCell>{tx.bedashTons}</TableCell>
-
                 <TableCell>{user.flyash.remaining}</TableCell>
                 <TableCell>{user.bedash.remaining}</TableCell>
-
                 <TableCell>{tx.paymentMode}</TableCell>
                 <TableCell>{tx.referenceNumber ?? "-"}</TableCell>
               </TableRow>
             ))}
 
-            {filteredRows.length === 0 && !loading && (
+            {rows.length === 0 && !loading && (
               <TableRow>
                 <TableCell colSpan={11} align="center">
                   No Transactions Found
