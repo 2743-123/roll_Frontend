@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Typography,
@@ -9,12 +9,13 @@ import {
   TableBody,
   Paper,
   Chip,
+  TextField,
 } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../../../store";
 import { getAdminTokensAction } from "../../../../Actions/Auth/TokenAction";
 
-/** 🔹 Token type (API ke exact hisaab se) */
+/** 🔹 Token type */
 interface AdminToken {
   tokenId: number;
   customerName: string;
@@ -37,6 +38,8 @@ const AllUserTokens: React.FC = () => {
     (state: RootState) => state.adminTokenReducer,
   );
 
+  const [search, setSearch] = useState("");
+
   useEffect(() => {
     dispatch(getAdminTokensAction());
   }, [dispatch]);
@@ -50,6 +53,19 @@ const AllUserTokens: React.FC = () => {
     return "default";
   };
 
+  /** 🔍 Search filter */
+  const filteredTokens = tokens.filter((t) => {
+    const q = search.toLowerCase();
+
+    return (
+      (t.customerName ?? "").toLowerCase().includes(q) ||
+      (t.userName ?? "").toLowerCase().includes(q) ||
+      (t.truckNumber ?? "").toLowerCase().includes(q) ||
+      (t.materialType ?? "").toLowerCase().includes(q) ||
+      (t.status ?? "").toLowerCase().includes(q)
+    );
+  });
+
   return (
     <Box p={3}>
       <Typography variant="h5" fontWeight={700} mb={1}>
@@ -59,6 +75,18 @@ const AllUserTokens: React.FC = () => {
       <Typography variant="body2" color="text.secondary" mb={2}>
         Total Tokens: {totalTokens}
       </Typography>
+
+      {/* 🔍 Search box */}
+      <Box mb={2}>
+        <TextField
+          label="Search by Customer, User, Truck, Material, Status"
+          variant="outlined"
+          size="small"
+          fullWidth
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </Box>
 
       {loading && <Typography>Loading...</Typography>}
       {error && <Typography color="error">{error}</Typography>}
@@ -81,7 +109,7 @@ const AllUserTokens: React.FC = () => {
           </TableHead>
 
           <TableBody>
-            {tokens.map((t) => (
+            {filteredTokens.map((t) => (
               <TableRow key={t.tokenId} hover>
                 <TableCell>{t.userName}</TableCell>
                 <TableCell>{t.customerName}</TableCell>
@@ -91,17 +119,14 @@ const AllUserTokens: React.FC = () => {
                 <TableCell>₹{t.carryForward}</TableCell>
                 <TableCell>{t.remainingTons}</TableCell>
 
-                {/* Created date */}
                 <TableCell>{new Date(t.createdAt).toLocaleString()}</TableCell>
 
-                {/* Confirmed date */}
                 <TableCell>
                   {t.confirmedAt
                     ? new Date(t.confirmedAt).toLocaleString()
                     : "-"}
                 </TableCell>
 
-                {/* Status chip */}
                 <TableCell>
                   <Chip
                     label={t.status.toUpperCase()}
@@ -112,7 +137,7 @@ const AllUserTokens: React.FC = () => {
               </TableRow>
             ))}
 
-            {tokens.length === 0 && !loading && (
+            {filteredTokens.length === 0 && !loading && (
               <TableRow>
                 <TableCell colSpan={10} align="center">
                   No Tokens Found

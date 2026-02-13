@@ -28,13 +28,16 @@ export const getBalanceAction =
     }
   };
 
-/** ================= ADD BALANCE ================= */
+
 export const addBalanceAction =
   (payload: AddBalancePayload) => async (dispatch: AppDispatch) => {
     try {
       const data = await addBalanceService(payload);
 
-      dispatch({ type: "ADD_BALANCE_SUCCESS", payload: data });
+      dispatch({ type: "ADD_BALANCE_SUCCESS" });
+
+      // ⭐ IMPORTANT — refresh balance
+      dispatch(getBalanceAction(Number(payload.userId)));
 
       dispatch(
         showNotification({
@@ -57,6 +60,7 @@ export const addBalanceAction =
       throw error;
     }
   };
+
 
 /** ================= EDIT BALANCE ================= */
 export const editBalanceAction =

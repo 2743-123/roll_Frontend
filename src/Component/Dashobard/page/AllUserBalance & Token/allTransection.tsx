@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Typography,
@@ -8,6 +8,7 @@ import {
   TableCell,
   TableBody,
   Paper,
+  TextField,
 } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 
@@ -22,17 +23,54 @@ const AllTransection: React.FC = () => {
     (state: RootState) => state.adminBalanceReducer,
   );
 
+  const [search, setSearch] = useState("");
+
   useEffect(() => {
     dispatch(getAdminBalanceAction());
   }, [dispatch]);
 
   const users: AdminUserBalance[] = data ?? [];
 
+  /** 🔹 safe string helper (null crash fix) */
+  const safe = (v: any) => (v ?? "").toString().toLowerCase();
+
+  /** 🔍 Filtered transactions */
+  const filteredRows = users.flatMap((u) =>
+    u.transactions
+      .filter((t) => {
+        const q = search.toLowerCase();
+
+        return (
+          safe(u.userName).includes(q) ||
+          safe(t.date).includes(q) ||
+          safe(t.flyashAmount).includes(q) ||
+          safe(t.bedashAmount).includes(q) ||
+          safe(t.totalAmount).includes(q) ||
+          safe(t.flyashTons).includes(q) ||
+          safe(t.bedashTons).includes(q) ||
+          safe(t.paymentMode).includes(q) ||
+          safe(t.referenceNumber).includes(q)
+        );
+      })
+      .map((t) => ({ user: u, tx: t })),
+  );
+
   return (
     <Box p={3}>
       <Typography variant="h5" fontWeight={700} mb={2}>
         All Transactions
       </Typography>
+
+      {/* 🔍 Search Box */}
+      <Box mb={2}>
+        <TextField
+          fullWidth
+          size="small"
+          label="Search by User, Amount, Tons, Payment, Reference..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </Box>
 
       {loading && <Typography>Loading...</Typography>}
       {error && <Typography color="error">{error}</Typography>}
@@ -51,7 +89,6 @@ const AllTransection: React.FC = () => {
               <TableCell sx={{ color: "#fff" }}>Flyash Tons</TableCell>
               <TableCell sx={{ color: "#fff" }}>Bedash Tons</TableCell>
 
-              {/* ⭐ NEW */}
               <TableCell sx={{ color: "#fff" }}>Flyash Remaining</TableCell>
               <TableCell sx={{ color: "#fff" }}>Bedash Remaining</TableCell>
 
@@ -61,31 +98,28 @@ const AllTransection: React.FC = () => {
           </TableHead>
 
           <TableBody>
-            {users.flatMap((u) =>
-              u.transactions.map((t) => (
-                <TableRow key={t.id} hover>
-                  <TableCell>{u.userName}</TableCell>
+            {filteredRows.map(({ user, tx }) => (
+              <TableRow key={tx.id} hover>
+                <TableCell>{user.userName}</TableCell>
 
-                  <TableCell>{new Date(t.date).toLocaleString()}</TableCell>
+                <TableCell>{new Date(tx.date).toLocaleString()}</TableCell>
 
-                  <TableCell>₹{t.flyashAmount}</TableCell>
-                  <TableCell>₹{t.bedashAmount}</TableCell>
-                  <TableCell>₹{t.totalAmount}</TableCell>
+                <TableCell>₹{tx.flyashAmount}</TableCell>
+                <TableCell>₹{tx.bedashAmount}</TableCell>
+                <TableCell>₹{tx.totalAmount}</TableCell>
 
-                  <TableCell>{t.flyashTons}</TableCell>
-                  <TableCell>{t.bedashTons}</TableCell>
+                <TableCell>{tx.flyashTons}</TableCell>
+                <TableCell>{tx.bedashTons}</TableCell>
 
-                  {/* ⭐ Remaining Tons */}
-                  <TableCell>{u.flyash.remaining}</TableCell>
-                  <TableCell>{u.bedash.remaining}</TableCell>
+                <TableCell>{user.flyash.remaining}</TableCell>
+                <TableCell>{user.bedash.remaining}</TableCell>
 
-                  <TableCell>{t.paymentMode}</TableCell>
-                  <TableCell>{t.referenceNumber ?? "-"}</TableCell>
-                </TableRow>
-              )),
-            )}
+                <TableCell>{tx.paymentMode}</TableCell>
+                <TableCell>{tx.referenceNumber ?? "-"}</TableCell>
+              </TableRow>
+            ))}
 
-            {users.length === 0 && !loading && (
+            {filteredRows.length === 0 && !loading && (
               <TableRow>
                 <TableCell colSpan={11} align="center">
                   No Transactions Found
