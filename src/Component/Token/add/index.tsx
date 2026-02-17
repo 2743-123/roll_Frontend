@@ -1,4 +1,5 @@
 // src/Component/Token/AddTokenDialog.tsx
+
 import React, { useState, useMemo, useEffect } from "react";
 import {
   Dialog,
@@ -14,9 +15,10 @@ import {
 } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../../store";
+
 import {
   createTokenAction,
-  getTokenAction,
+  getAdminTokensAction, // ⭐ IMPORTANT (all users tokens)
 } from "../../../Actions/Auth/TokenAction";
 
 interface AddTokenDialogProps {
@@ -26,49 +28,63 @@ interface AddTokenDialogProps {
 
 const AddTokenDialog: React.FC<AddTokenDialogProps> = ({ open, onClose }) => {
   const dispatch = useDispatch<AppDispatch>();
-  const { selectedUser } = useSelector((state: RootState) => state.user);
-  const { tokens } = useSelector((state: RootState) => state.token);
 
+  /** ⭐ Selected user */
+  const { selectedUser } = useSelector((state: RootState) => state.user);
+
+  /** ⭐ ALL TOKENS (admin reducer) */
+  const { data: allTokens } = useSelector(
+    (state: RootState) => state.adminTokenReducer
+  );
+
+  /** ================= FORM ================= */
   const [form, setForm] = useState({
     customerName: "",
     materialType: "",
   });
 
-  /** 🔄 Fetch tokens when dialog opens */
+  /** 🔄 Fetch ALL tokens when dialog opens */
   useEffect(() => {
-    if (open && selectedUser?.id) {
-      dispatch(getTokenAction(selectedUser.id));
+    if (open) {
+      dispatch(getAdminTokensAction()); // ⭐ fetch global tokens
     }
-  }, [open, selectedUser?.id, dispatch]);
+  }, [open, dispatch]);
 
-  /** 🔍 Unique customer names (ES5 safe) */
+  /** ================= CUSTOMER OPTIONS ================= */
   const customerOptions = useMemo(() => {
-    if (!tokens) return [];
+    if (!allTokens) return [];
 
-    const names = tokens
+    const names = allTokens
       .map((t: any) => t.customerName)
       .filter((name: string) => !!name);
 
-    return Array.from(new Set(names)); // ✅ ES5 compatible
-  }, [tokens]);
+    return Array.from(new Set(names)); // ⭐ unique customers
+  }, [allTokens]);
 
-  /** 📝 Submit */
+  /** ================= SUBMIT ================= */
   const handleSubmit = () => {
     if (!selectedUser) {
       alert("Please select a user first!");
       return;
     }
 
-    dispatch(createTokenAction({ ...form, userId: selectedUser.id }));
-    onClose();
+    dispatch(
+      createTokenAction({
+        ...form,
+        userId: selectedUser.id,
+      })
+    );
 
+    /** reset */
     setForm({ customerName: "", materialType: "" });
+    onClose();
   };
 
-  /** ❌ Disable button */
+  /** ================= VALIDATION ================= */
   const isFormInvalid =
     !form.customerName.trim() || !form.materialType || !selectedUser;
 
+  /** ================= UI ================= */
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <Paper
@@ -78,7 +94,7 @@ const AddTokenDialog: React.FC<AddTokenDialogProps> = ({ open, onClose }) => {
           borderRadius: 3,
         }}
       >
-        {/* Header */}
+        {/* HEADER */}
         <DialogTitle
           sx={{
             backgroundColor: "#1976d2",
@@ -91,11 +107,11 @@ const AddTokenDialog: React.FC<AddTokenDialogProps> = ({ open, onClose }) => {
           Add New Token
         </DialogTitle>
 
-        {/* Content */}
+        {/* CONTENT */}
         <DialogContent dividers sx={{ p: 3, backgroundColor: "white" }}>
           <Box display="flex" flexDirection="column" gap={2}>
             
-            {/* ⭐ Customer Autocomplete */}
+            {/* ⭐ GLOBAL CUSTOMER AUTOCOMPLETE */}
             <Autocomplete
               freeSolo
               options={customerOptions}
@@ -113,11 +129,10 @@ const AddTokenDialog: React.FC<AddTokenDialogProps> = ({ open, onClose }) => {
               )}
             />
 
-            {/* Material Type */}
+            {/* MATERIAL TYPE */}
             <TextField
               select
               label="Material Type"
-              name="materialType"
               value={form.materialType}
               onChange={(e) =>
                 setForm((prev) => ({
@@ -135,7 +150,7 @@ const AddTokenDialog: React.FC<AddTokenDialogProps> = ({ open, onClose }) => {
           </Box>
         </DialogContent>
 
-        {/* Actions */}
+        {/* ACTIONS */}
         <DialogActions sx={{ px: 3, py: 2, backgroundColor: "#f1f5f9" }}>
           <Button onClick={onClose} variant="outlined">
             Cancel
