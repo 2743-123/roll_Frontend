@@ -33,12 +33,12 @@ const PendingTokens: React.FC = () => {
   }, [dispatch, selectedUser?.id]);
 
   // 🔹 Filter pending tokens
-  useEffect(() => {
-    if (tokens?.length) {
-      const filtered = tokens.filter((t: any) => t.status !== "completed");
-      setPendingTokens(filtered);
-    }
-  }, [tokens]);
+ useEffect(() => {
+  const filtered = (tokens || []).filter(
+    (t: any) => t.status !== "completed"
+  );
+  setPendingTokens(filtered);
+}, [tokens]);
 
   const handleConfirmClick = (token: any) => {
     setSelectedToken(token);
