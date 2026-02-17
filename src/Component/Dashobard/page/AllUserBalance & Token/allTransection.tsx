@@ -103,53 +103,54 @@ const AllTransection: React.FC = () => {
 
   // ================= PDF =================
 
-const generatePDF = () => {
-  const selectedRows = rows.filter((r) => selectedIds.includes(r.tx.id));
+  const generatePDF = () => {
+    const selectedRows = rows.filter((r) => selectedIds.includes(r.tx.id));
 
-  if (selectedRows.length === 0) {
-    alert("Please select rows / કૃપા કરીને રો પસંદ કરો");
-    return;
-  }
+    if (selectedRows.length === 0) {
+      alert("Please select rows / કૃપા કરીને રો પસંદ કરો");
+      return;
+    }
 
-  const doc = new jsPDF();
+    const doc = new jsPDF();
 
-  // ⭐ SAME FONT as Token PDF (Gujarati supported)
-  doc.setFont("NotoSansGujarati-Regular", "normal");
-  doc.setFontSize(14);
+    // ⭐ SAME FONT as Token PDF (Gujarati supported)
+    doc.setFont("NotoSans-Regular", "normal");
+    doc.setFontSize(14);
 
-  doc.text("Transaction Report / ટ્રાન્ઝેક્શન રિપોર્ટ", 14, 15);
+    doc.text("Transaction Report / ટ્રાન્ઝેક્શન રિપોર્ટ", 14, 15);
 
-  autoTable(doc, {
-    startY: 22,
-    styles: {
-      font: "NotoSansGujarati-Regular", // ⭐ VERY IMPORTANT
-      fontSize: 10,
-    },
-    head: [[
-      "User",
-      "Date",
-      "Flyash",
-      "Bedash",
-      "Total ",
-      "Flyash Tons",
-      "Bedash Tons",
-      "Payment ",
-    ]],
-    body: selectedRows.map(({ user, tx }) => [
-      user.userName,
-      new Date(tx.date).toLocaleString(),
-      tx.flyashAmount,
-      tx.bedashAmount,
-      tx.totalAmount,
-      tx.flyashTons,
-      tx.bedashTons,
-      tx.paymentMode,
-    ]),
-  });
+    autoTable(doc, {
+      startY: 22,
+      styles: {
+        font: "NotoSans-Regular", // ⭐ VERY IMPORTANT
+        fontSize: 10,
+      },
+      head: [
+        [
+          "User",
+          "Date",
+          "Flyash",
+          "Bedash",
+          "Total ",
+          "Flyash Tons",
+          "Bedash Tons",
+          "Payment ",
+        ],
+      ],
+      body: selectedRows.map(({ user, tx }) => [
+        user.userName,
+        new Date(tx.date).toLocaleString(),
+        tx.flyashAmount,
+        tx.bedashAmount,
+        tx.totalAmount,
+        tx.flyashTons,
+        tx.bedashTons,
+        tx.paymentMode,
+      ]),
+    });
 
-  doc.save("transactions.pdf");
-};
-
+    doc.save("transactions.pdf");
+  };
 
   // =================================================
 

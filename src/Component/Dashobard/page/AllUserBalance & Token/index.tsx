@@ -107,7 +107,7 @@ const AllUserTokens: React.FC = () => {
     const doc = new jsPDF();
 
     // ⭐ FONT SET
-    doc.setFont("NotoSansGujarati-Regular", "normal");
+    doc.setFont("NotoSans-Regular", "normal");
     doc.setFontSize(14);
 
     doc.text("Admin Token Report / એડમિન ટોકન રિપોર્ટ", 14, 15);
@@ -115,7 +115,7 @@ const AllUserTokens: React.FC = () => {
     autoTable(doc, {
       startY: 22,
       styles: {
-        font: "NotoSansGujarati-Regular", // ⭐ MUST
+        font: "NotoSans-Regular", // ⭐ MUST
         fontSize: 10,
       },
       head: [
