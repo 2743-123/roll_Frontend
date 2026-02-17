@@ -19,6 +19,7 @@ import { getAdminTokensAction } from "../../../../Actions/Auth/TokenAction";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import "../../../../fonts/NotoSans-Regular";
+
 /** 🔹 Token type */
 interface AdminToken {
   tokenId: number;
@@ -35,6 +36,8 @@ interface AdminToken {
   confirmedAt: string | null;
 }
 
+const FIFTEEN_DAYS = 15 * 24 * 60 * 60 * 1000;
+
 const AllUserTokens: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
 
@@ -43,10 +46,15 @@ const AllUserTokens: React.FC = () => {
   );
 
   const [search, setSearch] = useState("");
-
-  /** ⭐ drag selection */
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [isDragging, setIsDragging] = useState(false);
+
+  /** ⭐ force re-render every second for timer */
+  const [, setNow] = useState(Date.now());
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     dispatch(getAdminTokensAction());
@@ -61,38 +69,60 @@ const AllUserTokens: React.FC = () => {
     return "default";
   };
 
-  /** 🔍 Search filter */
-  const filteredTokens = tokens.filter((t) => {
+  // ================= REMOVE AFTER 15 DAYS =================
+
+  const visibleTokens = tokens.filter((t) => {
+    if (t.status !== "completed" || !t.confirmedAt) return true;
+
+    const confirmedTime = new Date(t.confirmedAt).getTime();
+    return Date.now() - confirmedTime < FIFTEEN_DAYS;
+  });
+
+  // ================= SEARCH =================
+
+  const filteredTokens = visibleTokens.filter((t) => {
     const q = search.toLowerCase();
 
     return (
-      (t.customerName ?? "").toLowerCase().includes(q) ||
-      (t.userName ?? "").toLowerCase().includes(q) ||
-      (t.truckNumber ?? "").toLowerCase().includes(q) ||
-      (t.materialType ?? "").toLowerCase().includes(q) ||
-      (t.status ?? "").toLowerCase().includes(q)
+      t.customerName?.toLowerCase().includes(q) ||
+      t.userName?.toLowerCase().includes(q) ||
+      t.truckNumber?.toLowerCase().includes(q) ||
+      t.materialType?.toLowerCase().includes(q) ||
+      t.status?.toLowerCase().includes(q)
     );
   });
 
-  /** ⭐ drag start */
+  // ================= DRAG SELECT =================
+
   const handleMouseDown = (id: number) => {
     setIsDragging(true);
     setSelectedIds([id]);
   };
 
-  /** ⭐ drag enter */
   const handleMouseEnter = (id: number) => {
     if (!isDragging) return;
-
     setSelectedIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
   };
 
-  /** ⭐ drag end */
-  const handleMouseUp = () => {
-    setIsDragging(false);
+  const handleMouseUp = () => setIsDragging(false);
+
+  // ================= COUNTDOWN =================
+
+  const getRemainingTime = (confirmedAt: string | null) => {
+    if (!confirmedAt) return "";
+
+    const diff = FIFTEEN_DAYS - (Date.now() - new Date(confirmedAt).getTime());
+    if (diff <= 0) return "Expired";
+
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+    const mins = Math.floor((diff / (1000 * 60)) % 60);
+    const secs = Math.floor((diff / 1000) % 60);
+
+    return `${days}d ${hours}h ${mins}m ${secs}`;
   };
 
-  // ================= PDF DOWNLOAD =================
+  // ================= PDF =================
 
   const handleDownloadPDF = () => {
     const selectedTokens = filteredTokens.filter((t) =>
@@ -100,35 +130,28 @@ const AllUserTokens: React.FC = () => {
     );
 
     if (selectedTokens.length === 0) {
-      alert("Please select at least one row / કૃપા કરીને એક રો પસંદ કરો");
+      alert("Please select at least one row");
       return;
     }
 
     const doc = new jsPDF();
-
-    // ⭐ FONT SET
     doc.setFont("NotoSans-Regular", "normal");
     doc.setFontSize(14);
 
-    doc.text("Admin Token Report / એડમિન ટોકન રિપોર્ટ", 14, 15);
+    doc.text("Admin Token Report", 14, 15);
 
     autoTable(doc, {
       startY: 22,
-      styles: {
-        font: "NotoSans-Regular", // ⭐ MUST
-        fontSize: 10,
-      },
+      styles: { font: "NotoSans-Regular", fontSize: 10 },
       head: [
         [
           "User",
-          "Customer ",
+          "Customer",
           "Truck",
           "Material",
           "Weight",
           "Carry ₹",
           "Remaining Tons",
-          "Created Date",
-          "Confirmed Date",
           "Status",
         ],
       ],
@@ -140,8 +163,6 @@ const AllUserTokens: React.FC = () => {
         t.weight,
         `₹${t.carryForward}`,
         t.remainingTons,
-        new Date(t.createdAt).toLocaleString(),
-        t.confirmedAt ? new Date(t.confirmedAt).toLocaleString() : "-",
         t.status.toUpperCase(),
       ]),
     });
@@ -149,7 +170,7 @@ const AllUserTokens: React.FC = () => {
     doc.save("Token-Report.pdf");
   };
 
-  // =================================================
+  // ================= UI =================
 
   return (
     <Box p={3} onMouseUp={handleMouseUp}>
@@ -161,7 +182,7 @@ const AllUserTokens: React.FC = () => {
         Total Tokens: {totalTokens}
       </Typography>
 
-      {/* 🔍 Search */}
+      {/* SEARCH */}
       <Box mb={2}>
         <TextField
           label="Search..."
@@ -172,11 +193,10 @@ const AllUserTokens: React.FC = () => {
         />
       </Box>
 
-      {/* 📄 PDF Button */}
+      {/* PDF BUTTON */}
       <Box mb={2}>
         <Button
           variant="contained"
-          color="primary"
           disabled={selectedIds.length === 0}
           onClick={handleDownloadPDF}
         >
@@ -197,9 +217,8 @@ const AllUserTokens: React.FC = () => {
               <TableCell sx={{ color: "#fff" }}>Material</TableCell>
               <TableCell sx={{ color: "#fff" }}>Weight</TableCell>
               <TableCell sx={{ color: "#fff" }}>Carry ₹</TableCell>
-              <TableCell sx={{ color: "#fff" }}>Remaining Tons</TableCell>
-              <TableCell sx={{ color: "#fff" }}>Created</TableCell>
-              <TableCell sx={{ color: "#fff" }}>Confirmed</TableCell>
+              <TableCell sx={{ color: "#fff" }}>Remaining</TableCell>
+              <TableCell sx={{ color: "#fff" }}>Timer</TableCell>
               <TableCell sx={{ color: "#fff" }}>Status</TableCell>
             </TableRow>
           </TableHead>
@@ -226,14 +245,14 @@ const AllUserTokens: React.FC = () => {
                   <TableCell>{t.weight}</TableCell>
                   <TableCell>₹{t.carryForward}</TableCell>
                   <TableCell>{t.remainingTons}</TableCell>
+
+                  {/* ⏳ TIMER */}
                   <TableCell>
-                    {new Date(t.createdAt).toLocaleString()}
-                  </TableCell>
-                  <TableCell>
-                    {t.confirmedAt
-                      ? new Date(t.confirmedAt).toLocaleString()
+                    {t.status === "completed"
+                      ? getRemainingTime(t.confirmedAt)
                       : "-"}
                   </TableCell>
+
                   <TableCell>
                     <Chip
                       label={t.status.toUpperCase()}

@@ -7,6 +7,8 @@ import {
   Button,
   TextField,
   MenuItem,
+  Typography,
+  Box,
 } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../../store";
@@ -26,6 +28,8 @@ interface AddBalanceDialogProps {
   open: boolean;
   onClose: () => void;
 }
+
+const RATE_PER_TON = 180; // ⭐ constant rate
 
 const AddBalanceDialog: React.FC<AddBalanceDialogProps> = ({
   open,
@@ -48,32 +52,44 @@ const AddBalanceDialog: React.FC<AddBalanceDialogProps> = ({
   const [referenceNumber, setReferenceNumber] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // ⭐ Auto select first user
   useEffect(() => {
-    if (open && users && users.length > 0) {
-      setSelectedUserId(users[0].id);
+    if (open && onlyUsers.length > 0) {
+      setSelectedUserId(onlyUsers[0].id);
     }
-  }, [open, users]);
+  }, [open, onlyUsers]);
+
+  // ================= REAL-TIME TONS =================
+
+  const flyashTons =
+    flyashAmount ? (Number(flyashAmount) / RATE_PER_TON).toFixed(2) : "0";
+
+  const bedashTons =
+    bedashAmount ? (Number(bedashAmount) / RATE_PER_TON).toFixed(2) : "0";
+
+  const totalTons = (Number(flyashTons) + Number(bedashTons)).toFixed(2);
+
+  // ================= SUBMIT =================
 
   const handleSubmit = async () => {
     if (!selectedUserId || (!flyashAmount && !bedashAmount)) {
-      alert("Please fill all required fields");
+      alert("Please fill required fields");
       return;
     }
 
     if (paymentMode === "cash" && !bankName) {
-      alert("Please enter bank name for cash payment");
+      alert("Enter bank name for cash payment");
       return;
     }
 
     if (paymentMode === "online" && (!accountHolder || !referenceNumber)) {
-      alert(
-        "Please fill account holder and reference number for online payment",
-      );
+      alert("Fill account holder & reference number");
       return;
     }
 
     try {
       setLoading(true);
+
       await dispatch(
         addBalanceAction({
           userId: selectedUserId,
@@ -86,159 +102,108 @@ const AddBalanceDialog: React.FC<AddBalanceDialogProps> = ({
         }),
       );
 
-      // Reset
+      // reset
       setFlyashAmount("");
       setBedashAmount("");
       setBankName("");
       setAccountHolder("");
       setReferenceNumber("");
       setPaymentMode("cash");
+
       onClose();
     } catch (err) {
-      console.error("Failed to add balance:", err);
+      console.error("Add balance error:", err);
     } finally {
       setLoading(false);
     }
   };
 
+  // ================= UI =================
+
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      fullWidth
-      maxWidth="sm"
-      PaperProps={{
-        sx: {
-          borderRadius: 4,
-          background: "linear-gradient(135deg, #1b2735 0%, #090a0f 100%)",
-          color: "#fff",
-          boxShadow: "0 0 30px rgba(0, 188, 212, 0.25)",
-          backdropFilter: "blur(10px)",
-        },
-      }}
-    >
-      <DialogTitle
-        sx={{
-          fontWeight: "bold",
-          textAlign: "center",
-          borderBottom: "1px solid rgba(255,255,255,0.1)",
-          background: "linear-gradient(90deg,#00bcd4,#2196f3)",
-          color: "#fff",
-        }}
-      >
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+      <DialogTitle sx={{ fontWeight: "bold", textAlign: "center" }}>
         Add Balance
       </DialogTitle>
 
-      <DialogContent
-        dividers
-        sx={{
-          background: "rgba(255,255,255,0.02)",
-          display: "flex",
-          flexDirection: "column",
-          gap: 2,
-          p: 4,
-        }}
-      >
-        {/* User Dropdown */}
+      <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        {/* USER */}
         <TextField
           select
           label="Select User"
           value={selectedUserId}
           onChange={(e) => setSelectedUserId(Number(e.target.value))}
           fullWidth
-          InputLabelProps={{ style: { color: "#bbb" } }}
-          sx={{
-            input: { color: "#fff" },
-            "& .MuiOutlinedInput-root": {
-              "& fieldset": { borderColor: "#333" },
-              "&:hover fieldset": { borderColor: "#00bcd4" },
-              "&.Mui-focused fieldset": { borderColor: "#00bcd4" },
-            },
-            "& .MuiSelect-select": { color: "#fff" },
-          }}
         >
-          {onlyUsers.length > 0 ? (
-            onlyUsers.map((user: any) => (
-              <MenuItem key={user.id} value={user.id}>
-                {user.name}
-              </MenuItem>
-            ))
-          ) : (
-            <MenuItem disabled>No users found</MenuItem>
-          )}
+          {onlyUsers.map((user: any) => (
+            <MenuItem key={user.id} value={user.id}>
+              {user.name}
+            </MenuItem>
+          ))}
         </TextField>
 
-        {/* Flyash & Bedash Amount */}
+        {/* AMOUNTS */}
         <TextField
           label="Flyash Amount (₹)"
           type="number"
           value={flyashAmount}
           onChange={(e) => setFlyashAmount(Number(e.target.value))}
           fullWidth
-          InputLabelProps={{ style: { color: "#bbb" } }}
-          sx={{
-            input: { color: "#fff" },
-            "& .MuiOutlinedInput-root": {
-              "& fieldset": { borderColor: "#333" },
-              "&:hover fieldset": { borderColor: "#00bcd4" },
-              "&.Mui-focused fieldset": { borderColor: "#00bcd4" },
-            },
-          }}
         />
+
         <TextField
           label="Bedash Amount (₹)"
           type="number"
           value={bedashAmount}
           onChange={(e) => setBedashAmount(Number(e.target.value))}
           fullWidth
-          InputLabelProps={{ style: { color: "#bbb" } }}
-          sx={{
-            input: { color: "#fff" },
-            "& .MuiOutlinedInput-root": {
-              "& fieldset": { borderColor: "#333" },
-              "&:hover fieldset": { borderColor: "#00bcd4" },
-              "&.Mui-focused fieldset": { borderColor: "#00bcd4" },
-            },
-          }}
         />
 
-        {/* Payment Mode */}
+        {/* ⭐ LIVE TONS BOX */}
+        <Box
+          sx={{
+            p: 2,
+            borderRadius: 2,
+            background: "#f1f5f9",
+            border: "1px solid #cbd5e1",
+          }}
+        >
+          <Typography variant="subtitle2" gutterBottom>
+            Live Tons Calculation
+          </Typography>
+
+          <Typography variant="body2">
+            Flyash Tons: <strong>{flyashTons}</strong>
+          </Typography>
+
+          <Typography variant="body2">
+            Bedash Tons: <strong>{bedashTons}</strong>
+          </Typography>
+
+          <Typography variant="body2" sx={{ mt: 1 }}>
+            Total Tons: <strong>{totalTons}</strong>
+          </Typography>
+        </Box>
+
+        {/* PAYMENT MODE */}
         <TextField
           select
           label="Payment Mode"
           value={paymentMode}
-          onChange={(e) => setPaymentMode(e.target.value as "cash" | "online")}
+          onChange={(e) => setPaymentMode(e.target.value as any)}
           fullWidth
-          InputLabelProps={{ style: { color: "#bbb" } }}
-          sx={{
-            "& .MuiOutlinedInput-root": {
-              "& fieldset": { borderColor: "#333" },
-              "&:hover fieldset": { borderColor: "#00bcd4" },
-              "&.Mui-focused fieldset": { borderColor: "#00bcd4" },
-            },
-            "& .MuiSelect-select": { color: "#fff" },
-          }}
         >
           <MenuItem value="cash">Cash</MenuItem>
           <MenuItem value="online">Online</MenuItem>
         </TextField>
 
-        {/* Conditional Fields */}
+        {/* CONDITIONAL FIELDS */}
         {paymentMode === "cash" && (
           <TextField
             label="Bank Name"
             value={bankName}
             onChange={(e) => setBankName(e.target.value)}
             fullWidth
-            InputLabelProps={{ style: { color: "#bbb" } }}
-            sx={{
-              input: { color: "#fff" },
-              "& .MuiOutlinedInput-root": {
-                "& fieldset": { borderColor: "#333" },
-                "&:hover fieldset": { borderColor: "#00bcd4" },
-                "&.Mui-focused fieldset": { borderColor: "#00bcd4" },
-              },
-            }}
           />
         )}
 
@@ -249,67 +214,20 @@ const AddBalanceDialog: React.FC<AddBalanceDialogProps> = ({
               value={accountHolder}
               onChange={(e) => setAccountHolder(e.target.value)}
               fullWidth
-              InputLabelProps={{ style: { color: "#bbb" } }}
-              sx={{
-                input: { color: "#fff" },
-                "& .MuiOutlinedInput-root": {
-                  "& fieldset": { borderColor: "#333" },
-                  "&:hover fieldset": { borderColor: "#00bcd4" },
-                  "&.Mui-focused fieldset": { borderColor: "#00bcd4" },
-                },
-              }}
             />
             <TextField
               label="Reference Number"
               value={referenceNumber}
               onChange={(e) => setReferenceNumber(e.target.value)}
               fullWidth
-              InputLabelProps={{ style: { color: "#bbb" } }}
-              sx={{
-                input: { color: "#fff" },
-                "& .MuiOutlinedInput-root": {
-                  "& fieldset": { borderColor: "#333" },
-                  "&:hover fieldset": { borderColor: "#00bcd4" },
-                  "&.Mui-focused fieldset": { borderColor: "#00bcd4" },
-                },
-              }}
             />
           </>
         )}
       </DialogContent>
 
-      <DialogActions
-        sx={{
-          p: 3,
-          borderTop: "1px solid rgba(255,255,255,0.1)",
-          justifyContent: "space-between",
-        }}
-      >
-        <Button
-          onClick={onClose}
-          variant="outlined"
-          sx={{
-            color: "#00bcd4",
-            borderColor: "#00bcd4",
-            "&:hover": { borderColor: "#2196f3", color: "#2196f3" },
-          }}
-        >
-          Cancel
-        </Button>
-        <Button
-          onClick={handleSubmit}
-          variant="contained"
-          disabled={loading}
-          sx={{
-            background: "linear-gradient(90deg, #00bcd4, #2196f3)",
-            color: "#fff",
-            fontWeight: "bold",
-            px: 3,
-            "&:hover": {
-              background: "linear-gradient(90deg, #2196f3, #00bcd4)",
-            },
-          }}
-        >
+      <DialogActions>
+        <Button onClick={onClose}>Cancel</Button>
+        <Button variant="contained" disabled={loading} onClick={handleSubmit}>
           {loading ? "Adding..." : "Add Balance"}
         </Button>
       </DialogActions>
