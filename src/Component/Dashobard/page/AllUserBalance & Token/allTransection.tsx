@@ -9,6 +9,7 @@ import {
   TableBody,
   Paper,
   TextField,
+  Button,
 } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 
@@ -16,17 +17,25 @@ import { AppDispatch, RootState } from "../../../../store";
 import { getAdminBalanceAction } from "../../../../Actions/Auth/balance";
 import { AdminUserBalance } from "../../../../ActionType/balancetype.ts/balance";
 
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import "../../../../fonts/NotoSans-Regular"; // ⭐ Gujarati supported font
+
 type SortField = "none" | "flyash" | "bedash";
 
 const AllTransection: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
 
   const { data, loading, error } = useSelector(
-    (state: RootState) => state.adminBalanceReducer
+    (state: RootState) => state.adminBalanceReducer,
   );
 
   const [search, setSearch] = useState("");
   const [sortField, setSortField] = useState<SortField>("none");
+
+  /** ⭐ selected rows */
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
     dispatch(getAdminBalanceAction());
@@ -34,10 +43,9 @@ const AllTransection: React.FC = () => {
 
   const users: AdminUserBalance[] = data ?? [];
 
-  /** null safe helper */
   const safe = (v: any) => (v ?? "").toString().toLowerCase();
 
-  /** ================= FILTER ================= */
+  /** FILTER */
   let rows = users.flatMap((u) =>
     u.transactions
       .filter((t) => {
@@ -45,25 +53,18 @@ const AllTransection: React.FC = () => {
         return (
           safe(u.userName).includes(q) ||
           safe(t.date).includes(q) ||
-          safe(t.flyashAmount).includes(q) ||
-          safe(t.bedashAmount).includes(q) ||
-          safe(t.totalAmount).includes(q) ||
-          safe(t.flyashTons).includes(q) ||
-          safe(t.bedashTons).includes(q) ||
-          safe(t.paymentMode).includes(q) ||
-          safe(t.referenceNumber).includes(q)
+          safe(t.totalAmount).includes(q)
         );
       })
-      .map((t) => ({ user: u, tx: t }))
+      .map((t) => ({ user: u, tx: t })),
   );
 
-  /** ================= DEFAULT DATE SORT ================= */
+  /** DATE SORT */
   rows = rows.sort(
-    (a, b) =>
-      new Date(b.tx.date).getTime() - new Date(a.tx.date).getTime()
+    (a, b) => new Date(b.tx.date).getTime() - new Date(a.tx.date).getTime(),
   );
 
-  /** ================= REMAINING SORT ================= */
+  /** REMAINING SORT */
   if (sortField !== "none") {
     rows = [...rows].sort((a, b) => {
       const aVal =
@@ -76,21 +77,84 @@ const AllTransection: React.FC = () => {
           ? Number(b.user.flyash.remaining)
           : Number(b.user.bedash.remaining);
 
-      return bVal - aVal; // ⭐ highest → lowest
+      return bVal - aVal;
     });
   }
 
-  /** toggle */
+  /** toggle sort */
   const toggleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortField("none"); // back to date sort
-    } else {
-      setSortField(field); // highest → lowest
-    }
+    setSortField(sortField === field ? "none" : field);
   };
 
+  // ================= DRAG SELECT =================
+
+  const handleMouseDown = (id: number) => {
+    setIsDragging(true);
+    setSelectedIds([id]);
+  };
+
+  const handleMouseEnter = (id: number) => {
+    if (!isDragging) return;
+
+    setSelectedIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
+  };
+
+  const handleMouseUp = () => setIsDragging(false);
+
+  // ================= PDF =================
+
+const generatePDF = () => {
+  const selectedRows = rows.filter((r) => selectedIds.includes(r.tx.id));
+
+  if (selectedRows.length === 0) {
+    alert("Please select rows / કૃપા કરીને રો પસંદ કરો");
+    return;
+  }
+
+  const doc = new jsPDF();
+
+  // ⭐ SAME FONT as Token PDF (Gujarati supported)
+  doc.setFont("NotoSansGujarati-Regular", "normal");
+  doc.setFontSize(14);
+
+  doc.text("Transaction Report / ટ્રાન્ઝેક્શન રિપોર્ટ", 14, 15);
+
+  autoTable(doc, {
+    startY: 22,
+    styles: {
+      font: "NotoSansGujarati-Regular", // ⭐ VERY IMPORTANT
+      fontSize: 10,
+    },
+    head: [[
+      "User",
+      "Date",
+      "Flyash",
+      "Bedash",
+      "Total ",
+      "Flyash Tons",
+      "Bedash Tons",
+      "Payment ",
+    ]],
+    body: selectedRows.map(({ user, tx }) => [
+      user.userName,
+      new Date(tx.date).toLocaleString(),
+      tx.flyashAmount,
+      tx.bedashAmount,
+      tx.totalAmount,
+      tx.flyashTons,
+      tx.bedashTons,
+      tx.paymentMode,
+    ]),
+  });
+
+  doc.save("transactions.pdf");
+};
+
+
+  // =================================================
+
   return (
-    <Box p={3}>
+    <Box p={3} onMouseUp={handleMouseUp}>
       <Typography variant="h5" fontWeight={700} mb={2}>
         All Transactions
       </Typography>
@@ -106,6 +170,17 @@ const AllTransection: React.FC = () => {
         />
       </Box>
 
+      {/* PDF BUTTON */}
+      <Box mb={2}>
+        <Button
+          variant="contained"
+          disabled={selectedIds.length === 0}
+          onClick={generatePDF}
+        >
+          Download Selected PDF
+        </Button>
+      </Box>
+
       {loading && <Typography>Loading...</Typography>}
       {error && <Typography color="error">{error}</Typography>}
 
@@ -118,10 +193,7 @@ const AllTransection: React.FC = () => {
               <TableCell sx={{ color: "#fff" }}>Flyash ₹</TableCell>
               <TableCell sx={{ color: "#fff" }}>Bedash ₹</TableCell>
               <TableCell sx={{ color: "#fff" }}>Total ₹</TableCell>
-              <TableCell sx={{ color: "#fff" }}>Flyash Tons</TableCell>
-              <TableCell sx={{ color: "#fff" }}>Bedash Tons</TableCell>
 
-              {/* SORTABLE */}
               <TableCell
                 sx={{ color: "#fff", cursor: "pointer" }}
                 onClick={() => toggleSort("flyash")}
@@ -137,34 +209,35 @@ const AllTransection: React.FC = () => {
               </TableCell>
 
               <TableCell sx={{ color: "#fff" }}>Payment</TableCell>
-              <TableCell sx={{ color: "#fff" }}>Reference</TableCell>
             </TableRow>
           </TableHead>
 
           <TableBody>
-            {rows.map(({ user, tx }) => (
-              <TableRow key={tx.id} hover>
-                <TableCell>{user.userName}</TableCell>
-                <TableCell>{new Date(tx.date).toLocaleString()}</TableCell>
-                <TableCell>₹{tx.flyashAmount}</TableCell>
-                <TableCell>₹{tx.bedashAmount}</TableCell>
-                <TableCell>₹{tx.totalAmount}</TableCell>
-                <TableCell>{tx.flyashTons}</TableCell>
-                <TableCell>{tx.bedashTons}</TableCell>
-                <TableCell>{user.flyash.remaining}</TableCell>
-                <TableCell>{user.bedash.remaining}</TableCell>
-                <TableCell>{tx.paymentMode}</TableCell>
-                <TableCell>{tx.referenceNumber ?? "-"}</TableCell>
-              </TableRow>
-            ))}
+            {rows.map(({ user, tx }) => {
+              const selected = selectedIds.includes(tx.id);
 
-            {rows.length === 0 && !loading && (
-              <TableRow>
-                <TableCell colSpan={11} align="center">
-                  No Transactions Found
-                </TableCell>
-              </TableRow>
-            )}
+              return (
+                <TableRow
+                  key={tx.id}
+                  hover
+                  onMouseDown={() => handleMouseDown(tx.id)}
+                  onMouseEnter={() => handleMouseEnter(tx.id)}
+                  sx={{
+                    cursor: "pointer",
+                    backgroundColor: selected ? "#e3f2fd" : "inherit",
+                  }}
+                >
+                  <TableCell>{user.userName}</TableCell>
+                  <TableCell>{new Date(tx.date).toLocaleString()}</TableCell>
+                  <TableCell>₹{tx.flyashAmount}</TableCell>
+                  <TableCell>₹{tx.bedashAmount}</TableCell>
+                  <TableCell>₹{tx.totalAmount}</TableCell>
+                  <TableCell>{user.flyash.remaining}</TableCell>
+                  <TableCell>{user.bedash.remaining}</TableCell>
+                  <TableCell>{tx.paymentMode}</TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </Paper>
