@@ -54,18 +54,20 @@ const AddBalanceDialog: React.FC<AddBalanceDialogProps> = ({
 
   // ⭐ Auto select first user
   useEffect(() => {
-    if (open && onlyUsers.length > 0) {
+    if (open && selectedUserId === "" && onlyUsers.length > 0) {
       setSelectedUserId(onlyUsers[0].id);
     }
-  }, [open, onlyUsers]);
+  }, [open, onlyUsers, selectedUserId]);
 
   // ================= REAL-TIME TONS =================
 
-  const flyashTons =
-    flyashAmount ? (Number(flyashAmount) / RATE_PER_TON).toFixed(2) : "0";
+  const flyashTons = flyashAmount
+    ? (Number(flyashAmount) / RATE_PER_TON).toFixed(2)
+    : "0";
 
-  const bedashTons =
-    bedashAmount ? (Number(bedashAmount) / RATE_PER_TON).toFixed(2) : "0";
+  const bedashTons = bedashAmount
+    ? (Number(bedashAmount) / RATE_PER_TON).toFixed(2)
+    : "0";
 
   const totalTons = (Number(flyashTons) + Number(bedashTons)).toFixed(2);
 
@@ -147,7 +149,9 @@ const AddBalanceDialog: React.FC<AddBalanceDialogProps> = ({
           label="Flyash Amount (₹)"
           type="number"
           value={flyashAmount}
-          onChange={(e) => setFlyashAmount(Number(e.target.value))}
+          onChange={(e) =>
+            setFlyashAmount(e.target.value === "" ? "" : Number(e.target.value))
+          }
           fullWidth
         />
 

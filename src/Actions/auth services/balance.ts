@@ -70,9 +70,16 @@ export const editBalanceService = async (
   try {
     const url = API_BALANCE_EDIT.replace(":transactionId", String(transactionId));
 
-    const { data } = await api.put(url, payload, {
-      headers: authHeader(),
-    });
+    const { data } = await api.put(
+      url,
+      {
+        transactionId,   // ⭐ IMPORTANT FIX
+        ...payload,
+      },
+      {
+        headers: authHeader(),
+      }
+    );
 
     return data;
   } catch (error: any) {
