@@ -21,6 +21,9 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import "../../../../fonts/NotoSans-Regular";
 
+/** 🔹 Sort types */
+type SortField = "none" | "flyash" | "bedash";
+
 const AllTransection: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
 
@@ -32,6 +35,10 @@ const AllTransection: React.FC = () => {
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [isDragging, setIsDragging] = useState(false);
 
+  /** 🔹 SORT STATE */
+  const [sortField, setSortField] = useState<SortField>("none");
+
+  /** 🔹 Hover popup */
   const [popup, setPopup] = useState<{
     userName: string;
     total: number;
@@ -62,9 +69,34 @@ const AllTransection: React.FC = () => {
       .map((t) => ({ user: u, tx: t })),
   );
 
+  /* ================= DATE SORT (default) ================= */
+
   rows = rows.sort(
     (a, b) => new Date(b.tx.date).getTime() - new Date(a.tx.date).getTime(),
   );
+
+  /* ================= REMAINING SORT ================= */
+
+  if (sortField !== "none") {
+    rows = [...rows].sort((a, b) => {
+      const aVal =
+        sortField === "flyash"
+          ? Number(a.user.flyash.remaining)
+          : Number(a.user.bedash.remaining);
+
+      const bVal =
+        sortField === "flyash"
+          ? Number(b.user.flyash.remaining)
+          : Number(b.user.bedash.remaining);
+
+      return bVal - aVal; // big → low
+    });
+  }
+
+  /** 🔹 toggle sort */
+  const toggleSort = (field: SortField) => {
+    setSortField(sortField === field ? "none" : field);
+  };
 
   /* ================= CURRENT MONTH TOTAL ================= */
 
@@ -121,7 +153,7 @@ const AllTransection: React.FC = () => {
       selectedIds.includes(r.tx.id),
     );
 
-    if (selectedRows.length === 0) {
+    if (!selectedRows.length) {
       alert("Please select rows");
       return;
     }
@@ -186,7 +218,7 @@ const AllTransection: React.FC = () => {
       <Box mb={2}>
         <Button
           variant="contained"
-          disabled={selectedIds.length === 0}
+          disabled={!selectedIds.length}
           onClick={generatePDF}
         >
           Download Selected PDF
@@ -207,8 +239,22 @@ const AllTransection: React.FC = () => {
               <TableCell sx={{ color: "#fff" }}>Total ₹</TableCell>
               <TableCell sx={{ color: "#fff" }}>Flyash Tons</TableCell>
               <TableCell sx={{ color: "#fff" }}>Bedash Tons</TableCell>
-              <TableCell sx={{ color: "#fff" }}>Flyash Remaining</TableCell>
-              <TableCell sx={{ color: "#fff" }}>Bedash Remaining</TableCell>
+
+              {/* 🔹 CLICK SORT */}
+              <TableCell
+                sx={{ color: "#fff", cursor: "pointer" }}
+                onClick={() => toggleSort("flyash")}
+              >
+                Flyash Remaining {sortField === "flyash" ? "🔽" : ""}
+              </TableCell>
+
+              <TableCell
+                sx={{ color: "#fff", cursor: "pointer" }}
+                onClick={() => toggleSort("bedash")}
+              >
+                Bedash Remaining {sortField === "bedash" ? "🔽" : ""}
+              </TableCell>
+
               <TableCell sx={{ color: "#fff" }}>Payment</TableCell>
             </TableRow>
           </TableHead>
@@ -232,18 +278,15 @@ const AllTransection: React.FC = () => {
                   onMouseLeave={handleLeave}
                   sx={{
                     cursor: "pointer",
-
                     backgroundColor: selected
                       ? "#e3f2fd"
                       : isHighMonthly
                       ? "#ffebee"
                       : "inherit",
-
                     animation:
                       !selected && isHighMonthly
                         ? "redBlink 1s infinite"
                         : "none",
-
                     "@keyframes redBlink": {
                       "0%": { backgroundColor: "#ffebee" },
                       "50%": { backgroundColor: "#ffcdd2" },
