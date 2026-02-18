@@ -34,7 +34,12 @@ const PendingBedash: React.FC = () => {
   // 🔹 Filter only pending items
   useEffect(() => {
     if (Array.isArray(data)) {
-      const filtered = data.filter((item: any) => item.status === "pending");
+      const filtered = data
+  .filter((item: any) => item.status === "pending")
+  .sort(
+    (a: any, b: any) =>
+      new Date(a.targetDate).getTime() - new Date(b.targetDate).getTime(),
+  );;
       setPendingList(filtered);
     }
   }, [data]);
