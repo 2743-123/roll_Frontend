@@ -19,9 +19,7 @@ import { AdminUserBalance } from "../../../../ActionType/balancetype.ts/balance"
 
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import "../../../../fonts/NotoSans-Regular"; // ⭐ Gujarati supported font
-
-type SortField = "none" | "flyash" | "bedash";
+import "../../../../fonts/NotoSans-Regular";
 
 const AllTransection: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -31,11 +29,15 @@ const AllTransection: React.FC = () => {
   );
 
   const [search, setSearch] = useState("");
-  const [sortField, setSortField] = useState<SortField>("none");
-
-  /** ⭐ selected rows */
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [isDragging, setIsDragging] = useState(false);
+
+  const [popup, setPopup] = useState<{
+    userName: string;
+    total: number;
+    x: number;
+    y: number;
+  } | null>(null);
 
   useEffect(() => {
     dispatch(getAdminBalanceAction());
@@ -45,7 +47,8 @@ const AllTransection: React.FC = () => {
 
   const safe = (v: any) => (v ?? "").toString().toLowerCase();
 
-  /** FILTER */
+  /* ================= FILTER ================= */
+
   let rows = users.flatMap((u) =>
     u.transactions
       .filter((t) => {
@@ -59,82 +62,90 @@ const AllTransection: React.FC = () => {
       .map((t) => ({ user: u, tx: t })),
   );
 
-  /** DATE SORT */
   rows = rows.sort(
     (a, b) => new Date(b.tx.date).getTime() - new Date(a.tx.date).getTime(),
   );
 
-  /** REMAINING SORT */
-  if (sortField !== "none") {
-    rows = [...rows].sort((a, b) => {
-      const aVal =
-        sortField === "flyash"
-          ? Number(a.user.flyash.remaining)
-          : Number(a.user.bedash.remaining);
+  /* ================= CURRENT MONTH TOTAL ================= */
 
-      const bVal =
-        sortField === "flyash"
-          ? Number(b.user.flyash.remaining)
-          : Number(b.user.bedash.remaining);
+  const getCurrentMonthTotal = (user: AdminUserBalance) => {
+    const now = new Date();
 
-      return bVal - aVal;
-    });
-  }
-
-  /** toggle sort */
-  const toggleSort = (field: SortField) => {
-    setSortField(sortField === field ? "none" : field);
+    return user.transactions
+      .filter((t) => {
+        const d = new Date(t.date);
+        return (
+          d.getMonth() === now.getMonth() &&
+          d.getFullYear() === now.getFullYear()
+        );
+      })
+      .reduce((sum, t) => sum + Number(t.totalAmount), 0);
   };
 
-  // ================= DRAG SELECT =================
+  /* ================= DRAG SELECT ================= */
 
   const handleMouseDown = (id: number) => {
     setIsDragging(true);
     setSelectedIds([id]);
   };
 
-  const handleMouseEnter = (id: number) => {
+  const handleMouseEnterSelect = (id: number) => {
     if (!isDragging) return;
-
     setSelectedIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
   };
 
   const handleMouseUp = () => setIsDragging(false);
 
-  // ================= PDF =================
+  /* ================= POPUP ================= */
+
+  const handleRowHover = (
+    user: AdminUserBalance,
+    event: React.MouseEvent,
+  ) => {
+    const total = getCurrentMonthTotal(user);
+
+    setPopup({
+      userName: user.userName,
+      total,
+      x: event.clientX,
+      y: event.clientY,
+    });
+  };
+
+  const handleLeave = () => setPopup(null);
+
+  /* ================= PDF ================= */
 
   const generatePDF = () => {
-    const selectedRows = rows.filter((r) => selectedIds.includes(r.tx.id));
+    const selectedRows = rows.filter((r) =>
+      selectedIds.includes(r.tx.id),
+    );
 
     if (selectedRows.length === 0) {
-      alert("Please select rows / કૃપા કરીને રો પસંદ કરો");
+      alert("Please select rows");
       return;
     }
 
     const doc = new jsPDF();
-
-    // ⭐ SAME FONT as Token PDF (Gujarati supported)
     doc.setFont("NotoSans-Regular", "normal");
     doc.setFontSize(14);
-
-    doc.text("Transaction Report / ટ્રાન્ઝેક્શન રિપોર્ટ", 14, 15);
+    doc.text("Transaction Report", 14, 15);
 
     autoTable(doc, {
       startY: 22,
-      styles: {
-        font: "NotoSans-Regular", // ⭐ VERY IMPORTANT
-        fontSize: 10,
-      },
+      styles: { font: "NotoSans-Regular", fontSize: 10 },
       head: [
         [
           "User",
           "Date",
-          "Flyash",
-          "Bedash",
-          "Total ",
+          "Flyash ₹",
+          "Bedash ₹",
+          "Total ₹",
           "Flyash Tons",
           "Bedash Tons",
-          "Payment ",
+          "Flyash Remaining",
+          "Bedash Remaining",
+          "Payment",
         ],
       ],
       body: selectedRows.map(({ user, tx }) => [
@@ -145,6 +156,8 @@ const AllTransection: React.FC = () => {
         tx.totalAmount,
         tx.flyashTons,
         tx.bedashTons,
+        user.flyash.remaining,
+        user.bedash.remaining,
         tx.paymentMode,
       ]),
     });
@@ -152,7 +165,7 @@ const AllTransection: React.FC = () => {
     doc.save("transactions.pdf");
   };
 
-  // =================================================
+  /* ================= UI ================= */
 
   return (
     <Box p={3} onMouseUp={handleMouseUp}>
@@ -160,7 +173,6 @@ const AllTransection: React.FC = () => {
         All Transactions
       </Typography>
 
-      {/* SEARCH */}
       <Box mb={2}>
         <TextField
           fullWidth
@@ -171,7 +183,6 @@ const AllTransection: React.FC = () => {
         />
       </Box>
 
-      {/* PDF BUTTON */}
       <Box mb={2}>
         <Button
           variant="contained"
@@ -194,21 +205,10 @@ const AllTransection: React.FC = () => {
               <TableCell sx={{ color: "#fff" }}>Flyash ₹</TableCell>
               <TableCell sx={{ color: "#fff" }}>Bedash ₹</TableCell>
               <TableCell sx={{ color: "#fff" }}>Total ₹</TableCell>
-
-              <TableCell
-                sx={{ color: "#fff", cursor: "pointer" }}
-                onClick={() => toggleSort("flyash")}
-              >
-                Flyash Remaining {sortField === "flyash" ? "🔽" : ""}
-              </TableCell>
-
-              <TableCell
-                sx={{ color: "#fff", cursor: "pointer" }}
-                onClick={() => toggleSort("bedash")}
-              >
-                Bedash Remaining {sortField === "bedash" ? "🔽" : ""}
-              </TableCell>
-
+              <TableCell sx={{ color: "#fff" }}>Flyash Tons</TableCell>
+              <TableCell sx={{ color: "#fff" }}>Bedash Tons</TableCell>
+              <TableCell sx={{ color: "#fff" }}>Flyash Remaining</TableCell>
+              <TableCell sx={{ color: "#fff" }}>Bedash Remaining</TableCell>
               <TableCell sx={{ color: "#fff" }}>Payment</TableCell>
             </TableRow>
           </TableHead>
@@ -217,15 +217,38 @@ const AllTransection: React.FC = () => {
             {rows.map(({ user, tx }) => {
               const selected = selectedIds.includes(tx.id);
 
+              const monthlyTotal = getCurrentMonthTotal(user);
+              const isHighMonthly = monthlyTotal >= 100000;
+
               return (
                 <TableRow
                   key={tx.id}
                   hover
                   onMouseDown={() => handleMouseDown(tx.id)}
-                  onMouseEnter={() => handleMouseEnter(tx.id)}
+                  onMouseEnter={(e) => {
+                    handleMouseEnterSelect(tx.id);
+                    handleRowHover(user, e);
+                  }}
+                  onMouseLeave={handleLeave}
                   sx={{
                     cursor: "pointer",
-                    backgroundColor: selected ? "#e3f2fd" : "inherit",
+
+                    backgroundColor: selected
+                      ? "#e3f2fd"
+                      : isHighMonthly
+                      ? "#ffebee"
+                      : "inherit",
+
+                    animation:
+                      !selected && isHighMonthly
+                        ? "redBlink 1s infinite"
+                        : "none",
+
+                    "@keyframes redBlink": {
+                      "0%": { backgroundColor: "#ffebee" },
+                      "50%": { backgroundColor: "#ffcdd2" },
+                      "100%": { backgroundColor: "#ffebee" },
+                    },
                   }}
                 >
                   <TableCell>{user.userName}</TableCell>
@@ -233,6 +256,8 @@ const AllTransection: React.FC = () => {
                   <TableCell>₹{tx.flyashAmount}</TableCell>
                   <TableCell>₹{tx.bedashAmount}</TableCell>
                   <TableCell>₹{tx.totalAmount}</TableCell>
+                  <TableCell>{tx.flyashTons}</TableCell>
+                  <TableCell>{tx.bedashTons}</TableCell>
                   <TableCell>{user.flyash.remaining}</TableCell>
                   <TableCell>{user.bedash.remaining}</TableCell>
                   <TableCell>{tx.paymentMode}</TableCell>
@@ -242,6 +267,30 @@ const AllTransection: React.FC = () => {
           </TableBody>
         </Table>
       </Paper>
+
+      {/* 🔥 Hover Popup */}
+      {popup && (
+        <Box
+          sx={{
+            position: "fixed",
+            top: popup.y + 10,
+            left: popup.x + 10,
+            background: "#1976d2",
+            color: "#fff",
+            p: 2,
+            borderRadius: 2,
+            boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
+            zIndex: 9999,
+            minWidth: 220,
+          }}
+        >
+          <Typography fontWeight={700}>{popup.userName}</Typography>
+          <Typography variant="body2">
+            This Month Total:
+            <strong> ₹{popup.total.toLocaleString()}</strong>
+          </Typography>
+        </Box>
+      )}
     </Box>
   );
 };

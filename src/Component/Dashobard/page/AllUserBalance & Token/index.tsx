@@ -49,7 +49,15 @@ const AllUserTokens: React.FC = () => {
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [isDragging, setIsDragging] = useState(false);
 
-  /** ⭐ force re-render every second for timer */
+  /** 🔹 Hover popup */
+  const [hoverInfo, setHoverInfo] = useState<{
+    userName: string;
+    possible: number;
+    x: number;
+    y: number;
+  } | null>(null);
+
+  /** ⭐ timer refresh */
   const [, setNow] = useState(Date.now());
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 1000);
@@ -61,6 +69,32 @@ const AllUserTokens: React.FC = () => {
   }, [dispatch]);
 
   const tokens: AdminToken[] = data ?? [];
+
+  /** 🔹 Safe number */
+  const toNumber = (v: string | number) => {
+    const n = Number(v);
+    return isNaN(n) ? 0 : n;
+  };
+
+  /** 🔹 SMART possible tokens calculation */
+  const getPossibleTokens = (userId: number, remaining: string | number) => {
+    const totalRemaining = toNumber(remaining);
+    if (totalRemaining <= 0) return 0;
+
+    // count pending tokens of same user
+    const pendingCount = tokens.filter(
+      (t) => t.userId === userId && t.status === "pending"
+    ).length;
+
+    // block 27 tons per pending
+    const adjustedRemaining = totalRemaining - pendingCount * 27;
+    if (adjustedRemaining <= 0) return 0;
+
+    return Math.floor(adjustedRemaining / 27);
+  };
+
+  /** 🔹 Remaining < 27 */
+  const isLowStock = (remaining: string | number) => toNumber(remaining) < 27;
 
   /** 🔹 Status color */
   const getStatusColor = (status: string) => {
@@ -106,7 +140,7 @@ const AllUserTokens: React.FC = () => {
 
   const handleMouseUp = () => setIsDragging(false);
 
-  // ================= COUNTDOWN =================
+  // ================= TIMER =================
 
   const getRemainingTime = (confirmedAt: string | null) => {
     if (!confirmedAt) return "";
@@ -114,48 +148,49 @@ const AllUserTokens: React.FC = () => {
     const diff = FIFTEEN_DAYS - (Date.now() - new Date(confirmedAt).getTime());
     if (diff <= 0) return "Expired";
 
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
-    const mins = Math.floor((diff / (1000 * 60)) % 60);
-    const secs = Math.floor((diff / 1000) % 60);
+    const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const h = Math.floor((diff / (1000 * 60 * 60)) % 24);
+    const m = Math.floor((diff / (1000 * 60)) % 60);
+    const s = Math.floor((diff / 1000) % 60);
 
-    return `${days}d ${hours}h ${mins}m ${secs}`;
+    return `${d}d ${h}h ${m}m ${s}`;
   };
+
+  // ================= HOVER =================
+
+  const handleHover = (t: AdminToken, e: React.MouseEvent) => {
+    setHoverInfo({
+      userName: t.userName,
+      possible: getPossibleTokens(t.userId, t.remainingTons),
+      x: e.clientX,
+      y: e.clientY,
+    });
+  };
+
+  const handleLeaveHover = () => setHoverInfo(null);
 
   // ================= PDF =================
 
   const handleDownloadPDF = () => {
-    const selectedTokens = filteredTokens.filter((t) =>
-      selectedIds.includes(t.tokenId),
+    const selected = filteredTokens.filter((t) =>
+      selectedIds.includes(t.tokenId)
     );
 
-    if (selectedTokens.length === 0) {
-      alert("Please select at least one row");
+    if (!selected.length) {
+      alert("Select at least one row");
       return;
     }
 
     const doc = new jsPDF();
     doc.setFont("NotoSans-Regular", "normal");
     doc.setFontSize(14);
-
     doc.text("Admin Token Report", 14, 15);
 
     autoTable(doc, {
       startY: 22,
       styles: { font: "NotoSans-Regular", fontSize: 10 },
-      head: [
-        [
-          "User",
-          "Customer",
-          "Truck",
-          "Material",
-          "Weight",
-          "Carry ₹",
-          "Remaining Tons",
-          "Status",
-        ],
-      ],
-      body: selectedTokens.map((t) => [
+      head: [["User", "Customer", "Truck", "Material", "Weight", "Carry ₹", "Remaining", "Status"]],
+      body: selected.map((t) => [
         t.userName,
         t.customerName,
         t.truckNumber,
@@ -193,11 +228,11 @@ const AllUserTokens: React.FC = () => {
         />
       </Box>
 
-      {/* PDF BUTTON */}
+      {/* PDF */}
       <Box mb={2}>
         <Button
           variant="contained"
-          disabled={selectedIds.length === 0}
+          disabled={!selectedIds.length}
           onClick={handleDownloadPDF}
         >
           Download Selected PDF
@@ -211,31 +246,36 @@ const AllUserTokens: React.FC = () => {
         <Table>
           <TableHead>
             <TableRow sx={{ background: "#1976d2" }}>
-              <TableCell sx={{ color: "#fff" }}>User</TableCell>
-              <TableCell sx={{ color: "#fff" }}>Customer</TableCell>
-              <TableCell sx={{ color: "#fff" }}>Truck</TableCell>
-              <TableCell sx={{ color: "#fff" }}>Material</TableCell>
-              <TableCell sx={{ color: "#fff" }}>Weight</TableCell>
-              <TableCell sx={{ color: "#fff" }}>Carry ₹</TableCell>
-              <TableCell sx={{ color: "#fff" }}>Remaining</TableCell>
-              <TableCell sx={{ color: "#fff" }}>Timer</TableCell>
-              <TableCell sx={{ color: "#fff" }}>Status</TableCell>
+              {["User","Customer","Truck","Material","Weight","Carry ₹","Remaining","Timer","Status"].map(h=>(
+                <TableCell key={h} sx={{ color: "#fff" }}>{h}</TableCell>
+              ))}
             </TableRow>
           </TableHead>
 
           <TableBody>
             {filteredTokens.map((t) => {
               const selected = selectedIds.includes(t.tokenId);
+              const low = isLowStock(t.remainingTons);
 
               return (
                 <TableRow
                   key={t.tokenId}
                   hover
                   onMouseDown={() => handleMouseDown(t.tokenId)}
-                  onMouseEnter={() => handleMouseEnter(t.tokenId)}
+                  onMouseEnter={(e) => {
+                    handleMouseEnter(t.tokenId);
+                    handleHover(t, e);
+                  }}
+                  onMouseLeave={handleLeaveHover}
                   sx={{
                     cursor: "pointer",
-                    backgroundColor: selected ? "#e3f2fd" : "inherit",
+                    backgroundColor: selected ? "#e3f2fd" : low ? "#ffebee" : "inherit",
+                    animation: !selected && low ? "blink 1s infinite" : "none",
+                    "@keyframes blink": {
+                      "0%": { backgroundColor: "#ffebee" },
+                      "50%": { backgroundColor: "#ffcdd2" },
+                      "100%": { backgroundColor: "#ffebee" },
+                    },
                   }}
                 >
                   <TableCell>{t.userName}</TableCell>
@@ -245,20 +285,9 @@ const AllUserTokens: React.FC = () => {
                   <TableCell>{t.weight}</TableCell>
                   <TableCell>₹{t.carryForward}</TableCell>
                   <TableCell>{t.remainingTons}</TableCell>
-
-                  {/* ⏳ TIMER */}
+                  <TableCell>{t.status === "completed" ? getRemainingTime(t.confirmedAt) : "-"}</TableCell>
                   <TableCell>
-                    {t.status === "completed"
-                      ? getRemainingTime(t.confirmedAt)
-                      : "-"}
-                  </TableCell>
-
-                  <TableCell>
-                    <Chip
-                      label={t.status.toUpperCase()}
-                      color={getStatusColor(t.status) as any}
-                      size="small"
-                    />
+                    <Chip label={t.status.toUpperCase()} color={getStatusColor(t.status) as any} size="small" />
                   </TableCell>
                 </TableRow>
               );
@@ -266,6 +295,29 @@ const AllUserTokens: React.FC = () => {
           </TableBody>
         </Table>
       </Paper>
+
+      {/* HOVER POPUP */}
+      {hoverInfo && (
+        <Box
+          sx={{
+            position: "fixed",
+            top: hoverInfo.y + 10,
+            left: hoverInfo.x + 10,
+            background: "#1976d2",
+            color: "#fff",
+            p: 2,
+            borderRadius: 2,
+            boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
+            zIndex: 9999,
+          }}
+        >
+          <Typography fontWeight={700}>{hoverInfo.userName}</Typography>
+          <Typography variant="body2">
+            27 ton ke hisab se aur token:
+            <strong> {hoverInfo.possible}</strong>
+          </Typography>
+        </Box>
+      )}
     </Box>
   );
 };
