@@ -21,7 +21,6 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import "../../../../fonts/NotoSans-Regular";
 
-/** 🔹 Sort types */
 type SortField = "none" | "flyash" | "bedash";
 
 const AllTransection: React.FC = () => {
@@ -34,11 +33,8 @@ const AllTransection: React.FC = () => {
   const [search, setSearch] = useState("");
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [isDragging, setIsDragging] = useState(false);
-
-  /** 🔹 SORT STATE */
   const [sortField, setSortField] = useState<SortField>("none");
 
-  /** 🔹 Hover popup */
   const [popup, setPopup] = useState<{
     userName: string;
     total: number;
@@ -69,7 +65,7 @@ const AllTransection: React.FC = () => {
       .map((t) => ({ user: u, tx: t })),
   );
 
-  /* ================= DATE SORT (default) ================= */
+  /* ================= DATE SORT ================= */
 
   rows = rows.sort(
     (a, b) => new Date(b.tx.date).getTime() - new Date(a.tx.date).getTime(),
@@ -89,11 +85,10 @@ const AllTransection: React.FC = () => {
           ? Number(b.user.flyash.remaining)
           : Number(b.user.bedash.remaining);
 
-      return bVal - aVal; // big → low
+      return bVal - aVal;
     });
   }
 
-  /** 🔹 toggle sort */
   const toggleSort = (field: SortField) => {
     setSortField(sortField === field ? "none" : field);
   };
@@ -130,10 +125,7 @@ const AllTransection: React.FC = () => {
 
   /* ================= POPUP ================= */
 
-  const handleRowHover = (
-    user: AdminUserBalance,
-    event: React.MouseEvent,
-  ) => {
+  const handleRowHover = (user: AdminUserBalance, event: React.MouseEvent) => {
     const total = getCurrentMonthTotal(user);
 
     setPopup({
@@ -149,9 +141,7 @@ const AllTransection: React.FC = () => {
   /* ================= PDF ================= */
 
   const generatePDF = () => {
-    const selectedRows = rows.filter((r) =>
-      selectedIds.includes(r.tx.id),
-    );
+    const selectedRows = rows.filter((r) => selectedIds.includes(r.tx.id));
 
     if (!selectedRows.length) {
       alert("Please select rows");
@@ -240,7 +230,6 @@ const AllTransection: React.FC = () => {
               <TableCell sx={{ color: "#fff" }}>Flyash Tons</TableCell>
               <TableCell sx={{ color: "#fff" }}>Bedash Tons</TableCell>
 
-              {/* 🔹 CLICK SORT */}
               <TableCell
                 sx={{ color: "#fff", cursor: "pointer" }}
                 onClick={() => toggleSort("flyash")}
@@ -263,8 +252,26 @@ const AllTransection: React.FC = () => {
             {rows.map(({ user, tx }) => {
               const selected = selectedIds.includes(tx.id);
 
-              const monthlyTotal = getCurrentMonthTotal(user);
-              const isHighMonthly = monthlyTotal >= 100000;
+              const remaining = Number(user.flyash.remaining);
+              const used = Number(tx.flyashTons);
+
+              let light: "green" | "yellow" | "red" | "blue" | "none" = "none";
+
+              if (remaining === 0) light = "blue";
+              else if (remaining <= 27) light = "red";
+              else if (remaining < used) light = "yellow";
+              else if (remaining >= used) light = "green";
+
+              const blink =
+                light === "green"
+                  ? "greenBlink 2s ease-in-out infinite"
+                  : light === "yellow"
+                    ? "yellowBlink 2s ease-in-out infinite"
+                    : light === "red"
+                      ? "redBlink 2s ease-in-out infinite"
+                      : light === "blue"
+                        ? "blueBlink 2s ease-in-out infinite"
+                        : "none";
 
               return (
                 <TableRow
@@ -278,19 +285,31 @@ const AllTransection: React.FC = () => {
                   onMouseLeave={handleLeave}
                   sx={{
                     cursor: "pointer",
-                    backgroundColor: selected
-                      ? "#e3f2fd"
-                      : isHighMonthly
-                      ? "#ffebee"
-                      : "inherit",
-                    animation:
-                      !selected && isHighMonthly
-                        ? "redBlink 1s infinite"
-                        : "none",
+                    backgroundColor: selected ? "#e3f2fd" : "inherit",
+                    animation: !selected ? blink : "none",
+
+                    "@keyframes greenBlink": {
+                      "0%": { backgroundColor: "#f1f8f4" },
+                      "50%": { backgroundColor: "#a5d6a7" },
+                      "100%": { backgroundColor: "#f1f8f4" },
+                    },
+
+                    "@keyframes yellowBlink": {
+                      "0%": { backgroundColor: "#fffef5" },
+                      "50%": { backgroundColor: "#fff59d" },
+                      "100%": { backgroundColor: "#fffef5" },
+                    },
+
                     "@keyframes redBlink": {
-                      "0%": { backgroundColor: "#ffebee" },
-                      "50%": { backgroundColor: "#ffcdd2" },
-                      "100%": { backgroundColor: "#ffebee" },
+                      "0%": { backgroundColor: "#fff5f5" },
+                      "50%": { backgroundColor: "#ef9a9a" },
+                      "100%": { backgroundColor: "#fff5f5" },
+                    },
+
+                    "@keyframes blueBlink": {
+                      "0%": { backgroundColor: "#f3f8fd" },
+                      "50%": { backgroundColor: "#90caf9" },
+                      "100%": { backgroundColor: "#f3f8fd" },
                     },
                   }}
                 >
@@ -311,7 +330,6 @@ const AllTransection: React.FC = () => {
         </Table>
       </Paper>
 
-      {/* 🔥 Hover Popup */}
       {popup && (
         <Box
           sx={{
@@ -324,7 +342,6 @@ const AllTransection: React.FC = () => {
             borderRadius: 2,
             boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
             zIndex: 9999,
-            minWidth: 220,
           }}
         >
           <Typography fontWeight={700}>{popup.userName}</Typography>

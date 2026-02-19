@@ -49,10 +49,13 @@ const AllUserTokens: React.FC = () => {
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [isDragging, setIsDragging] = useState(false);
 
-  /** 🔹 Hover popup */
+  /** 🔹 Hover popup state */
   const [hoverInfo, setHoverInfo] = useState<{
     userName: string;
+    customerName: string;
     possible: number;
+    carryText: string;
+    tokenCount: number;
     x: number;
     y: number;
   } | null>(null);
@@ -76,21 +79,39 @@ const AllUserTokens: React.FC = () => {
     return isNaN(n) ? 0 : n;
   };
 
-  /** 🔹 SMART possible tokens calculation */
+  /** 🔹 Possible tokens after blocking pending */
   const getPossibleTokens = (userId: number, remaining: string | number) => {
     const totalRemaining = toNumber(remaining);
     if (totalRemaining <= 0) return 0;
 
-    // count pending tokens of same user
     const pendingCount = tokens.filter(
-      (t) => t.userId === userId && t.status === "pending"
+      (t) => t.userId === userId && t.status === "pending",
     ).length;
 
-    // block 27 tons per pending
     const adjustedRemaining = totalRemaining - pendingCount * 27;
     if (adjustedRemaining <= 0) return 0;
 
     return Math.floor(adjustedRemaining / 27);
+  };
+
+  /** 🔹 Negative carryForward total of SAME CUSTOMER */
+  const getCustomerNegativeTotal = (customerName: string) => {
+    const totalNegative = tokens
+      .filter(
+        (t) => t.customerName === customerName && Number(t.carryForward) < 0,
+      )
+      .reduce((sum, t) => sum + Number(t.carryForward), 0);
+
+    return Math.abs(totalNegative);
+  };
+
+  /** 🔹 Active tokens count (pending + updated) */
+  const getCustomerActiveTokenCount = (customerName: string) => {
+    return tokens.filter(
+      (t) =>
+        t.customerName === customerName &&
+        (t.status === "pending" || t.status === "updated"),
+    ).length;
   };
 
   /** 🔹 Remaining < 27 */
@@ -159,9 +180,17 @@ const AllUserTokens: React.FC = () => {
   // ================= HOVER =================
 
   const handleHover = (t: AdminToken, e: React.MouseEvent) => {
+    const negativeTotal = getCustomerNegativeTotal(t.customerName);
+
     setHoverInfo({
       userName: t.userName,
+      customerName: t.customerName,
       possible: getPossibleTokens(t.userId, t.remainingTons),
+      tokenCount: getCustomerActiveTokenCount(t.customerName),
+      carryText:
+        negativeTotal > 0
+          ? `- ₹${negativeTotal} baki hai`
+          : "+ No pending balance",
       x: e.clientX,
       y: e.clientY,
     });
@@ -173,7 +202,7 @@ const AllUserTokens: React.FC = () => {
 
   const handleDownloadPDF = () => {
     const selected = filteredTokens.filter((t) =>
-      selectedIds.includes(t.tokenId)
+      selectedIds.includes(t.tokenId),
     );
 
     if (!selected.length) {
@@ -189,7 +218,18 @@ const AllUserTokens: React.FC = () => {
     autoTable(doc, {
       startY: 22,
       styles: { font: "NotoSans-Regular", fontSize: 10 },
-      head: [["User", "Customer", "Truck", "Material", "Weight", "Carry ₹", "Remaining", "Status"]],
+      head: [
+        [
+          "User",
+          "Customer",
+          "Truck",
+          "Material",
+          "Weight",
+          "Carry ₹",
+          "Remaining",
+          "Status",
+        ],
+      ],
       body: selected.map((t) => [
         t.userName,
         t.customerName,
@@ -217,7 +257,6 @@ const AllUserTokens: React.FC = () => {
         Total Tokens: {totalTokens}
       </Typography>
 
-      {/* SEARCH */}
       <Box mb={2}>
         <TextField
           label="Search..."
@@ -228,7 +267,6 @@ const AllUserTokens: React.FC = () => {
         />
       </Box>
 
-      {/* PDF */}
       <Box mb={2}>
         <Button
           variant="contained"
@@ -246,8 +284,20 @@ const AllUserTokens: React.FC = () => {
         <Table>
           <TableHead>
             <TableRow sx={{ background: "#1976d2" }}>
-              {["User","Customer","Truck","Material","Weight","Carry ₹","Remaining","Timer","Status"].map(h=>(
-                <TableCell key={h} sx={{ color: "#fff" }}>{h}</TableCell>
+              {[
+                "User",
+                "Customer",
+                "Truck",
+                "Material",
+                "Weight",
+                "Carry ₹",
+                "Remaining",
+                "Timer",
+                "Status",
+              ].map((h) => (
+                <TableCell key={h} sx={{ color: "#fff" }}>
+                  {h}
+                </TableCell>
               ))}
             </TableRow>
           </TableHead>
@@ -269,7 +319,11 @@ const AllUserTokens: React.FC = () => {
                   onMouseLeave={handleLeaveHover}
                   sx={{
                     cursor: "pointer",
-                    backgroundColor: selected ? "#e3f2fd" : low ? "#ffebee" : "inherit",
+                    backgroundColor: selected
+                      ? "#e3f2fd"
+                      : low
+                        ? "#ffebee"
+                        : "inherit",
                     animation: !selected && low ? "blink 1s infinite" : "none",
                     "@keyframes blink": {
                       "0%": { backgroundColor: "#ffebee" },
@@ -285,9 +339,17 @@ const AllUserTokens: React.FC = () => {
                   <TableCell>{t.weight}</TableCell>
                   <TableCell>₹{t.carryForward}</TableCell>
                   <TableCell>{t.remainingTons}</TableCell>
-                  <TableCell>{t.status === "completed" ? getRemainingTime(t.confirmedAt) : "-"}</TableCell>
                   <TableCell>
-                    <Chip label={t.status.toUpperCase()} color={getStatusColor(t.status) as any} size="small" />
+                    {t.status === "completed"
+                      ? getRemainingTime(t.confirmedAt)
+                      : "-"}
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={t.status.toUpperCase()}
+                      color={getStatusColor(t.status) as any}
+                      size="small"
+                    />
                   </TableCell>
                 </TableRow>
               );
@@ -296,7 +358,7 @@ const AllUserTokens: React.FC = () => {
         </Table>
       </Paper>
 
-      {/* HOVER POPUP */}
+      {/* 🔥 FINAL POPUP */}
       {hoverInfo && (
         <Box
           sx={{
@@ -309,13 +371,21 @@ const AllUserTokens: React.FC = () => {
             borderRadius: 2,
             boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
             zIndex: 9999,
+            minWidth: 260,
           }}
         >
+          <Typography variant="body2">
+            Active Tokens: <strong>{hoverInfo.tokenCount}</strong>
+          </Typography>
           <Typography fontWeight={700}>{hoverInfo.userName}</Typography>
           <Typography variant="body2">
             27 ton ke hisab se aur token:
             <strong> {hoverInfo.possible}</strong>
           </Typography>
+
+          <Typography fontWeight={700}>{hoverInfo.customerName}</Typography>
+
+          <Typography variant="body2">{hoverInfo.carryText}</Typography>
         </Box>
       )}
     </Box>
