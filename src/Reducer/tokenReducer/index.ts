@@ -29,13 +29,16 @@ export const tokenReducer = (state = initialState, action: any): TokenState => {
       };
 
     case TOKEN_UPDATE_SUCCESS:
-      return {
-        ...state,
-        loading: false,
-        tokens: state.tokens.map((t) =>
-          t.id === action.payload.data.id ? action.payload.data : t,
-        ),
-      };
+  return {
+    ...state,
+    loading: false,
+    tokens: state.tokens.map((t) =>
+      action.payload?.data &&
+      t.id === action.payload.data.id
+        ? action.payload.data
+        : t,
+    ),
+  };
 
     case TOKEN_CONFIRM_SUCCESS:
       return {
