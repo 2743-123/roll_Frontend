@@ -42,7 +42,7 @@ const EditTokenDialog: React.FC<EditTokenDialogProps> = ({
   const [formData, setFormData] = useState({
     truckNumber: "",
     weight: "",
-    ratePerTon: 180, // ⭐ fixed rate
+    ratePerTon: 180, 
     commission: 0,
     paidAmount: 0,
   });
@@ -63,11 +63,16 @@ const EditTokenDialog: React.FC<EditTokenDialogProps> = ({
   useEffect(() => {
     if (token && open) {
       setTokenStatus(token.status);
+      
+      const w = Number(token.weight) || 0;
+      const c = Number(token.commission) || 0;
+      const t = Number(token.totalAmount) || 0;
+
       setFormData({
         truckNumber: token.truckNumber || "",
-        weight: token.weight?.toString() || "",
+        weight: w ? w.toString() : "",
         ratePerTon: 180,
-        commission: token.commission || 0,
+        commission: c,
         paidAmount: token.paidAmount || 0,
       });
 
@@ -80,13 +85,42 @@ const EditTokenDialog: React.FC<EditTokenDialogProps> = ({
         setManualDate("");
       }
 
-      // Default Bedash Reset
-      setSellRate(750);
-      setCartingRate(225);
-      setTruckOwnerType("owner");
-      setAnotherRate(330);
+      // ⭐ SMART REVERSE CALCULATION FOR BEDASH RATES
+      if (isBedash && w > 0 && token.status !== "pending") {
+        // Agar token already updated hai toh purane rate extract karo
+        const derivedSellRate = t / w;
+        setSellRate(derivedSellRate);
+
+        // Commission = (SellRate - CartingRate - FixRate) * Weight
+        // Toh => CartingRate = SellRate - FixRate - (Commission / Weight)
+        const marginPerTon = c / w;
+
+        // Default to "owner" logic to guess carting rate
+        // We assume 180 is Fix Rate for Owner. 
+        // Agar (Sell - 180 - Margin) ki value 225 ke aas paas ho toh owner hai
+        let derivedCarting = derivedSellRate - 180 - marginPerTon;
+
+        // Agar carting ki value kuch ajeeb negative ban rahi hai matlab ye "another" type hai (Fix rate = 330)
+        if (derivedCarting < 0 || Math.abs(derivedCarting - 225) > Math.abs(derivedSellRate - anotherRate - marginPerTon)) {
+           setTruckOwnerType("another");
+           // Yaha another rate set karne ki koshish (defaulting to 330 agar manually another rate pe tha)
+           setAnotherRate(330); 
+           derivedCarting = derivedSellRate - 330 - marginPerTon;
+        } else {
+           setTruckOwnerType("owner");
+        }
+
+        setCartingRate(Math.round(derivedCarting)); // Round off to avoid decimals
+
+      } else {
+        // Default Bedash Reset (Agar first time update ho raha hai)
+        setSellRate(750);
+        setCartingRate(225);
+        setTruckOwnerType("owner");
+        setAnotherRate(330);
+      }
     }
-  }, [token, open]);
+  }, [token, open, isBedash, anotherRate]); // Dependency array updated safely
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -196,7 +230,7 @@ const EditTokenDialog: React.FC<EditTokenDialogProps> = ({
         >
           {/* 🟢 COMMON FIELDS */}
           <Grid container spacing={2}>
-            <Grid>
+            <Grid >
               <TextField 
                 label="Truck Number" 
                 name="truckNumber" 
@@ -205,7 +239,7 @@ const EditTokenDialog: React.FC<EditTokenDialogProps> = ({
                 onChange={handleChange} 
               />
             </Grid>
-            <Grid>
+            <Grid >
               <TextField 
                 label="Weight (Tons)" 
                 name="weight" 
@@ -219,7 +253,7 @@ const EditTokenDialog: React.FC<EditTokenDialogProps> = ({
             {/* FLYASH: Normal Rate & Manual Commission */}
             {!isBedash && (
               <>
-                <Grid >
+                <Grid>
                   <TextField label="Rate / Ton" fullWidth value={180} disabled type="number" />
                 </Grid>
                 <Grid >
@@ -247,7 +281,7 @@ const EditTokenDialog: React.FC<EditTokenDialogProps> = ({
               />
             </Grid>
 
-            <Grid >
+            <Grid>
               <TextField 
                 label="Paid Amount (₹)" 
                 name="paidAmount" 
@@ -279,7 +313,7 @@ const EditTokenDialog: React.FC<EditTokenDialogProps> = ({
                     sx={{ bgcolor: "white" }}
                   />
                 </Grid>
-                <Grid >
+                <Grid>
                   <Typography variant="body2" fontWeight="600" color="primary.main">
                     {sellRate} × {w} = ₹{sellRate * w}
                   </Typography>
@@ -296,22 +330,22 @@ const EditTokenDialog: React.FC<EditTokenDialogProps> = ({
                     sx={{ bgcolor: "white" }}
                   />
                 </Grid>
-                <Grid >
+                <Grid>
                   <Typography variant="body2" fontWeight="600" color="error.main">
                     {cartingRate} × {w} = ₹{cartingRate * w}
                   </Typography>
                 </Grid>
 
-                <Grid >
+                <Grid>
                   <TextField label="Fix Rate" type="number" size="small" disabled value={180} fullWidth sx={{ bgcolor: "#f5f5f5" }} />
                 </Grid>
-                <Grid >
+                <Grid>
                   <Typography variant="body2" fontWeight="600" color="error.main">
                     180 × {w} = ₹{180 * w}
                   </Typography>
                 </Grid>
 
-                <Grid >
+                <Grid>
                   <FormControl size="small" fullWidth sx={{ bgcolor: "white" }}>
                     <InputLabel>Truck Owner Type</InputLabel>
                     <Select value={truckOwnerType} label="Truck Owner Type" onChange={(e) => setTruckOwnerType(e.target.value as "owner" | "another")}>
