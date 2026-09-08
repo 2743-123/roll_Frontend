@@ -1,4 +1,3 @@
-import "./App.css";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { LoginedIn, RequireAuth } from "./Routes";
 import Login from "./Component/Login/index";
@@ -15,6 +14,7 @@ import { AppDispatch } from "./store";
 import { useEffect } from "react";
 import AllUserToken from "./Component/Dashobard/page/AllUserBalance & Token/index";
 import AllTransection from "./Component/Dashobard/page/AllUserBalance & Token/allTransection";
+import PayentHistory from "./Component/Dashobard/page/Payemnt History/PaymentHistory";
 
 function App() {
   const dispatch = useDispatch<AppDispatch>();
@@ -56,6 +56,8 @@ function App() {
             <Route path="admin" element={<AdminList />} />
             <Route path="AllUserToken" element={<AllUserToken />} />
             <Route path="AllTransection" element={<AllTransection />} />
+            <Route path="PaymentHistory" element={<PayentHistory
+             />} />
           </Route>
         </Routes>
       </BrowserRouter>

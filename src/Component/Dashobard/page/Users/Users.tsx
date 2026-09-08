@@ -15,15 +15,20 @@ import {
   IconButton,
   Box,
   Typography,
-  Divider,
+  Chip,
+  Tooltip,
+  InputAdornment,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import SearchIcon from "@mui/icons-material/Search";
+import GroupIcon from "@mui/icons-material/Group";
+
 import AddUsers from "./Add";
 import EditUser from "./Update";
 import DeleteUserDialog from "./delete";
-import { deleteUserAction } from "../../../../Actions/Auth/user";
+import { deleteUserAction, getuserAction } from "../../../../Actions/Auth/user";
 
 export interface User {
   id: number;
@@ -31,7 +36,7 @@ export interface User {
   email: string;
   role: "user" | "admin" | "superadmin";
   isActive: boolean;
-  createdBy?: number | null; // 🆕 added
+  createdBy?: number | null;
 }
 
 const Users: React.FC = () => {
@@ -49,8 +54,10 @@ const Users: React.FC = () => {
   const [deleteUserId, setDeleteUserId] = React.useState<number | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) =>
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);
+    setPage(0);
+  };
 
   const handleOpenAdd = () => setOpenAdd(true);
   const handleCloseAdd = () => setOpenAdd(false);
@@ -72,11 +79,14 @@ const Users: React.FC = () => {
     setDeleteUserId(null);
     setDeleteDialogOpen(false);
   };
+
   const handleConfirmDelete = async () => {
     if (deleteUserId !== null) {
       await dispatch(deleteUserAction(deleteUserId));
       setDeleteUserId(null);
       setDeleteDialogOpen(false);
+      // 🔄 Auto-refresh list after deletion without manual reload
+      dispatch(getuserAction());
     }
   };
 
@@ -99,78 +109,97 @@ const Users: React.FC = () => {
         (u.role || "").toLowerCase().includes(search.toLowerCase()),
     );
 
-  // 🆕 Helper to get creator name/email
   const getCreatorName = (createdById?: number | null): string => {
     if (!createdById) return "—";
     const creator = userList.find((u) => u.id === createdById);
     if (creator) {
       return creator.email || creator.name || `ID: ${createdById}`;
     }
-    return `ID: ${createdById}`;
+    return `Admin ID: ${createdById}`;
   };
+
   const getCreatorRole = (createdById?: number | null): string => {
     if (!createdById) return "—";
     const creator = userList.find((u) => u.id === createdById);
     if (creator) {
-      return creator.role || creator.name || `ID: ${createdById}`;
+      return creator.role || `ID: ${createdById}`;
     }
-    return `ID: ${createdById}`;
+    return "Admin / Superadmin";
   };
 
   return (
     <Paper
-      elevation={3}
+      elevation={4}
       sx={{
         width: "100%",
-        borderRadius: 3,
-        overflow: "hidden",
-        background: "linear-gradient(135deg, #f9fafb 0%, #eef2f6 100%)",
-        p: 2,
+        p: 3,
+        borderRadius: 4,
+        background: "#ffffff",
+        minHeight: "80vh",
       }}
     >
-      {/* 🔹 Header Section */}
+      {/* ================= HEADER ================= */}
       <Box
         sx={{
-          background: "linear-gradient(135deg, #1976d2, #42a5f5)",
+          background: "linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%)",
           color: "white",
-          borderRadius: 2,
+          borderRadius: 3,
           px: 3,
-          py: 2,
-          mb: 2,
+          py: 2.5,
+          mb: 3,
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
           flexWrap: "wrap",
           gap: 2,
+          boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
         }}
       >
-        <Typography variant="h6" fontWeight={600}>
-          User Management
-        </Typography>
-        <Box display="flex" alignItems="center" gap={2}>
+        <Box display="flex" alignItems="center" gap={1.5}>
+          <GroupIcon sx={{ fontSize: 30, color: "#64b5f6" }} />
+          <Typography variant="h5" fontWeight={700} letterSpacing={0.5}>
+            User Management
+          </Typography>
+        </Box>
+
+        <Box display="flex" alignItems="center" gap={2} flexWrap="wrap">
           <TextField
-            label="Search Users"
-            variant="outlined"
+            placeholder="Search users..."
             size="small"
             value={search}
             onChange={handleSearch}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon sx={{ color: "gray" }} />
+                </InputAdornment>
+              ),
+            }}
             sx={{
               backgroundColor: "white",
-              borderRadius: 1,
-              width: 250,
+              borderRadius: 2,
+              width: { xs: "100%", sm: "260px" },
+              "& .MuiOutlinedInput-root": {
+                borderRadius: 2,
+                "& fieldset": { borderColor: "transparent" },
+                "&:hover fieldset": { borderColor: "#1976d2" },
+                "&.Mui-focused fieldset": { borderColor: "#1976d2" },
+              },
             }}
           />
           {loggedInUser?.role !== "user" && (
             <Button
               variant="contained"
-              color="inherit"
               startIcon={<AddIcon />}
               onClick={handleOpenAdd}
               sx={{
-                backgroundColor: "white",
-                color: "#1976d2",
-                fontWeight: 600,
-                "&:hover": { backgroundColor: "#e3f2fd" },
+                backgroundColor: "#ffeb3b",
+                color: "#000",
+                fontWeight: 700,
+                borderRadius: 2,
+                px: 3,
+                textTransform: "none",
+                "&:hover": { backgroundColor: "#fbc02d" },
               }}
             >
               Add User
@@ -179,7 +208,7 @@ const Users: React.FC = () => {
         </Box>
       </Box>
 
-      {/* 🔹 Add/Edit/Delete Dialogs */}
+      {/* ================= DIALOGS ================= */}
       <DeleteUserDialog
         open={deleteDialogOpen}
         onClose={handleCloseDelete}
@@ -197,36 +226,52 @@ const Users: React.FC = () => {
         />
       )}
 
-      {/* 🔹 Table Section */}
+      {/* ================= TABLE ================= */}
       <TableContainer
         sx={{
-          borderRadius: 2,
-          overflow: "hidden",
+          borderRadius: 3,
+          border: "1px solid #e0e0e0",
           backgroundColor: "white",
+          maxHeight: "65vh",
+          overflowY: "auto",
         }}
       >
-        <Table stickyHeader>
+        <Table stickyHeader size="medium">
           <TableHead>
-            <TableRow
-              sx={{
-                backgroundColor: "#1976d2",
-                "& th": { color: "blue", fontWeight: 600 },
-              }}
-            >
-              <TableCell>ID</TableCell>
-              <TableCell>Name</TableCell>
-              <TableCell>Email</TableCell>
-              <TableCell>Role</TableCell>
-              <TableCell>Status</TableCell>
-              {loggedInUser?.role === "superadmin" && (
-                <>
-                  <TableCell>Created By</TableCell>
-                  <TableCell>Created By Role</TableCell>
-                </>
-              )}
-              <TableCell align="center">Actions</TableCell>
+            <TableRow>
+              {[
+                { label: "ID", align: "left" },
+                { label: "Name", align: "left" },
+                { label: "Email", align: "left" },
+                { label: "Role", align: "center" },
+                { label: "Status", align: "center" },
+                ...(loggedInUser?.role === "superadmin"
+                  ? [
+                      { label: "Created By", align: "left" },
+                      { label: "Created By Role", align: "left" },
+                    ]
+                  : []),
+                { label: "Actions", align: "center" },
+              ].map((col) => (
+                <TableCell
+                  key={col.label}
+                  align={col.align as any}
+                  sx={{
+                    backgroundColor: "#f4f6f8",
+                    color: "#333",
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                    fontSize: "0.75rem",
+                    letterSpacing: 0.5,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {col.label}
+                </TableCell>
+              ))}
             </TableRow>
           </TableHead>
+
           <TableBody>
             {filteredUsers.length > 0 ? (
               filteredUsers
@@ -236,68 +281,83 @@ const Users: React.FC = () => {
                     key={u.id}
                     hover
                     sx={{
-                      "&:hover": {
-                        backgroundColor: "#f1f5f9",
-                        transition: "0.2s",
-                      },
+                      "&:hover": { backgroundColor: "#f9fafb" },
+                      "& td": { borderBottom: "1px solid #f0f0f0" },
                     }}
                   >
-                    <TableCell>{u.id}</TableCell>
-                    <TableCell>{u.name}</TableCell>
-                    <TableCell>{u.email}</TableCell>
-                    <TableCell sx={{ textTransform: "capitalize" }}>
-                      {u.role}
+                    <TableCell sx={{ fontWeight: 600, color: "#1976d2" }}>#{u.id}</TableCell>
+                    <TableCell sx={{ fontWeight: 600, color: "text.primary" }}>{u.name}</TableCell>
+                    <TableCell sx={{ color: "text.secondary" }}>{u.email}</TableCell>
+                    
+                    <TableCell align="center">
+                      <Chip
+                        label={u.role}
+                        size="small"
+                        sx={{
+                          textTransform: "capitalize",
+                          fontWeight: 600,
+                          backgroundColor: "#e3f2fd",
+                          color: "#1565c0",
+                        }}
+                      />
                     </TableCell>
-                    <TableCell>
-                      <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                      >
-                        <Box
-                          sx={{
-                            width: 10,
-                            height: 10,
-                            borderRadius: "50%",
-                            bgcolor: u.isActive ? "green" : "red",
-                          }}
-                        />
-                        <Typography variant="body2">
-                          {u.isActive ? "Active" : "Inactive"}
-                        </Typography>
-                      </Box>
+
+                    <TableCell align="center">
+                      <Chip
+                        label={u.isActive ? "Active" : "Inactive"}
+                        size="small"
+                        sx={{
+                          fontWeight: 600,
+                          backgroundColor: u.isActive ? "#e8f5e9" : "#ffebee",
+                          color: u.isActive ? "#2e7d32" : "#c62828",
+                        }}
+                      />
                     </TableCell>
+
                     {loggedInUser?.role === "superadmin" && (
                       <>
-                        <TableCell>{getCreatorName(u.createdBy)}</TableCell>
-                        <TableCell>{getCreatorRole(u.createdBy)}</TableCell>
+                        <TableCell sx={{ color: "text.secondary" }}>{getCreatorName(u.createdBy)}</TableCell>
+                        <TableCell sx={{ color: "text.secondary", textTransform: "capitalize" }}>{getCreatorRole(u.createdBy)}</TableCell>
                       </>
                     )}
-                    {/* 🆕 */}
-                    <TableCell align="center">
-                      {loggedInUser?.role !== "user" && (
+
+                    <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+                      {loggedInUser?.role !== "user" ? (
                         <>
-                          <IconButton
-                            color="primary"
-                            onClick={() => handleOpenEdit(u)}
-                          >
-                            <EditIcon />
-                          </IconButton>
-                          <IconButton
-                            color="error"
-                            onClick={() => handleOpenDelete(u.id)}
-                          >
-                            <DeleteIcon />
-                          </IconButton>
+                          <Tooltip title="Edit User">
+                            <IconButton
+                              color="primary"
+                              onClick={() => handleOpenEdit(u)}
+                              size="small"
+                              sx={{ mr: 1, backgroundColor: "#f0f7ff", "&:hover": { backgroundColor: "#e3f2fd" } }}
+                            >
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Delete User">
+                            <IconButton
+                              color="error"
+                              onClick={() => handleOpenDelete(u.id)}
+                              size="small"
+                              sx={{ backgroundColor: "#fff0f0", "&:hover": { backgroundColor: "#ffebee" } }}
+                            >
+                              <DeleteOutlineIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
                         </>
+                      ) : (
+                        <Typography variant="caption" color="text.disabled">No Access</Typography>
                       )}
                     </TableCell>
                   </TableRow>
                 ))
             ) : (
               <TableRow>
-                <TableCell colSpan={7} align="center">
-                  <Typography variant="body2" color="text.secondary" py={2}>
-                    No users found
-                  </Typography>
+                <TableCell colSpan={loggedInUser?.role === "superadmin" ? 9 : 7} align="center" sx={{ py: 6 }}>
+                  <Box display="flex" flexDirection="column" alignItems="center" sx={{ opacity: 0.5 }}>
+                    <Typography variant="h6" fontWeight={600}>No Users Found</Typography>
+                    <Typography variant="body2">Try adjusting your search query.</Typography>
+                  </Box>
                 </TableCell>
               </TableRow>
             )}
@@ -305,22 +365,19 @@ const Users: React.FC = () => {
         </Table>
       </TableContainer>
 
-      {/* 🔹 Pagination */}
-      <Divider sx={{ mt: 1 }} />
-      <TablePagination
-        rowsPerPageOptions={[5, 10, 25]}
-        count={filteredUsers.length}
-        page={page}
-        rowsPerPage={rowsPerPage}
-        onPageChange={handleChangePage}
-        onRowsPerPageChange={handleChangeRowsPerPage}
-        component="div"
-        sx={{
-          backgroundColor: "white",
-          borderBottomLeftRadius: 12,
-          borderBottomRightRadius: 12,
-        }}
-      />
+      {/* ================= PAGINATION ================= */}
+      <Box display="flex" justifyContent="flex-end" mt={1}>
+        <TablePagination
+          rowsPerPageOptions={[5, 10, 25]}
+          component="div"
+          count={filteredUsers.length}
+          page={page}
+          rowsPerPage={rowsPerPage}
+          onPageChange={handleChangePage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+          sx={{ borderBottom: "none" }}
+        />
+      </Box>
     </Paper>
   );
 };

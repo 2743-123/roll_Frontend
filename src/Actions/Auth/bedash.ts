@@ -1,5 +1,6 @@
 import { ERROR } from "../../ActionType/auth";
 import {
+  ADD_BEDASH_SUCCESS, // ✅ Import kiya
   CONFIRM_BEDASH_SUCCESS,
   GET_BEDASH_LIST,
 } from "../../ActionType/bedash/bedash";
@@ -28,18 +29,37 @@ export const confirmBedashAction =
     try {
       const data = await confirmBedashService(id);
       dispatch({ type: CONFIRM_BEDASH_SUCCESS, payload: data });
+      
+      // ✅ Success notification add ki
+      dispatch(
+        showNotification({
+          type: "success",
+          message: "Bedash confirmed successfully",
+        }),
+      );
     } catch (error: any) {
+      const msg = error?.response?.data?.msg || error.message;
       dispatch({
         type: ERROR,
-        payload: { msg: error?.response?.data?.msg || error.message },
+        payload: { msg },
       });
+      dispatch(
+        showNotification({ type: "error", message: msg || "Failed to confirm Bedash" }),
+      );
     }
   };
 
 export const addBedashAction =
   (payload: any) => async (dispatch: AppDispatch) => {
     try {
-      await addBedashService(payload);
+      const data = await addBedashService(payload);
+      
+      // ✅ Reducer ko update karne ke liye dispatch bheja
+      dispatch({ type: ADD_BEDASH_SUCCESS, payload: data });
+
+      // ✅ List ko refresh karne ke liye list action call ki
+      dispatch(getBedashListAction());
+
       dispatch(
         showNotification({
           type: "success",
@@ -47,8 +67,9 @@ export const addBedashAction =
         }),
       );
     } catch (error: any) {
+      const msg = error?.response?.data?.msg || error.message;
       dispatch(
-        showNotification({ type: "error", message: "Failed to add Bedash" }),
+        showNotification({ type: "error", message: msg || "Failed to add Bedash" }),
       );
     }
   };

@@ -50,10 +50,6 @@ const DropDownUserList: React.FC = () => {
 
   /**
    * ✅ Production-safe alphabetical sorting
-   * - trim spaces
-   * - lowercase normalize
-   * - numeric support (DA 2 < DA 10)
-   * - locale independent
    */
   const sortedActiveUsers = useMemo(() => {
     return users
@@ -71,25 +67,29 @@ const DropDownUserList: React.FC = () => {
   }, [users]);
 
   /**
-   * ✅ Default selection logic
+   * ✅ Default selection logic (Runs ONLY ONCE when users are loaded and nothing is selected yet)
    */
   useEffect(() => {
     if (!user) return;
 
     if (user.role === "user") {
-      setSelected(user.id.toString());
-      dispatch(selectUserAction(user));
+      if (!selected) {
+        setSelected(user.id.toString());
+        dispatch(selectUserAction(user));
+      }
     } else if (
       (user.role === "admin" || user.role === "superadmin") &&
-      sortedActiveUsers.length > 0
+      sortedActiveUsers.length > 0 &&
+      !selected
     ) {
-      setSelected(sortedActiveUsers[0].id.toString());
-      dispatch(selectUserAction(sortedActiveUsers[0]));
+      const defaultUser = sortedActiveUsers[0];
+      setSelected(defaultUser.id.toString());
+      dispatch(selectUserAction(defaultUser));
     }
-  }, [user, sortedActiveUsers, dispatch]);
+  }, [user, sortedActiveUsers, dispatch, selected]);
 
   /**
-   * ✅ Handle dropdown change
+   * ✅ Handle dropdown change (User manually changes selection)
    */
   const handleChange = (event: SelectChangeEvent) => {
     const selectedId = Number(event.target.value);
@@ -104,51 +104,74 @@ const DropDownUserList: React.FC = () => {
 
   return (
     <FormControl
+      size="small"
       sx={{
         m: 1,
         minWidth: 220,
         "& .MuiInputLabel-root": {
-          color: "white",
+          color: "rgba(255, 255, 255, 0.85)",
           fontWeight: 600,
-          "&.Mui-focused": { color: "#bbdefb" },
+          fontSize: "0.9rem",
+          top: "-2px",
+          "&.Mui-focused": { color: "#ffffff" },
         },
         "& .MuiOutlinedInput-root": {
           color: "white",
-          backgroundColor: "rgba(33, 203, 243, 0.15)",
-          borderRadius: "12px",
-          "& fieldset": { borderColor: "white" },
-          "&:hover fieldset": { borderColor: "#64b5f6" },
+          backgroundColor: "rgba(255, 255, 255, 0.1)",
+          borderRadius: "10px",
+          transition: "all 0.2s ease",
+          "& fieldset": { borderColor: "rgba(255, 255, 255, 0.3)" },
+          "&:hover fieldset": { borderColor: "rgba(255, 255, 255, 0.6)" },
           "&.Mui-focused fieldset": {
-            borderColor: "#2196f3",
-            boxShadow: "0 0 8px rgba(33,203,243,0.4)",
+            borderColor: "#64b5f6",
+            borderWidth: "2px",
           },
         },
         "& .MuiSelect-icon": { color: "white" },
         "& .MuiFormHelperText-root": {
-          color: "#e0f7fa",
+          color: "rgba(255, 255, 255, 0.7)",
           fontWeight: 500,
-          fontSize: "0.85rem",
+          fontSize: "0.75rem",
+          ml: 1,
+          mt: 0.5,
         },
       }}
     >
-      <InputLabel id="user-select-label">Select User</InputLabel>
+      <InputLabel id="user-select-label">Active Customer</InputLabel>
 
       <Select
         labelId="user-select-label"
         value={selected}
-        label="Select User"
+        label="Active Customer"
         onChange={handleChange}
         MenuProps={{
           PaperProps: {
             sx: {
-              backgroundColor: "#f0f4f8",
-              color: "#1976d2",
+              backgroundColor: "#ffffff",
+              color: "#333",
               borderRadius: "12px",
-              boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+              boxShadow: "0 8px 30px rgba(0,0,0,0.15)",
+              mt: 1,
               "& .MuiMenuItem-root": {
+                py: 1.2,
+                px: 2,
+                fontSize: "0.9rem",
+                fontWeight: 500,
+                borderRadius: "8px",
+                mx: 1,
+                my: 0.5,
+                transition: "background-color 0.2s",
                 "&:hover": {
-                  backgroundColor: "#bbdefb",
-                  color: "#0d47a1",
+                  backgroundColor: "#f0f7ff",
+                  color: "#1976d2",
+                },
+                "&.Mui-selected": {
+                  backgroundColor: "#e3f2fd",
+                  color: "#1565c0",
+                  fontWeight: 700,
+                  "&:hover": {
+                    backgroundColor: "#bbdefb",
+                  },
                 },
               },
             },
@@ -164,14 +187,7 @@ const DropDownUserList: React.FC = () => {
         {(user?.role === "admin" || user?.role === "superadmin") &&
           (sortedActiveUsers.length > 0 ? (
             sortedActiveUsers.map((u) => (
-              <MenuItem
-                key={u.id}
-                value={u.id}
-                sx={{
-                  backgroundColor:
-                    selected === u.id.toString() ? "#bbdefb" : "transparent",
-                }}
-              >
+              <MenuItem key={u.id} value={u.id}>
                 <ListItemText primary={u.name} />
               </MenuItem>
             ))
@@ -181,7 +197,7 @@ const DropDownUserList: React.FC = () => {
       </Select>
 
       <FormHelperText>
-        {selected ? "User selected" : "Please select a user"}
+        {selected ? "Customer synced" : "Select a customer"}
       </FormHelperText>
     </FormControl>
   );

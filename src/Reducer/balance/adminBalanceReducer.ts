@@ -1,4 +1,4 @@
-import { ERROR } from "../../ActionType/auth";
+import { ERROR, IN_PROGRESS } from "../../ActionType/auth";
 import {
   AdminUserBalance,
   GET_ADMIN_BALANCE,
@@ -29,6 +29,9 @@ const initialState: AdminBalanceState = {
  */
 type AdminBalanceAction =
   | {
+      type: typeof IN_PROGRESS;
+    }
+  | {
       type: typeof GET_ADMIN_BALANCE;
       payload: {
         data: AdminUserBalance[];
@@ -48,6 +51,13 @@ const adminBalanceReducer = (
   action: AdminBalanceAction,
 ): AdminBalanceState => {
   switch (action.type) {
+    case IN_PROGRESS:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
     case GET_ADMIN_BALANCE:
       return {
         ...state,

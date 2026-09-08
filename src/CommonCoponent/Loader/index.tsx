@@ -33,7 +33,7 @@
 import { useEffect } from "react";
 import Lottie, { Options } from "react-lottie";
 import animationData from "./loader.json"; // make sure this is a .json file
-import "./style.scss";
+import "./Style.scss";
 
 const Loader: React.FC = () => {
   const defaultOptions: Options = {

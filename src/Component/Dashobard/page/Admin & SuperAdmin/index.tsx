@@ -15,10 +15,16 @@ import {
   IconButton,
   Box,
   Typography,
+  Chip,
+  Tooltip,
+  InputAdornment,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import SearchIcon from "@mui/icons-material/Search";
+import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
+
 import AddUsers from "../Users/Add";
 import EditUser from "../Users/Update";
 import DeleteUserDialog from "../Users/delete";
@@ -40,17 +46,21 @@ const AdminList: React.FC = () => {
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
   const [search, setSearch] = React.useState("");
+  
   const [openAdd, setOpenAdd] = React.useState(false);
   const [openEdit, setOpenEdit] = React.useState(false);
   const [selectedUser, setSelectedUser] = React.useState<User | null>(null);
   const [deleteUserId, setDeleteUserId] = React.useState<number | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) =>
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);
+    setPage(0); // Reset to first page on search
+  };
 
   const handleOpenAdd = () => setOpenAdd(true);
   const handleCloseAdd = () => setOpenAdd(false);
+  
   const handleOpenEdit = (user: User) => {
     setSelectedUser(user);
     setOpenEdit(true);
@@ -59,6 +69,7 @@ const AdminList: React.FC = () => {
     setSelectedUser(null);
     setOpenEdit(false);
   };
+  
   const handleOpenDelete = (userId: number) => {
     setDeleteUserId(userId);
     setDeleteDialogOpen(true);
@@ -67,6 +78,7 @@ const AdminList: React.FC = () => {
     setDeleteUserId(null);
     setDeleteDialogOpen(false);
   };
+  
   const handleConfirmDelete = async () => {
     if (deleteUserId !== null) {
       try {
@@ -78,6 +90,7 @@ const AdminList: React.FC = () => {
       }
     }
   };
+
   const handleChangePage = (_e: unknown, newPage: number) => setPage(newPage);
   const handleChangeRowsPerPage = (e: React.ChangeEvent<HTMLInputElement>) => {
     setRowsPerPage(+e.target.value);
@@ -99,40 +112,61 @@ const AdminList: React.FC = () => {
 
   return (
     <Paper
+      elevation={4}
       sx={{
         width: "100%",
         p: 3,
-        borderRadius: 3,
-        boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
-        background: "linear-gradient(180deg, #ffffff 0%, #f5faff 100%)",
+        borderRadius: 4,
+        background: "#ffffff",
+        minHeight: "80vh",
       }}
     >
-      {/* Header */}
+      {/* ================= HEADER ================= */}
       <Box
         sx={{
+          background: "linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%)",
+          color: "white",
+          borderRadius: 3,
+          px: 3,
+          py: 2.5,
+          mb: 3,
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          mb: 2,
+          flexWrap: "wrap",
+          gap: 2,
+          boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
         }}
       >
-        <Typography variant="h6" sx={{ fontWeight: 700, color: "#1976d2" }}>
-          👥 Admin & SuperAdmin List
-        </Typography>
+        <Box display="flex" alignItems="center" gap={1.5}>
+          <AdminPanelSettingsIcon sx={{ fontSize: 30, color: "#ffb74d" }} />
+          <Typography variant="h5" fontWeight={700} letterSpacing={0.5}>
+            Admin Management
+          </Typography>
+        </Box>
 
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
           <TextField
-            label="Search Users"
-            variant="outlined"
+            placeholder="Search admins..."
             size="small"
             value={search}
             onChange={handleSearch}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon sx={{ color: "gray" }} />
+                </InputAdornment>
+              ),
+            }}
             sx={{
               backgroundColor: "white",
               borderRadius: 2,
-              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+              width: { xs: "100%", sm: "260px" },
               "& .MuiOutlinedInput-root": {
                 borderRadius: 2,
+                "& fieldset": { borderColor: "transparent" },
+                "&:hover fieldset": { borderColor: "#1976d2" },
+                "&.Mui-focused fieldset": { borderColor: "#1976d2" },
               },
             }}
           />
@@ -142,25 +176,22 @@ const AdminList: React.FC = () => {
               startIcon={<AddIcon />}
               onClick={handleOpenAdd}
               sx={{
-                background: "linear-gradient(90deg, #1976d2 0%, #42a5f5 100%)",
+                backgroundColor: "#ffeb3b",
+                color: "#000",
+                fontWeight: 700,
                 borderRadius: 2,
-                fontWeight: 600,
+                px: 3,
                 textTransform: "none",
-                "&:hover": {
-                  transform: "scale(1.05)",
-                  background:
-                    "linear-gradient(90deg, #42a5f5 0%, #64b5f6 100%)",
-                },
-                transition: "all 0.3s ease",
+                "&:hover": { backgroundColor: "#fbc02d" },
               }}
             >
-              Add User
+              Add Admin
             </Button>
           )}
         </Box>
       </Box>
 
-      {/* Modals */}
+      {/* ================= MODALS ================= */}
       <DeleteUserDialog
         open={deleteDialogOpen}
         onClose={handleCloseDelete}
@@ -176,37 +207,43 @@ const AdminList: React.FC = () => {
         />
       )}
 
-      {/* Table */}
+      {/* ================= TABLE ================= */}
       <TableContainer
-        component={Paper}
         sx={{
           borderRadius: 3,
-          overflow: "hidden",
-          boxShadow: "0 4px 16px rgba(0,0,0,0.1)",
+          border: "1px solid #e0e0e0",
+          backgroundColor: "white",
+          maxHeight: "65vh",
+          overflowY: "auto",
         }}
       >
         <Table stickyHeader>
           <TableHead>
-            <TableRow
-              sx={{
-                background: "linear-gradient(90deg, #bbdefb 0%, #e3f2fd 100%)",
-              }}
-            >
-              {["ID", "Name", "Email", "Role", "Status", "Actions"].map(
-                (header) => (
-                  <TableCell
-                    key={header}
-                    sx={{
-                      fontWeight: 700,
-                      color: "#0d47a1",
-                      fontSize: "0.95rem",
-                      textTransform: "uppercase",
-                    }}
-                  >
-                    {header}
-                  </TableCell>
-                ),
-              )}
+            <TableRow>
+              {[
+                { label: "ID", align: "left" },
+                { label: "Admin Name", align: "left" },
+                { label: "Email", align: "left" },
+                { label: "Role", align: "center" },
+                { label: "Status", align: "center" },
+                { label: "Actions", align: "center" },
+              ].map((col) => (
+                <TableCell
+                  key={col.label}
+                  align={col.align as any}
+                  sx={{
+                    backgroundColor: "#f4f6f8",
+                    color: "#333",
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                    fontSize: "0.75rem",
+                    letterSpacing: 0.5,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {col.label}
+                </TableCell>
+              ))}
             </TableRow>
           </TableHead>
 
@@ -219,66 +256,77 @@ const AdminList: React.FC = () => {
                     key={u.id}
                     hover
                     sx={{
-                      transition: "all 0.2s ease",
-                      "&:hover": {
-                        backgroundColor: "#f1f9ff",
-                        transform: "scale(1.01)",
-                      },
+                      "&:hover": { backgroundColor: "#f9fafb" },
+                      "& td": { borderBottom: "1px solid #f0f0f0" },
                     }}
                   >
-                    <TableCell>{u.id}</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>{u.name}</TableCell>
-                    <TableCell>{u.email}</TableCell>
-                    <TableCell sx={{ textTransform: "capitalize" }}>
-                      {u.role}
+                    <TableCell sx={{ fontWeight: 600, color: "#1976d2" }}>#{u.id}</TableCell>
+                    <TableCell sx={{ fontWeight: 600, color: "text.primary" }}>{u.name}</TableCell>
+                    <TableCell sx={{ color: "text.secondary" }}>{u.email}</TableCell>
+                    
+                    <TableCell align="center">
+                      <Chip
+                        label={u.role}
+                        size="small"
+                        sx={{
+                          textTransform: "capitalize",
+                          fontWeight: 600,
+                          backgroundColor: u.role === "superadmin" ? "#f3e5f5" : "#e3f2fd",
+                          color: u.role === "superadmin" ? "#6a1b9a" : "#1565c0",
+                          border: `1px solid ${u.role === "superadmin" ? "#ce93d8" : "#90caf9"}`,
+                        }}
+                      />
                     </TableCell>
-                    <TableCell>
-                      <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                      >
-                        <Box
-                          sx={{
-                            width: 10,
-                            height: 10,
-                            borderRadius: "50%",
-                            bgcolor: u.isActive ? "#4caf50" : "#f44336",
-                          }}
-                        />
-                        {u.isActive ? "Active" : "Inactive"}
-                      </Box>
+
+                    <TableCell align="center">
+                      <Chip
+                        label={u.isActive ? "Active" : "Inactive"}
+                        size="small"
+                        sx={{
+                          fontWeight: 600,
+                          backgroundColor: u.isActive ? "#e8f5e9" : "#ffebee",
+                          color: u.isActive ? "#2e7d32" : "#c62828",
+                        }}
+                      />
                     </TableCell>
-                    <TableCell>
-                      {loggedInUser?.role !== "user" && (
-                        <Box sx={{ display: "flex", gap: 1 }}>
-                          <IconButton
-                            color="primary"
-                            onClick={() => handleOpenEdit(u)}
-                            sx={{
-                              transition: "all 0.2s ease",
-                              "&:hover": { transform: "scale(1.2)" },
-                            }}
-                          >
-                            <EditIcon />
-                          </IconButton>
-                          <IconButton
-                            color="error"
-                            onClick={() => handleOpenDelete(u.id)}
-                            sx={{
-                              transition: "all 0.2s ease",
-                              "&:hover": { transform: "scale(1.2)" },
-                            }}
-                          >
-                            <DeleteIcon />
-                          </IconButton>
-                        </Box>
+
+                    <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+                      {loggedInUser?.role !== "user" ? (
+                        <>
+                          <Tooltip title="Edit Admin">
+                            <IconButton
+                              color="primary"
+                              onClick={() => handleOpenEdit(u)}
+                              size="small"
+                              sx={{ mr: 1, backgroundColor: "#f0f7ff", "&:hover": { backgroundColor: "#e3f2fd" } }}
+                            >
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Delete Admin">
+                            <IconButton
+                              color="error"
+                              onClick={() => handleOpenDelete(u.id)}
+                              size="small"
+                              sx={{ backgroundColor: "#fff0f0", "&:hover": { backgroundColor: "#ffebee" } }}
+                            >
+                              <DeleteOutlineIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </>
+                      ) : (
+                        <Typography variant="caption" color="text.disabled">No Access</Typography>
                       )}
                     </TableCell>
                   </TableRow>
                 ))
             ) : (
               <TableRow>
-                <TableCell colSpan={6} align="center" sx={{ py: 3 }}>
-                  No users found
+                <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
+                  <Box display="flex" flexDirection="column" alignItems="center" sx={{ opacity: 0.5 }}>
+                    <Typography variant="h6" fontWeight={600}>No Admins Found</Typography>
+                    <Typography variant="body2">Try adjusting your search criteria.</Typography>
+                  </Box>
                 </TableCell>
               </TableRow>
             )}
@@ -286,21 +334,19 @@ const AdminList: React.FC = () => {
         </Table>
       </TableContainer>
 
-      {/* Pagination */}
-      <TablePagination
-        rowsPerPageOptions={[5, 10, 25]}
-        count={filteredUsers.length}
-        page={page}
-        rowsPerPage={rowsPerPage}
-        onPageChange={handleChangePage}
-        onRowsPerPageChange={handleChangeRowsPerPage}
-        sx={{
-          mt: 2,
-          "& .MuiTablePagination-actions": {
-            color: "#1976d2",
-          },
-        }}
-      />
+      {/* ================= PAGINATION ================= */}
+      <Box display="flex" justifyContent="flex-end" mt={1}>
+        <TablePagination
+          rowsPerPageOptions={[5, 10, 25]}
+          component="div"
+          count={filteredUsers.length}
+          page={page}
+          rowsPerPage={rowsPerPage}
+          onPageChange={handleChangePage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+          sx={{ borderBottom: "none" }}
+        />
+      </Box>
     </Paper>
   );
 };

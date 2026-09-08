@@ -42,6 +42,10 @@ export const addUserAction =
     try {
       const data = await addUserService(userData);
       dispatch({ type: ADD_USER_SUCCESS, payload: data });
+      
+      // 🔄 Optional: list ko fresh rakhne ke liye fetch dispatch kar sakte hain
+      dispatch(getuserAction());
+
       dispatch(
         showNotification({
           type: "success",
@@ -49,10 +53,17 @@ export const addUserAction =
         }),
       );
     } catch (error: any) {
+      const msg = error?.response?.data?.msg || error.message;
       dispatch({
         type: ERROR,
-        payload: { msg: error?.response?.data?.msg || error.message },
+        payload: { msg },
       });
+      dispatch(
+        showNotification({
+          type: "error",
+          message: msg || "Failed to add user",
+        }),
+      );
     }
   };
 

@@ -36,15 +36,8 @@ export const confirmPaymentService = async (payload: any) => {
 
 export const getAdminTokensService = async () => {
   try {
-    const accessToken = localStorage.getItem("accessToken");
-
-    const response = await api.get(API_GET_ALL_USER_TOKEN, {
-      headers: {
-        Authorization: accessToken ? `Bearer ${accessToken}` : "",
-      },
-    });
-
-    return response.data;
+    const { data } = await api.get(API_GET_ALL_USER_TOKEN);
+    return data;
   } catch (error: any) {
     console.error(
       "❌ Admin token fetch error:",

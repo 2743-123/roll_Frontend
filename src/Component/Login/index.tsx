@@ -11,7 +11,11 @@ import {
   Typography,
   CircularProgress,
   Paper,
+  InputAdornment,
 } from "@mui/material";
+import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
+import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 
 interface Logindetails {
   email: string;
@@ -36,7 +40,8 @@ export default function DashboardLogin() {
     setLoginDetails({ ...loginDetails, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
     const { email, password } = loginDetails;
     if (email && password) {
       dispatch(login(email, password));
@@ -51,167 +56,185 @@ export default function DashboardLogin() {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        background: "linear-gradient(135deg, #87b7e4ff 0%, #a6d8f3ff 100%)",
+        background: "linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%)",
         overflow: "hidden",
         position: "relative",
         margin: 0,
         padding: 0,
       }}
     >
-      {/* Subtle glow layers */}
+      {/* ================= SUBTLE GLOW BACKGROUNDS ================= */}
       <Box
         sx={{
           position: "absolute",
-          width: 400,
-          height: 400,
-          background:
-            "radial-gradient(circle at center, rgba(211, 135, 135, 0.08), transparent 70%)",
+          width: 450,
+          height: 450,
+          background: "radial-gradient(circle at center, rgba(33, 150, 243, 0.15), transparent 70%)",
           top: 0,
           left: 0,
           transform: "translate(-30%, -30%)",
-          filter: "blur(100px)",
+          filter: "blur(120px)",
           pointerEvents: "none",
         }}
       />
       <Box
         sx={{
           position: "absolute",
-          width: 400,
-          height: 400,
-          background:
-            "radial-gradient(circle at center, rgba(0,188,212,0.08), transparent 70%)",
+          width: 450,
+          height: 450,
+          background: "radial-gradient(circle at center, rgba(0, 188, 212, 0.15), transparent 70%)",
           bottom: 0,
           right: 0,
           transform: "translate(30%, 30%)",
-          filter: "blur(100px)",
+          filter: "blur(120px)",
           pointerEvents: "none",
         }}
       />
 
-      {/* Login Card */}
+      {/* ================= LOGIN CARD ================= */}
       <Paper
-        elevation={10}
+        elevation={12}
+        component="form"
+        onSubmit={handleSubmit}
         sx={{
-          p: 6,
+          p: { xs: 4, sm: 5 },
           borderRadius: 4,
           width: "90%",
-          maxWidth: 400,
-          background: "rgba(20,20,30,0.9)",
-          backdropFilter: "blur(12px)",
+          maxWidth: 420,
+          background: "rgba(25, 30, 40, 0.85)",
+          backdropFilter: "blur(16px)",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          gap: 3,
+          gap: 2.5,
           zIndex: 2,
-          boxShadow: "0 0 40px rgba(0,0,0,0.6)",
+          border: "1px solid rgba(255, 255, 255, 0.1)",
+          boxShadow: "0 16px 40px rgba(0,0,0,0.4)",
         }}
       >
         {/* Logo / Icon */}
         <Box
           sx={{
-            width: 80,
-            height: 80,
+            width: 70,
+            height: 70,
             borderRadius: "50%",
-            background: "linear-gradient(135deg,#2196f3,#00bcd4)",
+            background: "linear-gradient(135deg,#1976d2,#42a5f5)",
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
-            mb: 1,
-            boxShadow: "0 0 20px rgba(0,188,212,0.5)",
+            mb: 0.5,
+            boxShadow: "0 0 25px rgba(25,118,210,0.5)",
           }}
         >
-          <Typography
-            variant="h5"
-            sx={{
-              color: "#fff",
-              fontWeight: "bold",
-              letterSpacing: 2,
-            }}
-          >
-            AD
-          </Typography>
+          <AdminPanelSettingsIcon sx={{ fontSize: 36, color: "#fff" }} />
         </Box>
 
         {/* Title */}
-        <Typography
-          variant="h5"
-          sx={{ fontWeight: "bold", textAlign: "center", color: "#fff" }}
-        >
-          Admin{" "}
-          <Box component="span" sx={{ color: "#00bcd4" }}>
-            Dashboard
-          </Box>
-        </Typography>
-        <Typography variant="body2" sx={{ color: "#aaa", textAlign: "center" }}>
-          Secure Access Portal
-        </Typography>
+        <Box textAlign="center">
+          <Typography
+            variant="h5"
+            sx={{ fontWeight: 700, color: "#fff", letterSpacing: 0.5 }}
+          >
+            Admin{" "}
+            <Box component="span" sx={{ color: "#64b5f6" }}>
+              Portal
+            </Box>
+          </Typography>
+          <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.6)", mt: 0.5 }}>
+            Secure Enterprise Access
+          </Typography>
+        </Box>
 
         {/* Input Fields */}
         <TextField
           fullWidth
-          placeholder="Email Address"
+          label="Email Address"
           name="email"
+          type="email"
+          required
           value={loginDetails.email}
           onChange={handleChange}
           variant="outlined"
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <EmailOutlinedIcon sx={{ color: "rgba(255,255,255,0.5)" }} />
+              </InputAdornment>
+            ),
+          }}
           sx={{
-            backgroundColor: "#1a1a25",
-            borderRadius: 2,
+            mt: 1,
+            "& .MuiInputLabel-root": { color: "rgba(255,255,255,0.7)" },
             "& .MuiOutlinedInput-root": {
-              "& fieldset": { borderColor: "#333" },
-              "&:hover fieldset": { borderColor: "#00bcd4" },
-              "&.Mui-focused fieldset": { borderColor: "#00bcd4" },
+              backgroundColor: "rgba(255, 255, 255, 0.05)",
+              borderRadius: 2,
               color: "#fff",
+              "& fieldset": { borderColor: "rgba(255,255,255,0.2)" },
+              "&:hover fieldset": { borderColor: "#42a5f5" },
+              "&.Mui-focused fieldset": { borderColor: "#1976d2" },
             },
-            input: { color: "#fff" },
           }}
         />
+
         <TextField
           fullWidth
           type="password"
-          placeholder="Password"
+          label="Password"
           name="password"
+          required
           value={loginDetails.password}
           onChange={handleChange}
           variant="outlined"
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <LockOutlinedIcon sx={{ color: "rgba(255,255,255,0.5)" }} />
+              </InputAdornment>
+            ),
+          }}
           sx={{
-            backgroundColor: "#1a1a25",
-            borderRadius: 2,
+            "& .MuiInputLabel-root": { color: "rgba(255,255,255,0.7)" },
             "& .MuiOutlinedInput-root": {
-              "& fieldset": { borderColor: "#333" },
-              "&:hover fieldset": { borderColor: "#00bcd4" },
-              "&.Mui-focused fieldset": { borderColor: "#00bcd4" },
+              backgroundColor: "rgba(255, 255, 255, 0.05)",
+              borderRadius: 2,
               color: "#fff",
+              "& fieldset": { borderColor: "rgba(255,255,255,0.2)" },
+              "&:hover fieldset": { borderColor: "#42a5f5" },
+              "&.Mui-focused fieldset": { borderColor: "#1976d2" },
             },
-            input: { color: "#fff" },
           }}
         />
 
         {/* Submit Button */}
         <Button
           fullWidth
+          type="submit"
           variant="contained"
-          onClick={handleSubmit}
           disabled={loading}
           sx={{
             mt: 1.5,
-            py: 1.5,
-            borderRadius: 3,
-            fontWeight: "bold",
-            fontSize: 15,
-            background: "linear-gradient(90deg, #00bcd4, #2196f3)",
-            boxShadow: "0 4px 20px rgba(0,188,212,0.4)",
+            py: 1.4,
+            borderRadius: 2.5,
+            fontWeight: 700,
+            fontSize: "0.95rem",
+            textTransform: "none",
+            background: "linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)",
+            boxShadow: "0 4px 20px rgba(25,118,210,0.4)",
             "&:hover": {
-              background: "linear-gradient(90deg, #2196f3, #00bcd4)",
+              background: "linear-gradient(135deg, #115293 0%, #1976d2 100%)",
+            },
+            "&.Mui-disabled": {
+              backgroundColor: "rgba(255,255,255,0.1)",
+              color: "rgba(255,255,255,0.3)",
             },
           }}
         >
-          {loading ? <CircularProgress size={24} color="inherit" /> : "Access"}
+          {loading ? <CircularProgress size={24} color="inherit" /> : "Access Dashboard"}
         </Button>
 
         {/* Footer */}
-        <Typography variant="caption" sx={{ color: "#777", mt: 2 }}>
-          © {new Date().getFullYear()} Admin Dashboard
+        <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.4)", mt: 1 }}>
+          © {new Date().getFullYear()} Bricks Admin Panel. All rights reserved.
         </Typography>
       </Paper>
     </Box>

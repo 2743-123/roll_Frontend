@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { IconButton, Tooltip } from "@mui/material";
-import LogoutIcon from "@mui/icons-material/Logout";
+import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
 import { logoutAction } from "../../Actions/Auth";
 import { RootState } from "../../Reducer";
 import { AppDispatch } from "../../store";
@@ -23,24 +23,29 @@ const Logout: React.FC = () => {
   }, [token, navigate]);
 
   return (
-    <Tooltip title="Logout" arrow>
+    <Tooltip title="Logout Portal" arrow placement="bottom">
       <IconButton
         onClick={handleClick}
+        aria-label="logout"
         sx={{
-          background: "linear-gradient(135deg, #2196f3 0%, #f32121ff 100%)",
+          background: "rgba(255, 255, 255, 0.1)",
           color: "white",
-          borderRadius: "50%",
-          p: 1.2,
-          transition: "all 0.3s ease",
-          boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+          borderRadius: "12px",
+          p: 1.1,
+          border: "1px solid rgba(255, 255, 255, 0.2)",
+          transition: "all 0.2s ease-in-out",
+          backdropFilter: "blur(4px)",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
           "&:hover": {
-            background: "linear-gradient(135deg, #910606ff 0%, #81d4fa 100%)",
-            transform: "scale(1.15)",
-            boxShadow: "0 6px 16px rgba(0,0,0,0.25)",
+            background: "rgba(244, 67, 54, 0.2)",
+            borderColor: "#f44336",
+            color: "#ff8a80",
+            transform: "translateY(-2px)",
+            boxShadow: "0 4px 12px rgba(244,67,54,0.3)",
           },
         }}
       >
-        <LogoutIcon fontSize="medium" />
+        <LogoutRoundedIcon fontSize="small" />
       </IconButton>
     </Tooltip>
   );

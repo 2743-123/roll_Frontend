@@ -17,7 +17,7 @@ import Logout from "../Logout";
 import DropDownUserList from "../DropDownUserList";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 
-const drawerWidth = 240;
+const drawerWidth = 260;
 
 // ---------------- Drawer Styles ----------------
 const openedMixin = (theme: Theme): CSSObject => ({
@@ -27,6 +27,8 @@ const openedMixin = (theme: Theme): CSSObject => ({
     duration: theme.transitions.duration.enteringScreen,
   }),
   overflowX: "hidden",
+  borderRight: "1px solid #e0e0e0",
+  boxShadow: "4px 0 20px rgba(0,0,0,0.05)",
 });
 
 const closedMixin = (theme: Theme): CSSObject => ({
@@ -35,9 +37,10 @@ const closedMixin = (theme: Theme): CSSObject => ({
     duration: theme.transitions.duration.leavingScreen,
   }),
   overflowX: "hidden",
-  width: `calc(${theme.spacing(7)} + 1px)`,
+  width: `calc(${theme.spacing(8)} + 1px)`,
+  borderRight: "1px solid #e0e0e0",
   [theme.breakpoints.up("sm")]: {
-    width: `calc(${theme.spacing(8)} + 1px)`,
+    width: `calc(${theme.spacing(9)} + 1px)`,
   },
 });
 
@@ -46,19 +49,15 @@ const DrawerHeader = styled("div")(({ theme }) => ({
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
-  justifyContent: "flex-start",
-  paddingTop: theme.spacing(2),
-  height: 120,
-  backgroundColor: "#f5f5f5",
-  boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+  justifyContent: "center",
+  padding: theme.spacing(2),
+  height: 110,
+  backgroundColor: "#ffffff",
+  borderBottom: "1px solid #f0f0f0",
   userSelect: "none",
-  transition: "all 0.3s ease",
+  position: "relative",
   "& svg": {
     transition: "all 0.3s ease",
-    transform: "scale(1)",
-  },
-  "&:hover svg": {
-    transform: "scale(1.2) rotate(10deg)",
   },
 }));
 
@@ -70,20 +69,17 @@ const AppBar = styled(MuiAppBar, {
   shouldForwardProp: (prop) => prop !== "open",
 })<AppBarProps>(({ theme, open }) => ({
   zIndex: theme.zIndex.drawer + 1,
-  background: "linear-gradient(90deg, #2196f3 0%, #21cbf3 100%)",
+  background: "linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%)",
   color: "#fff",
-  boxShadow: "0px 6px 20px rgba(0,0,0,0.12)",
-  transition: theme.transitions.create(["width", "margin", "background"], {
+  boxShadow: "0px 4px 20px rgba(0,0,0,0.1)",
+  transition: theme.transitions.create(["width", "margin"], {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.standard,
   }),
-  "&:hover": {
-    background: "linear-gradient(90deg, #21cbf3 0%, #2196f3 100%)",
-  },
   ...(open && {
     marginLeft: drawerWidth,
     width: `calc(100% - ${drawerWidth}px)`,
-    transition: theme.transitions.create(["width", "margin", "background"], {
+    transition: theme.transitions.create(["width", "margin"], {
       easing: theme.transitions.easing.sharp,
       duration: theme.transitions.duration.standard,
     }),
@@ -98,18 +94,8 @@ const Drawer = styled(MuiDrawer, {
   flexShrink: 0,
   whiteSpace: "nowrap",
   boxSizing: "border-box",
-  transition: theme.transitions.create("width", {
-    easing: theme.transitions.easing.sharp,
-    duration: theme.transitions.duration.standard,
-  }),
   "& .MuiDrawer-paper": {
     backgroundColor: "#ffffff",
-    borderRight: "1px solid #e0e0e0",
-    boxShadow: "2px 0px 8px rgba(0,0,0,0.05)",
-    transition: theme.transitions.create("width", {
-      easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.standard,
-    }),
   },
   ...(open && {
     ...openedMixin(theme),
@@ -128,17 +114,18 @@ const BreadcrumbPath: React.FC = () => {
   const pathnames = location.pathname.split("/").filter((x) => x);
 
   return (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
+    <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 3 }}>
       <Typography
+        variant="body2"
         sx={{
           cursor: "pointer",
-          color: "#1e88e5",
-          fontWeight: 600,
-          transition: "all 0.3s ease",
+          color: "#1976d2",
+          fontWeight: 700,
+          letterSpacing: 0.5,
+          transition: "all 0.2s ease",
           "&:hover": {
-            color: "#1976d2",
+            color: "#115293",
             textDecoration: "underline",
-            transform: "scale(1.05)",
           },
         }}
         onClick={() => navigate("/")}
@@ -150,14 +137,15 @@ const BreadcrumbPath: React.FC = () => {
         return (
           <Typography
             key={index}
+            variant="body2"
             sx={{
               cursor: "pointer",
-              color: "#555",
-              transition: "all 0.3s ease",
+              color: "text.secondary",
+              fontWeight: 500,
+              transition: "all 0.2s ease",
               "&:hover": {
-                color: "#2196f3",
+                color: "#1976d2",
                 textDecoration: "underline",
-                transform: "scale(1.05)",
               },
             }}
             onClick={() => navigate(routeTo)}
@@ -173,40 +161,40 @@ const BreadcrumbPath: React.FC = () => {
 // ---------------- Dashboard Component ----------------
 export default function Dashboard() {
   const theme = useTheme();
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = React.useState(true);
 
   const handleDrawerOpen = () => setOpen(true);
   const handleDrawerClose = () => setOpen(false);
 
   return (
-    <Box sx={{ display: "flex" }}>
+    <Box sx={{ display: "flex", backgroundColor: "#f8f9fa", minHeight: "100vh" }}>
       <CssBaseline />
 
       {/* AppBar */}
       <AppBar position="fixed" open={open}>
-        <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <Toolbar sx={{ display: "flex", justifyContent: "space-between", minHeight: "70px !important" }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
             <IconButton
               color="inherit"
               aria-label="open drawer"
               onClick={handleDrawerOpen}
               edge="start"
-              sx={{ marginRight: 2, ...(open && { display: "none" }) }}
+              sx={{ marginRight: 1.5, ...(open && { display: "none" }) }}
             >
               <MenuIcon />
             </IconButton>
-            <DashboardOutlinedIcon sx={{ fontSize: 32, color: "white" }} />
+            <DashboardOutlinedIcon sx={{ fontSize: 28, color: "#64b5f6" }} />
             <Typography
-              variant="h5"
+              variant="h6"
               noWrap
-              sx={{ fontWeight: 700, textTransform: "uppercase" }}
+              sx={{ fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase" }}
             >
-              Dashboard
+              Admin Dashboard
             </Typography>
           </Box>
 
-          {/* Right Side */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          {/* Right Side Controls */}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <DropDownUserList />
             <Logout />
           </Box>
@@ -216,54 +204,48 @@ export default function Dashboard() {
       {/* Drawer */}
       <Drawer variant="permanent" open={open}>
         <DrawerHeader>
-          <DashboardOutlinedIcon
-            sx={{ fontSize: 36, color: "#1976d2", mb: 1 }}
-          />
-          <Typography
-            sx={{
-              fontWeight: 800,
-              textTransform: "uppercase",
-              color: "#1976d2",
-              letterSpacing: 2,
-              fontSize: "1.8rem",
-              textAlign: "center",
-            }}
-          >
-            DASHBOARD
-          </Typography>
-
-          <IconButton
-            onClick={handleDrawerClose}
-            sx={{
-              position: "absolute",
-              top: 8,
-              right: 8,
-              color: "#1976d2",
-            }}
-          >
-            {theme.direction === "rtl" ? (
+          {open ? (
+            <Box display="flex" alignItems="center" justifyContent="space-between" width="100%" px={1}>
+              <Box display="flex" alignItems="center" gap={1}>
+                <DashboardOutlinedIcon sx={{ fontSize: 28, color: "#1976d2" }} />
+                <Typography
+                  sx={{
+                    fontWeight: 800,
+                    textTransform: "uppercase",
+                    color: "#1976d2",
+                    letterSpacing: 1.5,
+                    fontSize: "1.2rem",
+                  }}
+                >
+                  Bricks Admin
+                </Typography>
+              </Box>
+              <IconButton onClick={handleDrawerClose} sx={{ color: "#666" }}>
+                {theme.direction === "rtl" ? <ChevronRightIcon /> : <ChevronLeftIcon />}
+              </IconButton>
+            </Box>
+          ) : (
+            <IconButton onClick={handleDrawerOpen} sx={{ color: "#1976d2" }}>
               <ChevronRightIcon />
-            ) : (
-              <ChevronLeftIcon />
-            )}
-          </IconButton>
+            </IconButton>
+          )}
         </DrawerHeader>
 
         <Sidebar />
       </Drawer>
 
-      {/* Main Content */}
+      {/* Main Content Area */}
       <Box
         component="main"
         sx={{
           flexGrow: 1,
           p: 3,
-          backgroundColor: "#f9f9f9",
-          minHeight: "100vh",
-          transition: "all 0.3s ease",
+          mt: "70px", // matches toolbar height
+          backgroundColor: "#f8f9fa",
+          minHeight: "calc(100vh - 70px)",
+          overflowX: "hidden",
         }}
       >
-        <DrawerHeader /> {/* spacing for toolbar */}
         <BreadcrumbPath />
         <Outlet />
       </Box>

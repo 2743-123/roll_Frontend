@@ -6,10 +6,16 @@ import {
   ERROR,
   IN_PROGRESS,
 } from "../../ActionType/auth";
+
 const accessToken = localStorage.getItem("accessToken");
 
-let token = null;
-if (accessToken !== "undefined " && accessToken !== null) {
+let token: string | null = null;
+if (
+  accessToken &&
+  accessToken !== "undefined" &&
+  accessToken !== "null" &&
+  accessToken.trim() !== ""
+) {
   token = accessToken;
 }
 
@@ -27,6 +33,7 @@ const authReducer = (state = initialState, action: AuthAction): AuthState => {
       return {
         ...state,
         loading: true,
+        error: null, // Clear previous errors on new request
       };
 
     case LOGIN_SUCCESS:
@@ -35,6 +42,7 @@ const authReducer = (state = initialState, action: AuthAction): AuthState => {
         loading: false,
         token: action.payload.token,
         user: action.payload.user, // ✅ store full user object
+        role: action.payload.user?.role || null, // Optional: sync role state if available
         error: null,
       };
 
@@ -44,6 +52,8 @@ const authReducer = (state = initialState, action: AuthAction): AuthState => {
         user: null,
         loading: false,
         token: null,
+        role: null,
+        error: null,
       };
 
     case ERROR:

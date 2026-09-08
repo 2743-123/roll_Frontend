@@ -19,7 +19,6 @@ export interface AuthState {
   token: string | null;
   role: string | null;
   error: string | null;
-  // ✅ always array
   loading: boolean;
   user: {
     id: number;
@@ -32,36 +31,34 @@ export interface AuthState {
 export interface LoginSuccessAction {
   type: typeof LOGIN_SUCCESS;
   payload: {
-    type: string;
     token: string;
     user: {
       id: number;
       name: string;
-      role: "admin" | "superadmin" | "user"; // ✅ corrected
+      role: "admin" | "superadmin" | "user";
     };
   };
 }
 
 export interface LogoutAction {
   type: typeof LOGOUT;
-  loading: boolean;
 }
 
 export interface ErrorAction {
   type: typeof ERROR;
   payload: {
-    msg: null;
-    data?: null;
+    msg: string | null;
+    data?: any;
   };
 }
-export interface InProgress {
+
+export interface InProgressAction {
   type: typeof IN_PROGRESS;
-  loading: boolean;
 }
 
 // Union of actions
 export type AuthAction =
-  | InProgress
+  | InProgressAction
   | LoginSuccessAction
   | LogoutAction
   | ErrorAction;

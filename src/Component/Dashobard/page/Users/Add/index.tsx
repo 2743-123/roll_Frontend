@@ -13,7 +13,10 @@ import {
   Select,
   MenuItem,
   SelectChangeEvent,
+  Box,
+  CircularProgress,
 } from "@mui/material";
+import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import { addUserAction } from "../../../../../Actions/Auth/user";
 import { AppDispatch, RootState } from "../../../../../store";
 
@@ -25,7 +28,6 @@ interface AddUsersProps {
 const AddUsers: React.FC<AddUsersProps> = ({ open, onClose }) => {
   const dispatch = useDispatch<AppDispatch>();
 
-  // 🆕 Get logged-in user from Redux
   const loggedInUser = useSelector((state: RootState) => state.auth.user);
 
   const [form, setForm] = React.useState({
@@ -35,6 +37,7 @@ const AddUsers: React.FC<AddUsersProps> = ({ open, onClose }) => {
     role: "user" as "user" | "admin" | "superadmin",
     isActive: true,
   });
+  const [loading, setLoading] = React.useState(false);
 
   // 🧠 Generate role options dynamically based on who is logged in
   const getRoleOptions = () => {
@@ -48,7 +51,7 @@ const AddUsers: React.FC<AddUsersProps> = ({ open, onClose }) => {
     if (loggedInUser?.role === "admin") {
       return [{ value: "user", label: "User" }];
     }
-    return [];
+    return [{ value: "user", label: "User" }];
   };
 
   // Input change
@@ -65,24 +68,31 @@ const AddUsers: React.FC<AddUsersProps> = ({ open, onClose }) => {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    dispatch(
-      addUserAction({
-        name: form.name,
-        email: form.email,
-        password: form.password,
-        role: form.role,
-      }),
-    );
-    onClose();
-    setForm({
-      name: "",
-      email: "",
-      password: "",
-      role: "user",
-      isActive: true,
-    });
+    try {
+      setLoading(true);
+      await dispatch(
+        addUserAction({
+          name: form.name,
+          email: form.email,
+          password: form.password,
+          role: form.role,
+        }),
+      );
+      onClose();
+      setForm({
+        name: "",
+        email: "",
+        password: "",
+        role: "user",
+        isActive: true,
+      });
+    } catch (err) {
+      console.error("Add user error:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -93,163 +103,136 @@ const AddUsers: React.FC<AddUsersProps> = ({ open, onClose }) => {
       fullWidth
       PaperProps={{
         sx: {
-          borderRadius: 4,
-          background: "linear-gradient(135deg, #1b2735 0%, #090a0f 100%)",
-          color: "#fff",
-          boxShadow: "0 0 30px rgba(0, 188, 212, 0.25)",
-          backdropFilter: "blur(10px)",
+          borderRadius: 3,
+          boxShadow: "0 12px 40px rgba(0,0,0,0.2)",
+          overflow: "hidden",
         },
       }}
     >
+      {/* ================= HEADER ================= */}
       <DialogTitle
         sx={{
-          fontWeight: "bold",
-          textAlign: "center",
-          borderBottom: "1px solid rgba(255,255,255,0.1)",
-          background: "linear-gradient(90deg,#00bcd4,#2196f3)",
-          color: "#fff",
+          background: "linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%)",
+          color: "white",
+          fontWeight: 700,
+          display: "flex",
+          alignItems: "center",
+          gap: 1.5,
+          p: 2.5,
         }}
       >
-        Add New User
+        <PersonAddIcon sx={{ color: "#81c784" }} /> Add New User / Admin
       </DialogTitle>
 
       <form onSubmit={handleSubmit}>
+        {/* ================= CONTENT ================= */}
         <DialogContent
-          dividers
-          sx={{
-            background: "rgba(255,255,255,0.02)",
-            p: 4,
-          }}
-        >
-          <Grid container spacing={2}>
-            <Grid>
-              <TextField
-                label="Full Name"
-                name="name"
-                fullWidth
-                required
-                value={form.name}
-                onChange={handleChange}
-                variant="outlined"
-                InputLabelProps={{ style: { color: "#bbb" } }}
-                sx={{
-                  input: { color: "#fff" },
-                  "& .MuiOutlinedInput-root": {
-                    "& fieldset": { borderColor: "#333" },
-                    "&:hover fieldset": { borderColor: "#00bcd4" },
-                    "&.Mui-focused fieldset": { borderColor: "#00bcd4" },
-                  },
-                }}
-              />
-            </Grid>
-
-            <Grid>
-              <TextField
-                label="Email"
-                name="email"
-                type="email"
-                fullWidth
-                required
-                value={form.email}
-                onChange={handleChange}
-                InputLabelProps={{ style: { color: "#bbb" } }}
-                sx={{
-                  input: { color: "#fff" },
-                  "& .MuiOutlinedInput-root": {
-                    "& fieldset": { borderColor: "#333" },
-                    "&:hover fieldset": { borderColor: "#00bcd4" },
-                    "&.Mui-focused fieldset": { borderColor: "#00bcd4" },
-                  },
-                }}
-              />
-            </Grid>
-
-            <Grid>
-              <TextField
-                label="Password"
-                name="password"
-                type="password"
-                fullWidth
-                required
-                value={form.password}
-                onChange={handleChange}
-                InputLabelProps={{ style: { color: "#bbb" } }}
-                sx={{
-                  input: { color: "#fff" },
-                  "& .MuiOutlinedInput-root": {
-                    "& fieldset": { borderColor: "#333" },
-                    "&:hover fieldset": { borderColor: "#00bcd4" },
-                    "&.Mui-focused fieldset": { borderColor: "#00bcd4" },
-                  },
-                }}
-              />
-            </Grid>
-
-            <Grid>
-              <FormControl fullWidth required>
-                <InputLabel id="role-label" sx={{ color: "#bbb" }}>
-                  Role
-                </InputLabel>
-                <Select
-                  labelId="role-label"
-                  value={form.role}
-                  onChange={handleRoleChange}
-                  sx={{
-                    color: "#fff",
-                    "& .MuiOutlinedInput-notchedOutline": {
-                      borderColor: "#333",
-                    },
-                    "&:hover .MuiOutlinedInput-notchedOutline": {
-                      borderColor: "#00bcd4",
-                    },
-                    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                      borderColor: "#00bcd4",
-                    },
-                  }}
-                >
-                  {getRoleOptions().map((r) => (
-                    <MenuItem key={r.value} value={r.value}>
-                      {r.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-          </Grid>
-        </DialogContent>
-
-        <DialogActions
           sx={{
             p: 3,
-            borderTop: "1px solid rgba(255,255,255,0.1)",
-            justifyContent: "space-between",
+            bgcolor: "#f8f9fa",
+            borderBottom: "1px solid #e0e0e0",
+          }}
+        >
+          <Box
+            display="flex"
+            flexDirection="column"
+            gap={2.5}
+            mt={1}
+            sx={{
+              "& .MuiTextField-root, & .MuiFormControl-root": {
+                backgroundColor: "white",
+                borderRadius: 1,
+              },
+            }}
+          >
+            <Grid container spacing={2}>
+              <Grid>
+                <TextField
+                  label="Full Name"
+                  name="name"
+                  fullWidth
+                  required
+                  value={form.name}
+                  onChange={handleChange}
+                  variant="outlined"
+                />
+              </Grid>
+
+              <Grid >
+                <TextField
+                  label="Email Address"
+                  name="email"
+                  type="email"
+                  fullWidth
+                  required
+                  value={form.email}
+                  onChange={handleChange}
+                  variant="outlined"
+                />
+              </Grid>
+
+              <Grid>
+                <TextField
+                  label="Password"
+                  name="password"
+                  type="password"
+                  fullWidth
+                  required
+                  value={form.password}
+                  onChange={handleChange}
+                  variant="outlined"
+                />
+              </Grid>
+
+              <Grid>
+                <FormControl fullWidth required>
+                  <InputLabel id="role-label">Role</InputLabel>
+                  <Select
+                    labelId="role-label"
+                    value={form.role}
+                    label="Role"
+                    onChange={handleRoleChange}
+                  >
+                    {getRoleOptions().map((r) => (
+                      <MenuItem key={r.value} value={r.value}>
+                        {r.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+            </Grid>
+          </Box>
+        </DialogContent>
+
+        {/* ================= FOOTER ================= */}
+        <DialogActions
+          sx={{
+            p: 2.5,
+            bgcolor: "#f8f9fa",
+            justifyContent: "flex-end",
           }}
         >
           <Button
             onClick={onClose}
+            color="error"
             variant="outlined"
-            sx={{
-              color: "#00bcd4",
-              borderColor: "#00bcd4",
-              "&:hover": { borderColor: "#2196f3", color: "#2196f3" },
-            }}
+            sx={{ borderRadius: 2, mr: 1, px: 3, fontWeight: 600 }}
           >
             Cancel
           </Button>
           <Button
             type="submit"
             variant="contained"
+            disabled={loading}
             sx={{
-              background: "linear-gradient(90deg, #00bcd4, #2196f3)",
-              color: "#fff",
-              fontWeight: "bold",
-              px: 3,
-              "&:hover": {
-                background: "linear-gradient(90deg, #2196f3, #00bcd4)",
-              },
+              borderRadius: 2,
+              px: 4,
+              fontWeight: 600,
+              background: "linear-gradient(90deg, #1976d2, #42a5f5)",
             }}
           >
-            Add User
+            {loading ? <CircularProgress size={24} color="inherit" /> : "Add User"}
           </Button>
         </DialogActions>
       </form>

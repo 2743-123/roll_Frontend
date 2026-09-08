@@ -1,5 +1,3 @@
-// src/Component/Token/AddTokenDialog.tsx
-
 import React, { useState, useMemo, useEffect } from "react";
 import {
   Dialog,
@@ -10,15 +8,16 @@ import {
   Button,
   MenuItem,
   Box,
-  Paper,
   Autocomplete,
+  CircularProgress,
 } from "@mui/material";
+import AddCardIcon from "@mui/icons-material/AddCard";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../../store";
 
 import {
   createTokenAction,
-  getAdminTokensAction, // ⭐ IMPORTANT (all users tokens)
+  getAdminTokensAction,
 } from "../../../Actions/Auth/TokenAction";
 
 interface AddTokenDialogProps {
@@ -42,11 +41,12 @@ const AddTokenDialog: React.FC<AddTokenDialogProps> = ({ open, onClose }) => {
     customerName: "",
     materialType: "",
   });
+  const [loading, setLoading] = useState(false);
 
   /** 🔄 Fetch ALL tokens when dialog opens */
   useEffect(() => {
     if (open) {
-      dispatch(getAdminTokensAction()); // ⭐ fetch global tokens
+      dispatch(getAdminTokensAction());
     }
   }, [open, dispatch]);
 
@@ -58,26 +58,33 @@ const AddTokenDialog: React.FC<AddTokenDialogProps> = ({ open, onClose }) => {
       .map((t: any) => t.customerName)
       .filter((name: string) => !!name);
 
-    return Array.from(new Set(names)); // ⭐ unique customers
+    return Array.from(new Set(names));
   }, [allTokens]);
 
   /** ================= SUBMIT ================= */
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!selectedUser) {
       alert("Please select a user first!");
       return;
     }
 
-    dispatch(
-      createTokenAction({
-        ...form,
-        userId: selectedUser.id,
-      })
-    );
+    try {
+      setLoading(true);
+      await dispatch(
+        createTokenAction({
+          ...form,
+          userId: selectedUser.id,
+        })
+      );
 
-    /** reset */
-    setForm({ customerName: "", materialType: "" });
-    onClose();
+      /** reset */
+      setForm({ customerName: "", materialType: "" });
+      onClose();
+    } catch (err) {
+      console.error("Create token error:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   /** ================= VALIDATION ================= */
@@ -86,85 +93,113 @@ const AddTokenDialog: React.FC<AddTokenDialogProps> = ({ open, onClose }) => {
 
   /** ================= UI ================= */
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <Paper
-        elevation={0}
+    <Dialog 
+      open={open} 
+      onClose={onClose} 
+      fullWidth 
+      maxWidth="sm"
+      PaperProps={{
+        sx: { 
+          borderRadius: 3, 
+          boxShadow: "0 12px 40px rgba(0,0,0,0.2)", 
+          overflow: "hidden" 
+        }
+      }}
+    >
+      {/* ================= HEADER ================= */}
+      <DialogTitle
         sx={{
-          background: "linear-gradient(135deg, #f8fafc 0%, #eef2f6 100%)",
-          borderRadius: 3,
+          background: "linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%)",
+          color: "white",
+          fontWeight: 700,
+          display: "flex",
+          alignItems: "center",
+          gap: 1.5,
+          p: 2.5,
         }}
       >
-        {/* HEADER */}
-        <DialogTitle
+        <AddCardIcon sx={{ color: "#81c784" }} /> Add New Token
+      </DialogTitle>
+
+      {/* ================= CONTENT ================= */}
+      <DialogContent sx={{ p: 3, bgcolor: "#f8f9fa", borderBottom: "1px solid #e0e0e0" }}>
+        <Box 
+          display="flex" 
+          flexDirection="column" 
+          gap={2.5} 
+          mt={1}
           sx={{
-            backgroundColor: "#1976d2",
-            color: "white",
-            textAlign: "center",
-            fontWeight: 600,
-            py: 1.5,
+            "& .MuiTextField-root, & .MuiAutocomplete-root": {
+              backgroundColor: "white",
+              borderRadius: 1,
+            },
           }}
         >
-          Add New Token
-        </DialogTitle>
+          {/* ⭐ GLOBAL CUSTOMER AUTOCOMPLETE */}
+          <Autocomplete
+            freeSolo
+            options={customerOptions}
+            inputValue={form.customerName}
+            onInputChange={(_, value) =>
+              setForm((prev) => ({ ...prev, customerName: value }))
+            }
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Customer Name"
+                fullWidth
+                required
+              />
+            )}
+          />
 
-        {/* CONTENT */}
-        <DialogContent dividers sx={{ p: 3, backgroundColor: "white" }}>
-          <Box display="flex" flexDirection="column" gap={2}>
-            
-            {/* ⭐ GLOBAL CUSTOMER AUTOCOMPLETE */}
-            <Autocomplete
-              freeSolo
-              options={customerOptions}
-              inputValue={form.customerName}
-              onInputChange={(_, value) =>
-                setForm((prev) => ({ ...prev, customerName: value }))
-              }
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Customer Name"
-                  fullWidth
-                  required
-                />
-              )}
-            />
-
-            {/* MATERIAL TYPE */}
-            <TextField
-              select
-              label="Material Type"
-              value={form.materialType}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  materialType: e.target.value,
-                }))
-              }
-              fullWidth
-              required
-            >
-              <MenuItem value="flyash">Flyash</MenuItem>
-              <MenuItem value="bedash">Bedash</MenuItem>
-              <MenuItem value="cement">Cement</MenuItem>
-            </TextField>
-          </Box>
-        </DialogContent>
-
-        {/* ACTIONS */}
-        <DialogActions sx={{ px: 3, py: 2, backgroundColor: "#f1f5f9" }}>
-          <Button onClick={onClose} variant="outlined">
-            Cancel
-          </Button>
-
-          <Button
-            onClick={handleSubmit}
-            variant="contained"
-            disabled={isFormInvalid}
+          {/* MATERIAL TYPE */}
+          <TextField
+            select
+            label="Material Type"
+            value={form.materialType}
+            onChange={(e) =>
+              setForm((prev) => ({
+                ...prev,
+                materialType: e.target.value,
+              }))
+            }
+            fullWidth
+            required
           >
-            Create Token
-          </Button>
-        </DialogActions>
-      </Paper>
+            <MenuItem value="flyash">Flyash</MenuItem>
+            <MenuItem value="bedash">Bedash</MenuItem>
+            <MenuItem value="cement">Cement</MenuItem>
+          </TextField>
+        </Box>
+      </DialogContent>
+
+      {/* ================= FOOTER ================= */}
+      <DialogActions sx={{ p: 2.5, bgcolor: "#f8f9fa", justifyContent: "flex-end" }}>
+        <Button 
+          onClick={onClose} 
+          color="error"
+          variant="outlined"
+          sx={{ borderRadius: 2, mr: 1, px: 3, fontWeight: 600 }}
+        >
+          Cancel
+        </Button>
+
+        <Button
+          onClick={handleSubmit}
+          variant="contained"
+          disabled={isFormInvalid || loading}
+          sx={{ 
+            borderRadius: 2, 
+            px: 4, 
+            fontWeight: 600, 
+            background: "linear-gradient(90deg, #1976d2, #42a5f5)",
+            boxShadow: "none"
+          }}
+        >
+          {loading ? <CircularProgress size={24} color="inherit" /> : "Create Token"}
+        </Button>
+      </DialogActions>
     </Dialog>
   );
 };

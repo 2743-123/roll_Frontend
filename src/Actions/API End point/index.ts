@@ -33,3 +33,6 @@ export const API_DELETE_TOKEN = `${ENVIRONMENT_VARIABLES.Base_API_URL}/token/:to
 export const API_GET_BEDASH = `${ENVIRONMENT_VARIABLES.Base_API_URL}/message/all`;
 export const API_CONFIRM_BEDASH = `${ENVIRONMENT_VARIABLES.Base_API_URL}/message/complete/:id`;
 export const API_ADD_BEDASH = `${ENVIRONMENT_VARIABLES.Base_API_URL}/message/add`;
+
+/* ================= PAYMENT HISTORY ================= */
+export const API_GET_PAYMENT_HISTORY = `${ENVIRONMENT_VARIABLES.Base_API_URL}/payment-history/`;

@@ -11,7 +11,12 @@ import {
   Chip,
   TextField,
   Button,
+  CircularProgress,
+  InputAdornment,
 } from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search";
+import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
+import SupervisorAccountIcon from "@mui/icons-material/SupervisorAccount";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../../../store";
 import { getAdminTokensAction } from "../../../../Actions/Auth/TokenAction";
@@ -125,7 +130,6 @@ const AllUserTokens: React.FC = () => {
   };
 
   // ================= REMOVE AFTER 15 DAYS =================
-
   const visibleTokens = tokens.filter((t) => {
     if (t.status !== "completed" || !t.confirmedAt) return true;
 
@@ -134,7 +138,6 @@ const AllUserTokens: React.FC = () => {
   });
 
   // ================= SEARCH =================
-
   const filteredTokens = visibleTokens.filter((t) => {
     const q = search.toLowerCase();
 
@@ -148,7 +151,6 @@ const AllUserTokens: React.FC = () => {
   });
 
   // ================= DRAG SELECT =================
-
   const handleMouseDown = (id: number) => {
     setIsDragging(true);
     setSelectedIds([id]);
@@ -162,7 +164,6 @@ const AllUserTokens: React.FC = () => {
   const handleMouseUp = () => setIsDragging(false);
 
   // ================= TIMER =================
-
   const getRemainingTime = (confirmedAt: string | null) => {
     if (!confirmedAt) return "";
 
@@ -174,11 +175,10 @@ const AllUserTokens: React.FC = () => {
     const m = Math.floor((diff / (1000 * 60)) % 60);
     const s = Math.floor((diff / 1000) % 60);
 
-    return `${d}d ${h}h ${m}m ${s}`;
+    return `${d}d ${h}h ${m}m ${s}s`;
   };
 
   // ================= HOVER =================
-
   const handleHover = (t: AdminToken, e: React.MouseEvent) => {
     const negativeTotal = getCustomerNegativeTotal(t.customerName);
 
@@ -199,7 +199,6 @@ const AllUserTokens: React.FC = () => {
   const handleLeaveHover = () => setHoverInfo(null);
 
   // ================= PDF =================
-
   const handleDownloadPDF = () => {
     const selected = filteredTokens.filter((t) =>
       selectedIds.includes(t.tokenId),
@@ -228,6 +227,8 @@ const AllUserTokens: React.FC = () => {
           "Carry ₹",
           "Remaining",
           "Status",
+          "Created At",
+          "Confirmed At",
         ],
       ],
       body: selected.map((t) => [
@@ -239,153 +240,281 @@ const AllUserTokens: React.FC = () => {
         `₹${t.carryForward}`,
         t.remainingTons,
         t.status.toUpperCase(),
+        t.createdAt ? new Date(t.createdAt).toLocaleString() : "-",
+        t.confirmedAt ? new Date(t.confirmedAt).toLocaleString() : "-",
       ]),
     });
 
     doc.save("Token-Report.pdf");
   };
 
+  /* ================= FORMAT CURRENCY ================= */
+  const formatCur = (val: string | number) => `₹${Number(val || 0).toLocaleString("en-IN")}`;
+
+  /* ================= LOADING & ERROR ================= */
+  if (loading)
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" height="50vh">
+        <CircularProgress size={50} thickness={4} />
+      </Box>
+    );
+
+  if (error)
+    return (
+      <Typography color="error" align="center" variant="h6" sx={{ mt: 5 }}>
+        {error}
+      </Typography>
+    );
+
   // ================= UI =================
-
   return (
-    <Box p={3} onMouseUp={handleMouseUp}>
-      <Typography variant="h5" fontWeight={700} mb={1}>
-        Admin Token Report
-      </Typography>
+    <Box p={3} onMouseUp={handleMouseUp} sx={{ background: "#f8f9fa", minHeight: "85vh", borderRadius: 4 }}>
+      
+      {/* ================= HEADER ================= */}
+      <Box
+        sx={{
+          background: "linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%)",
+          color: "white",
+          borderRadius: 3,
+          px: 3,
+          py: 2.5,
+          mb: 3,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: 2,
+          boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+        }}
+      >
+        <Box display="flex" alignItems="center" gap={1.5}>
+          <SupervisorAccountIcon sx={{ fontSize: 30, color: "#81c784" }} />
+          <Box>
+            <Typography variant="h5" fontWeight={700} letterSpacing={0.5}>
+              All User Tokens Report
+            </Typography>
+            <Typography variant="caption" sx={{ opacity: 0.8 }}>
+              Total Tokens: <strong>{totalTokens}</strong>
+            </Typography>
+          </Box>
+        </Box>
 
-      <Typography variant="body2" color="text.secondary" mb={2}>
-        Total Tokens: {totalTokens}
-      </Typography>
+        <Box display="flex" gap={2} alignItems="center" flexWrap="wrap">
+          <TextField
+            placeholder="Search tokens..."
+            size="small"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon sx={{ color: "gray" }} />
+                </InputAdornment>
+              ),
+            }}
+            sx={{
+              backgroundColor: "white",
+              borderRadius: 2,
+              width: { xs: "100%", sm: "260px" },
+              "& .MuiOutlinedInput-root": {
+                borderRadius: 2,
+                "& fieldset": { borderColor: "transparent" },
+                "&:hover fieldset": { borderColor: "#1976d2" },
+                "&.Mui-focused fieldset": { borderColor: "#1976d2" },
+              },
+            }}
+          />
 
-      <Box mb={2}>
-        <TextField
-          label="Search..."
-          size="small"
-          fullWidth
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+          <Button
+            variant="contained"
+            startIcon={<PictureAsPdfIcon />}
+            disabled={!selectedIds.length}
+            onClick={handleDownloadPDF}
+            sx={{
+              backgroundColor: "#ffeb3b",
+              color: "#000",
+              fontWeight: 700,
+              borderRadius: 2,
+              px: 3,
+              textTransform: "none",
+              "&:hover": { backgroundColor: "#fbc02d" },
+              "&.Mui-disabled": { backgroundColor: "#e0e0e0", color: "#9e9e9e" }
+            }}
+          >
+            Download PDF ({selectedIds.length})
+          </Button>
+        </Box>
       </Box>
 
-      <Box mb={2}>
-        <Button
-          variant="contained"
-          disabled={!selectedIds.length}
-          onClick={handleDownloadPDF}
-        >
-          Download Selected PDF
-        </Button>
-      </Box>
-
-      {loading && <Typography>Loading...</Typography>}
-      {error && <Typography color="error">{error}</Typography>}
-
-      <Paper elevation={3}>
-        <Table>
+      {/* ================= TABLE CONTAINER ================= */}
+      <Paper
+        elevation={4}
+        sx={{
+          borderRadius: 3,
+          border: "1px solid #e0e0e0",
+          overflow: "hidden",
+          maxHeight: "68vh",
+          overflowY: "auto",
+        }}
+      >
+        <Table stickyHeader size="medium">
           <TableHead>
-            <TableRow sx={{ background: "#1976d2" }}>
+            <TableRow>
               {[
-                "User",
-                "Customer",
-                "Truck",
-                "Material",
-                "Weight",
-                "Carry ₹",
-                "Remaining",
-                "Timer",
-                "Status",
-              ].map((h) => (
-                <TableCell key={h} sx={{ color: "#fff" }}>
-                  {h}
+                { label: "User", align: "left" },
+                { label: "Customer", align: "left" },
+                { label: "Truck", align: "left" },
+                { label: "Material", align: "left" },
+                { label: "Weight", align: "right" },
+                { label: "Carry ₹", align: "right" },
+                { label: "Remaining", align: "right" },
+                { label: "Timer", align: "center" },
+                { label: "Status", align: "center" },
+                { label: "Created At", align: "left" },
+                { label: "Confirmed At", align: "left" },
+              ].map((col) => (
+                <TableCell
+                  key={col.label}
+                  align={col.align as any}
+                  sx={{
+                    backgroundColor: "#f4f6f8",
+                    color: "#333",
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                    fontSize: "0.75rem",
+                    letterSpacing: 0.5,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {col.label}
                 </TableCell>
               ))}
             </TableRow>
           </TableHead>
 
           <TableBody>
-            {filteredTokens.map((t) => {
-              const selected = selectedIds.includes(t.tokenId);
-              const low = isLowStock(t.remainingTons);
+            {filteredTokens.length > 0 ? (
+              filteredTokens.map((t) => {
+                const selected = selectedIds.includes(t.tokenId);
+                const low = isLowStock(t.remainingTons);
 
-              return (
-                <TableRow
-                  key={t.tokenId}
-                  hover
-                  onMouseDown={() => handleMouseDown(t.tokenId)}
-                  onMouseEnter={(e) => {
-                    handleMouseEnter(t.tokenId);
-                    handleHover(t, e);
-                  }}
-                  onMouseLeave={handleLeaveHover}
-                  sx={{
-                    cursor: "pointer",
-                    backgroundColor: selected
-                      ? "#e3f2fd"
-                      : low
-                        ? "#ffebee"
-                        : "inherit",
-                    animation: !selected && low ? "blink 1s infinite" : "none",
-                    "@keyframes blink": {
-                      "0%": { backgroundColor: "#ffebee" },
-                      "50%": { backgroundColor: "#ffcdd2" },
-                      "100%": { backgroundColor: "#ffebee" },
-                    },
-                  }}
-                >
-                  <TableCell>{t.userName}</TableCell>
-                  <TableCell>{t.customerName}</TableCell>
-                  <TableCell>{t.truckNumber}</TableCell>
-                  <TableCell>{t.materialType}</TableCell>
-                  <TableCell>{t.weight}</TableCell>
-                  <TableCell>₹{t.carryForward}</TableCell>
-                  <TableCell>{t.remainingTons}</TableCell>
-                  <TableCell>
-                    {t.status === "completed"
-                      ? getRemainingTime(t.confirmedAt)
-                      : "-"}
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={t.status.toUpperCase()}
-                      color={getStatusColor(t.status) as any}
-                      size="small"
-                    />
-                  </TableCell>
-                </TableRow>
-              );
-            })}
+                return (
+                  <TableRow
+                    key={t.tokenId}
+                    hover
+                    onMouseDown={() => handleMouseDown(t.tokenId)}
+                    onMouseEnter={(e) => {
+                      handleMouseEnter(t.tokenId);
+                      handleHover(t, e);
+                    }}
+                    onMouseLeave={handleLeaveHover}
+                    sx={{
+                      cursor: "pointer",
+                      backgroundColor: selected
+                        ? "#e3f2fd !important"
+                        : low
+                          ? "#ffebee !important"
+                          : "inherit",
+                      animation: !selected && low ? "blink 1.5s infinite" : "none",
+                      "& td": { borderBottom: "1px solid #f0f0f0" },
+
+                      "@keyframes blink": {
+                        "0%": { backgroundColor: "#ffebee" },
+                        "50%": { backgroundColor: "#ffcdd2" },
+                        "100%": { backgroundColor: "#ffebee" },
+                      },
+                    }}
+                  >
+                    <TableCell sx={{ fontWeight: 600, color: "#1976d2" }}>{t.userName}</TableCell>
+                    <TableCell sx={{ fontWeight: 500 }}>{t.customerName}</TableCell>
+                    <TableCell>
+                      <Chip label={t.truckNumber || "N/A"} size="small" variant="outlined" sx={{ borderRadius: 1 }} />
+                    </TableCell>
+                    <TableCell sx={{ textTransform: "capitalize", color: t.materialType?.toLowerCase() === 'bedash' ? '#ed6c02' : '#757575', fontWeight: 500 }}>
+                      {t.materialType}
+                    </TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 500 }}>{t.weight} T</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 600 }}>{formatCur(t.carryForward)}</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 700, color: low ? "#d32f2f" : "#2e7d32" }}>
+                      {t.remainingTons} T
+                    </TableCell>
+                    <TableCell align="center" sx={{ fontFamily: "monospace", fontSize: "0.85rem", fontWeight: 600 }}>
+                      {t.status === "completed" ? getRemainingTime(t.confirmedAt) : "-"}
+                    </TableCell>
+                    <TableCell align="center">
+                      <Chip
+                        label={t.status}
+                        size="small"
+                        color={getStatusColor(t.status) as any}
+                        sx={{ textTransform: "capitalize", fontWeight: 600 }}
+                      />
+                    </TableCell>
+                    <TableCell sx={{ color: "text.secondary", fontSize: "0.85rem", whiteSpace: "nowrap" }}>
+                      {t.createdAt ? new Date(t.createdAt).toLocaleString("en-IN", {
+                        day: "2-digit", month: "short", year: "numeric",
+                        hour: "2-digit", minute: "2-digit", hour12: true
+                      }) : "-"}
+                    </TableCell>
+                    <TableCell sx={{ color: "text.secondary", fontSize: "0.85rem", whiteSpace: "nowrap" }}>
+                      {t.confirmedAt ? new Date(t.confirmedAt).toLocaleString("en-IN", {
+                        day: "2-digit", month: "short", year: "numeric",
+                        hour: "2-digit", minute: "2-digit", hour12: true
+                      }) : "-"}
+                    </TableCell>
+                  </TableRow>
+                );
+              })
+            ) : (
+              <TableRow>
+                <TableCell colSpan={11} align="center" sx={{ py: 6 }}>
+                  <Box display="flex" flexDirection="column" alignItems="center" sx={{ opacity: 0.5 }}>
+                    <Typography variant="h6" fontWeight={600}>No Tokens Found</Typography>
+                    <Typography variant="body2">Try adjusting your search criteria.</Typography>
+                  </Box>
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </Paper>
 
-      {/* 🔥 FINAL POPUP */}
+      {/* ================= HOVER POPUP ================= */}
       {hoverInfo && (
         <Box
           sx={{
             position: "fixed",
-            top: hoverInfo.y + 10,
-            left: hoverInfo.x + 10,
-            background: "#1976d2",
+            top: hoverInfo.y + 15,
+            left: hoverInfo.x + 15,
+            background: "rgba(15, 32, 39, 0.95)",
             color: "#fff",
             p: 2,
-            borderRadius: 2,
-            boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
+            borderRadius: 2.5,
+            boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
             zIndex: 9999,
+            pointerEvents: "none",
+            backdropFilter: "blur(4px)",
+            border: "1px solid rgba(255,255,255,0.1)",
             minWidth: 260,
           }}
         >
-          <Typography variant="body2">
-            Active Tokens: <strong>{hoverInfo.tokenCount}</strong>
+          <Typography variant="caption" sx={{ color: "#81c784", fontWeight: 700, textTransform: "uppercase" }}>
+            {hoverInfo.userName}
           </Typography>
-          <Typography fontWeight={700}>{hoverInfo.userName}</Typography>
-          <Typography variant="body2">
-            27 ton ke hisab se aur token:
-            <strong> {hoverInfo.possible}</strong>
+          <Typography fontWeight={700} color="#ffb74d" variant="subtitle1" mb={1}>
+            {hoverInfo.customerName}
           </Typography>
-
-          <Typography fontWeight={700}>{hoverInfo.customerName}</Typography>
-
-          <Typography variant="body2">{hoverInfo.carryText}</Typography>
+          
+          <Box display="flex" flexDirection="column" gap={0.5}>
+            <Typography variant="body2">
+              Active Tokens: <strong>{hoverInfo.tokenCount}</strong>
+            </Typography>
+            <Typography variant="body2">
+              Possible tokens (27T): <strong style={{ color: "#64b5f6" }}>{hoverInfo.possible}</strong>
+            </Typography>
+            <Typography variant="body2" sx={{ mt: 0.5, pt: 0.5, borderTop: "1px solid rgba(255,255,255,0.2)" }}>
+              Carry Status: <strong style={{ color: hoverInfo.carryText.includes("baki") ? "#ef5350" : "#81c784" }}>{hoverInfo.carryText}</strong>
+            </Typography>
+          </Box>
         </Box>
       )}
     </Box>

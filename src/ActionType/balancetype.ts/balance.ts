@@ -22,7 +22,8 @@ export interface MaterialBalance {
   remaining: string;
 }
 
-interface BalanceData {
+// ✅ Exported for direct usage in reducers/components if needed
+export interface BalanceData {
   user: { id: number; name: string };
   flyash: { total: string; used: string; remaining: string };
   bedash: { total: string; used: string; remaining: string };

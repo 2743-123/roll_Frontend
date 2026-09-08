@@ -1,12 +1,13 @@
 import React, { useEffect, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { ToastContainer, toast, ToastOptions } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import "react-toastify/ReactToastify.css";
 import { RootState } from "../../Reducer";
 import { clearNotification } from "./NotificationReduer";
+import { AppDispatch } from "../../store"; // Apna AppDispatch import karein
 
 const Notification: React.FC = () => {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const { type, message } = useSelector(
     (state: RootState) => state.notification,
   );
@@ -26,11 +27,13 @@ const Notification: React.FC = () => {
   useEffect(() => {
     if (message) {
       if (type === "success") toast.success(message, options);
-      if (type === "error") toast.error(message, options);
-      if (type === "info") toast.info(message, options);
-      if (type === "warning") toast.warning(message, options);
+      else if (type === "error") toast.error(message, options);
+      else if (type === "info") toast.info(message, options);
+      else if (type === "warning") toast.warning(message, options);
+      else toast(message, options); // Fallback agar koi aur type ho
 
-      setTimeout(() => dispatch(clearNotification()), 500);
+      // 🔄 Turant state clear karein taaki duplicate renders se bacha ja sake
+      dispatch(clearNotification());
     }
   }, [message, type, dispatch, options]);
 

@@ -15,9 +15,11 @@ export const logoutuserServices = async () => {
   const token = getAccessToken();
   const { data } = await axios.post(
     API_AUTH_LOGOUT,
-
-    { withCredentials: true },
-    { headers: { Authorization: `Bearer ${token}` } },
+    {}, // ✅ Data body empty hai toh khali object pass karein
+    { 
+      withCredentials: true,
+      headers: { Authorization: `Bearer ${token}` } 
+    }, // ✅ Config object ke andar dono properties aayengi
   );
   return data;
 };

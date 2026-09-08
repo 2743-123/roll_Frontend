@@ -9,7 +9,13 @@ import {
   Box,
   Typography,
   Grid,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
+  Divider,
 } from "@mui/material";
+import EditNoteIcon from "@mui/icons-material/EditNote";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "../../../store";
 import {
@@ -32,7 +38,7 @@ const EditTokenDialog: React.FC<EditTokenDialogProps> = ({
 }) => {
   const dispatch = useDispatch<AppDispatch>();
 
-  /** 📦 Form State */
+  /** 📦 Form State (Standard) */
   const [formData, setFormData] = useState({
     truckNumber: "",
     weight: "",
@@ -41,37 +47,82 @@ const EditTokenDialog: React.FC<EditTokenDialogProps> = ({
     paidAmount: 0,
   });
 
-  const [tokenStatus, setTokenStatus] = useState(token.status);
+  const [tokenStatus, setTokenStatus] = useState(token?.status);
+  const isBedash = token?.materialType?.toLowerCase() === "bedash";
+
+  /** 🚚 BEDASH Specific State */
+  const [sellRate, setSellRate] = useState<number>(750);
+  const [cartingRate, setCartingRate] = useState<number>(225);
+  const [truckOwnerType, setTruckOwnerType] = useState<"owner" | "another">("owner");
+  const [anotherRate, setAnotherRate] = useState<number>(330);
+  
+  /** 📅 Manual Date State */
+  const [manualDate, setManualDate] = useState("");
 
   /** 🔄 Load token data when dialog opens */
   useEffect(() => {
-    setTokenStatus(token.status);
+    if (token && open) {
+      setTokenStatus(token.status);
+      setFormData({
+        truckNumber: token.truckNumber || "",
+        weight: token.weight?.toString() || "",
+        ratePerTon: 180,
+        commission: token.commission || 0,
+        paidAmount: token.paidAmount || 0,
+      });
 
-    setFormData({
-      truckNumber: token.truckNumber || "",
-      weight: token.weight || "",
-      ratePerTon: 180, // ⭐ always fixed
-      commission: token.commission || 0,
-      paidAmount: token.paidAmount || 0,
-    });
-  }, [token]);
+      // Format current token date for datetime-local input
+      if (token.createdAt) {
+        const dateObj = new Date(token.createdAt);
+        const localISO = new Date(dateObj.getTime() - (dateObj.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+        setManualDate(localISO);
+      } else {
+        setManualDate("");
+      }
 
-  /** ✏️ Handle input change */
+      // Default Bedash Reset
+      setSellRate(750);
+      setCartingRate(225);
+      setTruckOwnerType("owner");
+      setAnotherRate(330);
+    }
+  }, [token, open]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  /** 🔄 Update token (truck + billing) */
+  /** 🧮 TOTAL & COMMISSION CALCULATION */
+  const w = Number(formData.weight) || 0;
+  let finalTotalAmount = 0;
+  let finalCommission = Number(formData.commission);
+  let bedashMarginPerTon = 0;
+
+  if (isBedash) {
+    finalTotalAmount = sellRate * w;
+    if (truckOwnerType === "owner") {
+      bedashMarginPerTon = sellRate - cartingRate - 180;
+    } else {
+      bedashMarginPerTon = sellRate - cartingRate - anotherRate;
+    }
+    finalCommission = bedashMarginPerTon * w;
+  } else {
+    finalTotalAmount = (w * 180) + Number(formData.commission);
+  }
+
+  /** 🔄 Update token */
   const handleUpdate = async () => {
     await dispatch(
       updateTokenAction({
         tokenId: token.id,
         truckNumber: formData.truckNumber,
         weight: formData.weight,
-        commission: formData.commission,
+        commission: finalCommission,
         userId: token.user.id,
-      }),
+        totalAmount: finalTotalAmount,
+        manualDate: manualDate || undefined,
+      })
     );
 
     setTokenStatus("updated");
@@ -84,157 +135,249 @@ const EditTokenDialog: React.FC<EditTokenDialogProps> = ({
       confirmPaymentAction({
         tokenId: token.id,
         paidAmount: formData.paidAmount,
-      }),
+      })
     );
-
     onClose();
     onRefresh();
   };
 
-  /** 🧮 Total calculation */
-  const totalAmount =
-    Number(formData.weight) * 180 + Number(formData.commission);
-
-  /** 🔒 Paid field rule */
   const isPaidDisabled = tokenStatus !== "updated";
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="sm"
+    <Dialog 
+      open={open} 
+      onClose={onClose} 
+      maxWidth="sm" 
       fullWidth
       PaperProps={{
-        sx: {
-          borderRadius: 3,
-          p: 2,
-          background: "#f4f6f8",
-          boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
+        sx: { 
+          borderRadius: 3, 
+          boxShadow: "0 12px 40px rgba(0,0,0,0.2)", 
+          overflow: "hidden" 
         },
       }}
     >
-      <DialogTitle sx={{ fontWeight: 700, color: "#1976d2" }}>
-        Edit Token (#{token.id})
+      {/* ================= HEADER ================= */}
+      <DialogTitle
+        sx={{
+          background: "linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%)",
+          color: "white",
+          fontWeight: 700,
+          display: "flex",
+          alignItems: "center",
+          gap: 1.5,
+          p: 2.5,
+        }}
+      >
+        <EditNoteIcon sx={{ color: "#64b5f6", fontSize: 30 }} /> 
+        <Box>
+          Edit Token #{token?.id}
+          {isBedash && (
+            <Typography component="span" sx={{ color: "#ffb74d", ml: 1, fontWeight: 600, fontSize: "0.9rem" }}>
+              (Bedash Material)
+            </Typography>
+          )}
+        </Box>
       </DialogTitle>
 
-      <DialogContent>
-        <Box sx={{ mt: 2 }}>
+      {/* ================= CONTENT ================= */}
+      <DialogContent sx={{ p: 3, bgcolor: "#f8f9fa", borderBottom: "1px solid #e0e0e0" }}>
+        <Box 
+          display="flex" 
+          flexDirection="column" 
+          gap={2.5} 
+          mt={1}
+          sx={{
+            "& .MuiTextField-root, & .MuiFormControl-root": {
+              backgroundColor: "white",
+              borderRadius: 1,
+            },
+          }}
+        >
+          {/* 🟢 COMMON FIELDS */}
           <Grid container spacing={2}>
-            {/* 🚛 Truck Number */}
             <Grid>
-              <TextField
-                label="Truck Number"
-                name="truckNumber"
-                fullWidth
-                value={formData.truckNumber}
-                onChange={handleChange}
+              <TextField 
+                label="Truck Number" 
+                name="truckNumber" 
+                fullWidth 
+                value={formData.truckNumber} 
+                onChange={handleChange} 
+              />
+            </Grid>
+            <Grid>
+              <TextField 
+                label="Weight (Tons)" 
+                name="weight" 
+                fullWidth 
+                value={formData.weight} 
+                onChange={handleChange} 
+                type="number" 
               />
             </Grid>
 
-            {/* ⚖ Weight */}
-            <Grid>
-              <TextField
-                label="Weight (tons)"
-                name="weight"
-                fullWidth
-                value={formData.weight}
-                onChange={handleChange}
-                type="number"
+            {/* FLYASH: Normal Rate & Manual Commission */}
+            {!isBedash && (
+              <>
+                <Grid >
+                  <TextField label="Rate / Ton" fullWidth value={180} disabled type="number" />
+                </Grid>
+                <Grid >
+                  <TextField 
+                    label="Commission (₹)" 
+                    name="commission" 
+                    fullWidth 
+                    value={formData.commission} 
+                    onChange={handleChange} 
+                    type="number" 
+                  />
+                </Grid>
+              </>
+            )}
+
+            {/* 📅 Manual Date Picker */}
+            <Grid >
+              <TextField 
+                label="Manual Date & Time" 
+                type="datetime-local" 
+                fullWidth 
+                value={manualDate} 
+                onChange={(e) => setManualDate(e.target.value)} 
+                InputLabelProps={{ shrink: true }} 
               />
             </Grid>
 
-            {/* 💵 Rate (Fixed 180) */}
-            <Grid>
-              <TextField
-                label="Rate / Ton"
-                fullWidth
-                value={180}
-                disabled
-                type="number"
-              />
-            </Grid>
-
-            {/* 🧾 Commission */}
-            <Grid>
-              <TextField
-                label="Commission"
-                name="commission"
-                fullWidth
-                value={formData.commission}
-                onChange={handleChange}
-                type="number"
-              />
-            </Grid>
-
-            {/* 💰 Paid Amount */}
-            <Grid>
-              <TextField
-                label="Paid Amount"
-                name="paidAmount"
-                fullWidth
-                value={formData.paidAmount}
-                onChange={handleChange}
-                type="number"
-                disabled={isPaidDisabled} // ⭐ disabled until updated
+            <Grid >
+              <TextField 
+                label="Paid Amount (₹)" 
+                name="paidAmount" 
+                fullWidth 
+                value={formData.paidAmount} 
+                onChange={handleChange} 
+                type="number" 
+                disabled={isPaidDisabled} 
               />
             </Grid>
           </Grid>
 
-          {/* 💰 Total Display */}
-          <Box sx={{ mt: 3, textAlign: "center" }}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-              💰 Total Amount:{" "}
-              <span style={{ color: "#43a047" }}>
-                ₹{totalAmount.toFixed(2)}
-              </span>
+          {/* 🟠 BEDASH CUSTOM LIVE UI */}
+          {isBedash && (
+            <Box sx={{ mt: 1, p: 2.5, bgcolor: "#fff8e1", borderRadius: 2, border: "1px solid #ffe0b2", display: "flex", flexDirection: "column", gap: 2 }}>
+              <Typography variant="subtitle2" fontWeight={700} color="#e65100">
+                Bedash Dynamic Calculation Engine
+              </Typography>
+
+              <Grid container spacing={2} alignItems="center">
+                <Grid>
+                  <TextField 
+                    label="Sell Rate" 
+                    type="number" 
+                    size="small" 
+                    fullWidth
+                    value={sellRate} 
+                    onChange={(e) => setSellRate(Number(e.target.value))} 
+                    sx={{ bgcolor: "white" }}
+                  />
+                </Grid>
+                <Grid >
+                  <Typography variant="body2" fontWeight="600" color="primary.main">
+                    {sellRate} × {w} = ₹{sellRate * w}
+                  </Typography>
+                </Grid>
+
+                <Grid>
+                  <TextField 
+                    label="Carting Rate" 
+                    type="number" 
+                    size="small" 
+                    fullWidth
+                    value={cartingRate} 
+                    onChange={(e) => setCartingRate(Number(e.target.value))} 
+                    sx={{ bgcolor: "white" }}
+                  />
+                </Grid>
+                <Grid >
+                  <Typography variant="body2" fontWeight="600" color="error.main">
+                    {cartingRate} × {w} = ₹{cartingRate * w}
+                  </Typography>
+                </Grid>
+
+                <Grid >
+                  <TextField label="Fix Rate" type="number" size="small" disabled value={180} fullWidth sx={{ bgcolor: "#f5f5f5" }} />
+                </Grid>
+                <Grid >
+                  <Typography variant="body2" fontWeight="600" color="error.main">
+                    180 × {w} = ₹{180 * w}
+                  </Typography>
+                </Grid>
+
+                <Grid >
+                  <FormControl size="small" fullWidth sx={{ bgcolor: "white" }}>
+                    <InputLabel>Truck Owner Type</InputLabel>
+                    <Select value={truckOwnerType} label="Truck Owner Type" onChange={(e) => setTruckOwnerType(e.target.value as "owner" | "another")}>
+                      <MenuItem value="owner">Selected Owner</MenuItem>
+                      <MenuItem value="another">Another Owner</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+
+                {truckOwnerType === "another" && (
+                  <>
+                    <Grid>
+                      <TextField 
+                        label="Another Rate" 
+                        type="number" 
+                        size="small" 
+                        fullWidth
+                        value={anotherRate} 
+                        onChange={(e) => setAnotherRate(Number(e.target.value))} 
+                        sx={{ bgcolor: "white" }}
+                      />
+                    </Grid>
+                    <Grid>
+                      <Typography variant="body2" fontWeight="600" color="error.main">
+                        {anotherRate} × {w} = ₹{anotherRate * w}
+                      </Typography>
+                    </Grid>
+                  </>
+                )}
+              </Grid>
+
+              <Box mt={1} p={1.5} bgcolor="#ffffff" borderRadius={1.5} border="1px dashed #ffb74d">
+                <Typography variant="body2" color="text.secondary">
+                  {truckOwnerType === "owner" 
+                    ? `${sellRate} - ${cartingRate} - 180 = ${bedashMarginPerTon} Margin/Ton`
+                    : `${sellRate} - ${cartingRate} - ${anotherRate} = ${bedashMarginPerTon} Margin/Ton`
+                  }
+                </Typography>
+                <Typography variant="body1" fontWeight={700} mt={0.5} color="success.main">
+                  👉 Auto Commission: {bedashMarginPerTon} × {w} Tons = ₹{finalCommission}
+                </Typography>
+              </Box>
+            </Box>
+          )}
+
+          <Divider sx={{ my: 0.5 }} />
+
+          {/* 💰 Final Total Display Box */}
+          <Box sx={{ p: 2, bgcolor: "#e8f5e9", borderRadius: 2, textAlign: "center", border: "1px solid #c8e6c9" }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "#2e7d32" }}>
+              💰 Final Total Amount: ₹{finalTotalAmount.toFixed(2)}
             </Typography>
           </Box>
         </Box>
       </DialogContent>
 
-      <DialogActions sx={{ justifyContent: "space-between", p: 2 }}>
-        {/* Cancel */}
-        <Button
-          variant="outlined"
-          color="error"
-          onClick={onClose}
-          sx={{
-            borderRadius: 2,
-            px: 3,
-            "&:hover": { backgroundColor: "#ffebee", transform: "scale(1.05)" },
-          }}
-        >
+      {/* ================= FOOTER ================= */}
+      <DialogActions sx={{ p: 2.5, bgcolor: "#f8f9fa", justifyContent: "space-between", flexWrap: "wrap", gap: 1 }}>
+        <Button variant="outlined" color="error" onClick={onClose} sx={{ borderRadius: 2, px: 3, fontWeight: 600 }}>
           Cancel
         </Button>
-
-        <Box>
-          {/* Update */}
-          <Button
-            variant="contained"
-            color="primary"
-            sx={{
-              mr: 2,
-              borderRadius: 2,
-              px: 3,
-              background: "linear-gradient(90deg, #2196f3 0%, #21cbf3 100%)",
-            }}
-            onClick={handleUpdate}
-          >
+        <Box display="flex" gap={1.5}>
+          <Button variant="contained" color="primary" sx={{ borderRadius: 2, px: 3, fontWeight: 600 }} onClick={handleUpdate}>
             Update Token
           </Button>
-
-          {/* Confirm */}
-          <Button
-            variant="contained"
-            color="success"
-            sx={{
-              borderRadius: 2,
-              px: 3,
-              background: "linear-gradient(90deg, #43a047 0%, #66bb6a 100%)",
-            }}
-            onClick={handleConfirmPayment}
-            disabled={tokenStatus !== "updated"}
-          >
+          <Button variant="contained" color="success" sx={{ borderRadius: 2, px: 3, fontWeight: 600, boxShadow: "none" }} onClick={handleConfirmPayment} disabled={isPaidDisabled}>
             Confirm Payment
           </Button>
         </Box>

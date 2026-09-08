@@ -13,9 +13,13 @@ import {
   Chip,
   Box,
   Typography,
-  Divider,
+  CircularProgress,
+  InputAdornment,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
+import SearchIcon from "@mui/icons-material/Search";
+import InventoryIcon from "@mui/icons-material/Inventory";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../store";
 import {
@@ -60,87 +64,117 @@ const BedashList: React.FC = () => {
   };
 
   const handleConfirm = async (id: number) => {
-    await dispatch(confirmBedashAction(id));
+    if (window.confirm("Are you sure you want to confirm this material?")) {
+      await dispatch(confirmBedashAction(id));
+    }
+  };
+
+  /** 📅 Date Formatting Helpers */
+  const formatDateTime = (dateStr?: string | null) => {
+    if (!dateStr) return "-";
+    return new Date(dateStr).toLocaleString("en-IN", {
+      day: "2-digit", month: "short", year: "numeric",
+      hour: "2-digit", minute: "2-digit", hour12: true
+    });
+  };
+
+  const formatDateOnly = (dateStr?: string | null) => {
+    if (!dateStr) return "-";
+    return new Date(dateStr).toLocaleDateString("en-IN", {
+      day: "2-digit", month: "short", year: "numeric"
+    });
   };
 
   const filteredData: BedashItem[] =
     data?.filter((item) => {
       const query = search.toLowerCase();
       return (
-        item.userName.toLowerCase().includes(query) ||
-        item.status.toLowerCase().includes(query) ||
-        item.materialType.toLowerCase().includes(query)
+        item.userName?.toLowerCase().includes(query) ||
+        item.status?.toLowerCase().includes(query) ||
+        item.materialType?.toLowerCase().includes(query)
       );
     }) || [];
 
   if (loading) {
     return (
-      <Box
-        sx={{
-          textAlign: "center",
-          p: 5,
-          fontWeight: 500,
-          color: "text.secondary",
-        }}
-      >
-        Loading...
+      <Box display="flex" justifyContent="center" alignItems="center" height="50vh">
+        <CircularProgress size={50} thickness={4} />
       </Box>
     );
   }
 
   return (
     <Paper
-      elevation={3}
+      elevation={4}
       sx={{
+        p: 3,
+        borderRadius: 4,
+        background: "#ffffff",
         width: "100%",
-        borderRadius: 3,
-        overflow: "hidden",
-        background: "linear-gradient(135deg, #f9fafb 0%, #eef2f6 100%)",
-        p: 2,
+        minHeight: "80vh",
       }}
     >
-      {/* 🔹 Header Section */}
+      {/* ================= HEADER ================= */}
       <Box
         sx={{
-          background: "linear-gradient(135deg, #1976d2, #42a5f5)",
+          background: "linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%)",
           color: "white",
-          borderRadius: 2,
+          borderRadius: 3,
           px: 3,
-          py: 2,
-          mb: 2,
+          py: 2.5,
+          mb: 3,
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
           flexWrap: "wrap",
           gap: 2,
+          boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
         }}
       >
-        <Typography variant="h6" fontWeight={600}>
-          Bedash Material List
-        </Typography>
-        <Box display="flex" alignItems="center" gap={2}>
+        <Box display="flex" alignItems="center" gap={1.5}>
+          <InventoryIcon sx={{ fontSize: 28, color: "#ffb74d" }} />
+          <Typography variant="h5" fontWeight={700} letterSpacing={0.5}>
+            Material Inventory
+          </Typography>
+        </Box>
+
+        <Box display="flex" gap={2} alignItems="center" flexWrap="wrap">
           <TextField
-            label="Search Material"
-            variant="outlined"
+            placeholder="Search material..."
             size="small"
             value={search}
             onChange={handleSearchChange}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon sx={{ color: "gray" }} />
+                </InputAdornment>
+              ),
+            }}
             sx={{
               backgroundColor: "white",
-              borderRadius: 1,
-              width: 250,
+              borderRadius: 2,
+              width: { xs: "100%", sm: "260px" },
+              "& .MuiOutlinedInput-root": {
+                borderRadius: 2,
+                "& fieldset": { borderColor: "transparent" },
+                "&:hover fieldset": { borderColor: "#1976d2" },
+                "&.Mui-focused fieldset": { borderColor: "#1976d2" },
+              },
             }}
           />
           <Button
             variant="contained"
-            color="inherit"
             startIcon={<AddIcon />}
             onClick={() => setOpenAdd(true)}
             sx={{
-              backgroundColor: "white",
-              color: "#1976d2",
-              fontWeight: 600,
-              "&:hover": { backgroundColor: "#e3f2fd" },
+              backgroundColor: "#ffeb3b",
+              color: "#000",
+              fontWeight: 700,
+              borderRadius: 2,
+              px: 3,
+              textTransform: "none",
+              "&:hover": { backgroundColor: "#fbc02d" },
             }}
           >
             Add Material
@@ -148,31 +182,46 @@ const BedashList: React.FC = () => {
         </Box>
       </Box>
 
-      {/* 📋 Table Section */}
+      {/* ================= TABLE ================= */}
       <TableContainer
         sx={{
-          borderRadius: 2,
-          overflow: "hidden",
+          borderRadius: 3,
+          border: "1px solid #e0e0e0",
           backgroundColor: "white",
+          maxHeight: "65vh",
+          overflowY: "auto",
         }}
       >
-        <Table stickyHeader aria-label="bedash table">
+        <Table stickyHeader size="medium">
           <TableHead>
-            <TableRow
-              sx={{
-                backgroundColor: "#1976d2",
-                "& th": { color: "blue", fontWeight: 600 },
-              }}
-            >
-              <TableCell>ID</TableCell>
-              <TableCell>User Name</TableCell>
-              <TableCell>Material Type</TableCell>
-              <TableCell>Remaining Tons</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Custom Date</TableCell>
-              <TableCell>Target Date</TableCell>
-              <TableCell>Created At</TableCell>
-              <TableCell align="center">Action</TableCell>
+            <TableRow>
+              {[
+                { label: "ID", align: "left" },
+                { label: "Customer Name", align: "left" },
+                { label: "Material", align: "center" },
+                { label: "Remaining Tons", align: "right" },
+                { label: "Target Date", align: "left" },
+                { label: "Custom Date", align: "left" },
+                { label: "Created At", align: "left" },
+                { label: "Status", align: "center" },
+                { label: "Action", align: "center" },
+              ].map((col) => (
+                <TableCell
+                  key={col.label}
+                  align={col.align as any}
+                  sx={{
+                    backgroundColor: "#f4f6f8",
+                    color: "#333",
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                    fontSize: "0.75rem",
+                    letterSpacing: 0.5,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {col.label}
+                </TableCell>
+              ))}
             </TableRow>
           </TableHead>
 
@@ -185,59 +234,92 @@ const BedashList: React.FC = () => {
                     key={item.id}
                     hover
                     sx={{
-                      "&:hover": {
-                        backgroundColor: "#f1f5f9",
-                        transition: "0.2s",
-                      },
+                      "&:hover": { backgroundColor: "#f9fafb" },
+                      "& td": { borderBottom: "1px solid #f0f0f0" },
                     }}
                   >
-                    <TableCell>{item.id}</TableCell>
-                    <TableCell>{item.userName}</TableCell>
-                    <TableCell sx={{ textTransform: "capitalize" }}>
-                      {item.materialType}
+                    <TableCell sx={{ fontWeight: 600, color: "#1976d2" }}>
+                      #{item.id}
                     </TableCell>
-                    <TableCell>{item.remainingTons.toFixed(2)}</TableCell>
-                    <TableCell>
+                    
+                    <TableCell sx={{ fontWeight: 600, color: "text.primary" }}>
+                      {item.userName}
+                    </TableCell>
+                    
+                    <TableCell align="center">
                       <Chip
-                        label={item.status}
-                        color={
-                          item.status === "completed" ? "success" : "warning"
-                        }
+                        label={item.materialType}
                         size="small"
-                        sx={{ textTransform: "capitalize" }}
+                        sx={{
+                          textTransform: "capitalize",
+                          fontWeight: 600,
+                          backgroundColor: item.materialType.toLowerCase() === "bedash" ? "#fff3e0" : "#f5f5f5",
+                          color: item.materialType.toLowerCase() === "bedash" ? "#ed6c02" : "#616161",
+                          border: `1px solid ${item.materialType.toLowerCase() === "bedash" ? "#ffcc80" : "#e0e0e0"}`,
+                        }}
                       />
                     </TableCell>
-                    <TableCell>{item.customDate || "-"}</TableCell>
-                    <TableCell>{item.targetDate}</TableCell>
-                    <TableCell>
-                      {new Date(item.createdAt).toLocaleString()}
+
+                    <TableCell align="right" sx={{ fontWeight: 700, color: "#2e7d32", fontSize: "0.95rem" }}>
+                      {Number(item.remainingTons).toFixed(2)} T
                     </TableCell>
+
+                    <TableCell sx={{ color: "text.secondary", fontWeight: 500, whiteSpace: "nowrap" }}>
+                      {formatDateOnly(item.targetDate)}
+                    </TableCell>
+                    
+                    <TableCell sx={{ color: "text.secondary", whiteSpace: "nowrap" }}>
+                      {formatDateOnly(item.customDate)}
+                    </TableCell>
+                    
+                    <TableCell sx={{ color: "text.secondary", fontSize: "0.85rem", whiteSpace: "nowrap" }}>
+                      {formatDateTime(item.createdAt)}
+                    </TableCell>
+
                     <TableCell align="center">
+                      <Chip
+                        label={item.status}
+                        size="small"
+                        sx={{
+                          textTransform: "capitalize",
+                          fontWeight: 600,
+                          backgroundColor: item.status === "completed" ? "#e8f5e9" : "#ffebee",
+                          color: item.status === "completed" ? "#2e7d32" : "#c62828",
+                        }}
+                      />
+                    </TableCell>
+
+                    <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>
                       {item.status === "pending" ? (
                         <Button
                           variant="contained"
                           color="success"
                           size="small"
+                          startIcon={<CheckCircleIcon fontSize="small" />}
                           onClick={() => handleConfirm(item.id)}
                           sx={{
                             textTransform: "none",
                             fontWeight: 600,
+                            borderRadius: 1.5,
+                            boxShadow: "none",
+                            "&:hover": { boxShadow: "0 2px 8px rgba(46,125,50,0.3)" },
                           }}
                         >
                           Confirm
                         </Button>
                       ) : (
-                        <Chip label="Completed" color="success" size="small" />
+                        <Chip label="Confirmed" size="small" variant="outlined" color="success" sx={{ border: "none", fontWeight: 600 }} />
                       )}
                     </TableCell>
                   </TableRow>
                 ))
             ) : (
               <TableRow>
-                <TableCell colSpan={9} align="center" sx={{ py: 2 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    No Bedash materials found
-                  </Typography>
+                <TableCell colSpan={9} align="center" sx={{ py: 6 }}>
+                  <Box display="flex" flexDirection="column" alignItems="center" sx={{ opacity: 0.5 }}>
+                    <Typography variant="h6" fontWeight={600}>No Materials Found</Typography>
+                    <Typography variant="body2">Try adjusting your search query or add a new material.</Typography>
+                  </Box>
                 </TableCell>
               </TableRow>
             )}
@@ -245,22 +327,19 @@ const BedashList: React.FC = () => {
         </Table>
       </TableContainer>
 
-      {/* 🔹 Pagination */}
-      <Divider sx={{ mt: 1 }} />
-      <TablePagination
-        rowsPerPageOptions={[5, 10, 25]}
-        component="div"
-        count={filteredData.length}
-        rowsPerPage={rowsPerPage}
-        page={page}
-        onPageChange={handleChangePage}
-        onRowsPerPageChange={handleChangeRowsPerPage}
-        sx={{
-          backgroundColor: "white",
-          borderBottomLeftRadius: 12,
-          borderBottomRightRadius: 12,
-        }}
-      />
+      {/* ================= PAGINATION ================= */}
+      <Box display="flex" justifyContent="flex-end" mt={1}>
+        <TablePagination
+          component="div"
+          count={filteredData.length}
+          page={page}
+          rowsPerPage={rowsPerPage}
+          rowsPerPageOptions={[5, 10, 25, 50]}
+          onPageChange={handleChangePage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+          sx={{ borderBottom: "none" }}
+        />
+      </Box>
 
       {/* ➕ Add Dialog */}
       <AddBedashDialog open={openAdd} onClose={() => setOpenAdd(false)} />

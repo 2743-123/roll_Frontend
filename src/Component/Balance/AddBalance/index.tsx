@@ -9,7 +9,12 @@ import {
   MenuItem,
   Typography,
   Box,
+  Grid,
+  InputAdornment,
+  Divider,
 } from "@mui/material";
+import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
+import CalculateIcon from "@mui/icons-material/Calculate";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../../store";
 import { addBalanceAction } from "../../../Actions/Auth/balance";
@@ -40,7 +45,7 @@ const AddBalanceDialog: React.FC<AddBalanceDialogProps> = ({
 
   const userList = Array.isArray(users) ? users : [users];
   const onlyUsers = userList.filter(
-    (u: any) => u.role?.toLowerCase() === "user",
+    (u: any) => u.role?.toLowerCase() === "user"
   );
 
   const [selectedUserId, setSelectedUserId] = useState<number | "">("");
@@ -60,32 +65,25 @@ const AddBalanceDialog: React.FC<AddBalanceDialogProps> = ({
   }, [open, onlyUsers, selectedUserId]);
 
   // ================= REAL-TIME TONS =================
-
-  const flyashTons = flyashAmount
-    ? (Number(flyashAmount) / RATE_PER_TON).toFixed(2)
-    : "0";
-
-  const bedashTons = bedashAmount
-    ? (Number(bedashAmount) / RATE_PER_TON).toFixed(2)
-    : "0";
-
+  const flyashTons = flyashAmount ? (Number(flyashAmount) / RATE_PER_TON).toFixed(2) : "0.00";
+  const bedashTons = bedashAmount ? (Number(bedashAmount) / RATE_PER_TON).toFixed(2) : "0.00";
   const totalTons = (Number(flyashTons) + Number(bedashTons)).toFixed(2);
+  const totalAmount = Number(flyashAmount || 0) + Number(bedashAmount || 0);
 
   // ================= SUBMIT =================
-
   const handleSubmit = async () => {
     if (!selectedUserId || (!flyashAmount && !bedashAmount)) {
-      alert("Please fill required fields");
+      alert("Please fill required fields (User and at least one amount).");
       return;
     }
 
     if (paymentMode === "cash" && !bankName) {
-      alert("Enter bank name for cash payment");
+      alert("Enter bank name for cash payment.");
       return;
     }
 
     if (paymentMode === "online" && (!accountHolder || !referenceNumber)) {
-      alert("Fill account holder & reference number");
+      alert("Fill account holder & reference number for online payment.");
       return;
     }
 
@@ -98,10 +96,10 @@ const AddBalanceDialog: React.FC<AddBalanceDialogProps> = ({
           flyashAmount: flyashAmount || 0,
           bedashAmount: bedashAmount || 0,
           paymentMode,
-          bankName: paymentMode === "cash" ? bankName : "",
+          bankName: paymentMode === "cash" ? bankName : bankName, // Retained user's logic
           accountHolder: paymentMode === "online" ? accountHolder : "",
           referenceNumber: paymentMode === "online" ? referenceNumber : "",
-        }),
+        })
       );
 
       // reset
@@ -111,7 +109,6 @@ const AddBalanceDialog: React.FC<AddBalanceDialogProps> = ({
       setAccountHolder("");
       setReferenceNumber("");
       setPaymentMode("cash");
-
       onClose();
     } catch (err) {
       console.error("Add balance error:", err);
@@ -121,119 +118,186 @@ const AddBalanceDialog: React.FC<AddBalanceDialogProps> = ({
   };
 
   // ================= UI =================
-
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle sx={{ fontWeight: "bold", textAlign: "center" }}>
-        Add Balance
+    <Dialog 
+      open={open} 
+      onClose={onClose} 
+      fullWidth 
+      maxWidth="sm"
+      PaperProps={{
+        sx: { borderRadius: 3, boxShadow: "0 12px 40px rgba(0,0,0,0.2)", overflow: "hidden" }
+      }}
+    >
+      <DialogTitle 
+        sx={{ 
+          background: "linear-gradient(135deg, #1976d2, #42a5f5)", 
+          color: "white", 
+          fontWeight: 700, 
+          display: "flex", 
+          alignItems: "center", 
+          gap: 1.5,
+          p: 2.5
+        }}
+      >
+        <AccountBalanceWalletIcon /> Add New Balance
       </DialogTitle>
 
-      <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-        {/* USER */}
-        <TextField
-          select
-          label="Select User"
-          value={selectedUserId}
-          onChange={(e) => setSelectedUserId(Number(e.target.value))}
-          fullWidth
-        >
-          {onlyUsers.map((user: any) => (
-            <MenuItem key={user.id} value={user.id}>
-              {user.name}
-            </MenuItem>
-          ))}
-        </TextField>
-
-        {/* AMOUNTS */}
-        <TextField
-          label="Flyash Amount (₹)"
-          type="number"
-          value={flyashAmount}
-          onChange={(e) =>
-            setFlyashAmount(e.target.value === "" ? "" : Number(e.target.value))
-          }
-          fullWidth
-        />
-
-        <TextField
-          label="Bedash Amount (₹)"
-          type="number"
-          value={bedashAmount}
-          onChange={(e) => setBedashAmount(Number(e.target.value))}
-          fullWidth
-        />
-
-        {/* ⭐ LIVE TONS BOX */}
-        <Box
-          sx={{
-            p: 2,
-            borderRadius: 2,
-            background: "#f1f5f9",
-            border: "1px solid #cbd5e1",
-          }}
-        >
-          <Typography variant="subtitle2" gutterBottom>
-            Live Tons Calculation
-          </Typography>
-
-          <Typography variant="body2">
-            Flyash Tons: <strong>{flyashTons}</strong>
-          </Typography>
-
-          <Typography variant="body2">
-            Bedash Tons: <strong>{bedashTons}</strong>
-          </Typography>
-
-          <Typography variant="body2" sx={{ mt: 1 }}>
-            Total Tons: <strong>{totalTons}</strong>
-          </Typography>
-        </Box>
-
-        {/* PAYMENT MODE */}
-        <TextField
-          select
-          label="Payment Mode"
-          value={paymentMode}
-          onChange={(e) => setPaymentMode(e.target.value as any)}
-          fullWidth
-        >
-          <MenuItem value="cash">Cash</MenuItem>
-          <MenuItem value="online">Online</MenuItem>
-        </TextField>
-
-        {/* CONDITIONAL FIELDS */}
-        {paymentMode === "cash" && (
+      <DialogContent sx={{ p: 3, bgcolor: "#f8f9fa" }}>
+        <Box display="flex" flexDirection="column" gap={2.5} mt={1}>
+          
+          {/* USER SELECTION */}
           <TextField
-            label="Bank Name"
-            value={bankName}
-            onChange={(e) => setBankName(e.target.value)}
+            select
+            label="Select Customer / User"
+            value={selectedUserId}
+            onChange={(e) => setSelectedUserId(Number(e.target.value))}
             fullWidth
-          />
-        )}
+            sx={{ bgcolor: "white", borderRadius: 1 }}
+          >
+            {onlyUsers.map((user: any) => (
+              <MenuItem key={user.id} value={user.id}>
+                {user.name}
+              </MenuItem>
+            ))}
+          </TextField>
 
-        {paymentMode === "online" && (
-          <>
+          {/* AMOUNTS (Side by Side) */}
+          <Grid container spacing={2}>
+            <Grid >
+              <TextField
+                label="Flyash Amount"
+                type="number"
+                value={flyashAmount}
+                onChange={(e) => setFlyashAmount(e.target.value === "" ? "" : Number(e.target.value))}
+                fullWidth
+                sx={{ bgcolor: "white", borderRadius: 1 }}
+                InputProps={{
+                  startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+                }}
+              />
+            </Grid>
+            <Grid >
+              <TextField
+                label="Bedash Amount"
+                type="number"
+                value={bedashAmount}
+                onChange={(e) => setBedashAmount(e.target.value === "" ? "" : Number(e.target.value))}
+                fullWidth
+                sx={{ bgcolor: "white", borderRadius: 1 }}
+                InputProps={{
+                  startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+                }}
+              />
+            </Grid>
+          </Grid>
+
+          {/* ⭐ LIVE TONS BOX (Redesigned) */}
+          <Box
+            sx={{
+              p: 2,
+              borderRadius: 2,
+              background: "#e3f2fd",
+              border: "1px dashed #1976d2",
+            }}
+          >
+            <Typography variant="subtitle2" color="primary.main" display="flex" alignItems="center" gap={1} mb={1.5} fontWeight={700}>
+              <CalculateIcon fontSize="small" /> Live Conversion (Rate: ₹{RATE_PER_TON}/Ton)
+            </Typography>
+            
+            <Grid container spacing={2} textAlign="center">
+              <Grid >
+                <Typography variant="caption" color="text.secondary" display="block">Flyash</Typography>
+                <Typography variant="body1" fontWeight={700} color="text.primary">{flyashTons} T</Typography>
+              </Grid>
+              <Grid  sx={{ borderLeft: "1px solid #bbdefb", borderRight: "1px solid #bbdefb" }}>
+                <Typography variant="caption" color="text.secondary" display="block">Bedash</Typography>
+                <Typography variant="body1" fontWeight={700} color="text.primary">{bedashTons} T</Typography>
+              </Grid>
+              <Grid >
+                <Typography variant="caption" color="text.secondary" display="block">Total Capacity</Typography>
+                <Typography variant="body1" fontWeight={700} color="success.main">{totalTons} T</Typography>
+              </Grid>
+            </Grid>
+          </Box>
+
+          <Divider sx={{ my: 0.5 }} />
+
+          {/* PAYMENT DETAILS */}
+          <TextField
+            select
+            label="Payment Mode"
+            value={paymentMode}
+            onChange={(e) => setPaymentMode(e.target.value as any)}
+            fullWidth
+            sx={{ bgcolor: "white", borderRadius: 1 }}
+          >
+            <MenuItem value="cash">Cash Payment</MenuItem>
+            <MenuItem value="online">Online Transfer (Bank/UPI)</MenuItem>
+          </TextField>
+
+          {/* CONDITIONAL FIELDS */}
+          {paymentMode === "cash" && (
             <TextField
-              label="Account Holder"
-              value={accountHolder}
-              onChange={(e) => setAccountHolder(e.target.value)}
+              label="Bank Name (Cash Deposit)"
+              value={bankName}
+              onChange={(e) => setBankName(e.target.value)}
               fullWidth
+              sx={{ bgcolor: "white", borderRadius: 1 }}
             />
-            <TextField
-              label="Reference Number"
-              value={referenceNumber}
-              onChange={(e) => setReferenceNumber(e.target.value)}
-              fullWidth
-            />
-          </>
-        )}
+          )}
+
+          {paymentMode === "online" && (
+            <Grid container spacing={2}>
+              <Grid >
+                <TextField
+                  label="Bank Name"
+                  value={bankName}
+                  onChange={(e) => setBankName(e.target.value)}
+                  fullWidth
+                  sx={{ bgcolor: "white", borderRadius: 1 }}
+                />
+              </Grid>
+              <Grid >
+                <TextField
+                  label="Account Holder"
+                  value={accountHolder}
+                  onChange={(e) => setAccountHolder(e.target.value)}
+                  fullWidth
+                  sx={{ bgcolor: "white", borderRadius: 1 }}
+                />
+              </Grid>
+              <Grid >
+                <TextField
+                  label="Reference Number"
+                  value={referenceNumber}
+                  onChange={(e) => setReferenceNumber(e.target.value)}
+                  fullWidth
+                  sx={{ bgcolor: "white", borderRadius: 1 }}
+                />
+              </Grid>
+            </Grid>
+          )}
+        </Box>
       </DialogContent>
 
-      <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button variant="contained" disabled={loading} onClick={handleSubmit}>
-          {loading ? "Adding..." : "Add Balance"}
-        </Button>
+      <DialogActions sx={{ p: 2.5, bgcolor: "#f8f9fa", borderTop: "1px solid #e0e0e0", justifyContent: "space-between" }}>
+        <Typography variant="subtitle1" fontWeight={700} color="text.primary" sx={{ pl: 1 }}>
+          Total: <span style={{ color: "#2e7d32" }}>₹{totalAmount.toLocaleString("en-IN")}</span>
+        </Typography>
+        <Box>
+          <Button onClick={onClose} color="error" variant="outlined" sx={{ borderRadius: 2, mr: 1.5, px: 3 }}>
+            Cancel
+          </Button>
+          <Button 
+            variant="contained" 
+            color="primary"
+            disabled={loading} 
+            onClick={handleSubmit}
+            sx={{ borderRadius: 2, px: 4, fontWeight: 600, background: "linear-gradient(90deg, #1976d2, #42a5f5)" }}
+          >
+            {loading ? "Processing..." : "Confirm & Add"}
+          </Button>
+        </Box>
       </DialogActions>
     </Dialog>
   );
