@@ -15,6 +15,7 @@ import { useEffect } from "react";
 import AllUserToken from "./Component/Dashobard/page/AllUserBalance & Token/index";
 import AllTransection from "./Component/Dashobard/page/AllUserBalance & Token/allTransection";
 import PayentHistory from "./Component/Dashobard/page/Payemnt History/PaymentHistory";
+import BackupRestore from "./Component/backup/BackupRestore";
 
 function App() {
   const dispatch = useDispatch<AppDispatch>();
@@ -58,6 +59,7 @@ function App() {
             <Route path="AllTransection" element={<AllTransection />} />
             <Route path="PaymentHistory" element={<PayentHistory
              />} />
+             <Route path="Backup" element={<BackupRestore />} />
           </Route>
         </Routes>
       </BrowserRouter>
