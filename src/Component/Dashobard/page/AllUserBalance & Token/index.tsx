@@ -25,19 +25,22 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import "../../../../fonts/NotoSans-Regular";
 
-/** 🔹 Token type */
+/** 🔹 Token type with Total, Commission & Dates */
 interface AdminToken {
   tokenId: number;
   customerName: string;
   truckNumber: string;
   materialType: string;
   weight: string;
+  totalAmount?: string | number;
+  commission?: string | number;
   carryForward: string;
   status: "pending" | "updated" | "completed";
   userId: number;
   userName: string;
   remainingTons: string;
   createdAt: string;
+  updatedAt?: string; // ⭐ Added for 'Up' date tracking
   confirmedAt: string | null;
 }
 
@@ -79,7 +82,7 @@ const AllUserTokens: React.FC = () => {
   const tokens: AdminToken[] = data ?? [];
 
   /** 🔹 Safe number */
-  const toNumber = (v: string | number) => {
+  const toNumber = (v: string | number | undefined) => {
     const n = Number(v);
     return isNaN(n) ? 0 : n;
   };
@@ -99,15 +102,17 @@ const AllUserTokens: React.FC = () => {
     return Math.floor(adjustedRemaining / 27);
   };
 
-  /** 🔹 Negative carryForward total of SAME CUSTOMER */
+  /** 🔹 Largest negative carryForward of SAME CUSTOMER */
   const getCustomerNegativeTotal = (customerName: string) => {
-    const totalNegative = tokens
-      .filter(
-        (t) => t.customerName === customerName && Number(t.carryForward) < 0,
-      )
-      .reduce((sum, t) => sum + Number(t.carryForward), 0);
+    const negativeTokens = tokens.filter(
+      (t) => t.customerName === customerName && Number(t.carryForward) < 0
+    );
 
-    return Math.abs(totalNegative);
+    if (negativeTokens.length === 0) return 0;
+
+    const minCarry = Math.min(...negativeTokens.map((t) => Number(t.carryForward)));
+
+    return Math.abs(minCarry);
   };
 
   /** 🔹 Active tokens count (pending + updated) */
@@ -224,6 +229,8 @@ const AllUserTokens: React.FC = () => {
           "Truck",
           "Material",
           "Weight",
+          "Total",
+          "Commission",
           "Carry ₹",
           "Remaining",
           "Status",
@@ -237,6 +244,8 @@ const AllUserTokens: React.FC = () => {
         t.truckNumber,
         t.materialType,
         t.weight,
+        formatCur(t.totalAmount || 0),
+        formatCur(t.commission || 0),
         `₹${t.carryForward}`,
         t.remainingTons,
         t.status.toUpperCase(),
@@ -248,8 +257,16 @@ const AllUserTokens: React.FC = () => {
     doc.save("Token-Report.pdf");
   };
 
-  /* ================= FORMAT CURRENCY ================= */
+  /* ================= HELPERS ================= */
   const formatCur = (val: string | number) => `₹${Number(val || 0).toLocaleString("en-IN")}`;
+
+  const formatDateTime = (dateStr?: string | null) => {
+    if (!dateStr) return null;
+    return new Date(dateStr).toLocaleString("en-IN", {
+      day: "2-digit", month: "short", year: "2-digit",
+      hour: "2-digit", minute: "2-digit", hour12: true
+    });
+  };
 
   /* ================= LOADING & ERROR ================= */
   if (loading)
@@ -366,12 +383,13 @@ const AllUserTokens: React.FC = () => {
                 { label: "Truck", align: "left" },
                 { label: "Material", align: "left" },
                 { label: "Weight", align: "right" },
+                { label: "Total", align: "right" },
+                { label: "Commission", align: "right" },
                 { label: "Carry ₹", align: "right" },
                 { label: "Remaining", align: "right" },
                 { label: "Timer", align: "center" },
                 { label: "Status", align: "center" },
-                { label: "Created At", align: "left" },
-                { label: "Confirmed At", align: "left" },
+                { label: "Dates (Cr / Up / Co)", align: "left" }, // ⭐ Combined Date Header
               ].map((col) => (
                 <TableCell
                   key={col.label}
@@ -434,6 +452,14 @@ const AllUserTokens: React.FC = () => {
                       {t.materialType}
                     </TableCell>
                     <TableCell align="right" sx={{ fontWeight: 500 }}>{t.weight} T</TableCell>
+                    
+                    <TableCell align="right" sx={{ fontWeight: 600, color: "#2e7d32" }}>
+                      {formatCur(t.totalAmount || 0)}
+                    </TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 600, color: "#0288d1" }}>
+                      {formatCur(t.commission || 0)}
+                    </TableCell>
+
                     <TableCell align="right" sx={{ fontWeight: 600 }}>{formatCur(t.carryForward)}</TableCell>
                     <TableCell align="right" sx={{ fontWeight: 700, color: low ? "#d32f2f" : "#2e7d32" }}>
                       {t.remainingTons} T
@@ -449,24 +475,33 @@ const AllUserTokens: React.FC = () => {
                         sx={{ textTransform: "capitalize", fontWeight: 600 }}
                       />
                     </TableCell>
-                    <TableCell sx={{ color: "text.secondary", fontSize: "0.85rem", whiteSpace: "nowrap" }}>
-                      {t.createdAt ? new Date(t.createdAt).toLocaleString("en-IN", {
-                        day: "2-digit", month: "short", year: "numeric",
-                        hour: "2-digit", minute: "2-digit", hour12: true
-                      }) : "-"}
-                    </TableCell>
-                    <TableCell sx={{ color: "text.secondary", fontSize: "0.85rem", whiteSpace: "nowrap" }}>
-                      {t.confirmedAt ? new Date(t.confirmedAt).toLocaleString("en-IN", {
-                        day: "2-digit", month: "short", year: "numeric",
-                        hour: "2-digit", minute: "2-digit", hour12: true
-                      }) : "-"}
+                    
+                    {/* ⭐ Combined Dates Box */}
+                    <TableCell align="left" sx={{ whiteSpace: "nowrap" }}>
+                      <Box display="flex" flexDirection="column" gap={0.5}>
+                        {t.createdAt && (
+                          <Typography variant="caption" sx={{ display: "flex", gap: 1, color: "text.secondary" }}>
+                            <span style={{ fontWeight: 700, minWidth: "20px" }}>Cr:</span> {formatDateTime(t.createdAt)}
+                          </Typography>
+                        )}
+                        {t.updatedAt && (
+                          <Typography variant="caption" sx={{ display: "flex", gap: 1, color: "primary.main" }}>
+                            <span style={{ fontWeight: 700, minWidth: "20px" }}>Up:</span> {formatDateTime(t.updatedAt)}
+                          </Typography>
+                        )}
+                        {t.confirmedAt && (
+                          <Typography variant="caption" sx={{ display: "flex", gap: 1, color: "success.main" }}>
+                            <span style={{ fontWeight: 700, minWidth: "20px" }}>Co:</span> {formatDateTime(t.confirmedAt)}
+                          </Typography>
+                        )}
+                      </Box>
                     </TableCell>
                   </TableRow>
                 );
               })
             ) : (
               <TableRow>
-                <TableCell colSpan={11} align="center" sx={{ py: 6 }}>
+                <TableCell colSpan={12} align="center" sx={{ py: 6 }}>
                   <Box display="flex" flexDirection="column" alignItems="center" sx={{ opacity: 0.5 }}>
                     <Typography variant="h6" fontWeight={600}>No Tokens Found</Typography>
                     <Typography variant="body2">Try adjusting your search criteria.</Typography>
