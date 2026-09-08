@@ -7,12 +7,16 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { useGoogleLogin } from "@react-oauth/google";
 import axios from "axios";
 
+// ⭐ Dynamic API Base URL (Local ke liye localhost, Live ke liye aapka Backend URL)
+const API_BASE_URL = window.location.hostname === "localhost" 
+  ? "http://localhost:5000" 
+  : "https://bricks-admin-backend.onrender.com"; // Yahan apne live backend ka URL daal dein (e.g. Render/Railway URL)
+
 const BackupRestore: React.FC = () => {
   const [googleToken, setGoogleToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<{ type: "success" | "error" | ""; msg: string }>({ type: "", msg: "" });
 
-  // ⭐ Page load hote hi check karein ki pehle se Google token saved hai ya nahi
   useEffect(() => {
     const savedToken = localStorage.getItem("googleDriveToken");
     if (savedToken) {
@@ -20,11 +24,9 @@ const BackupRestore: React.FC = () => {
     }
   }, []);
 
-  // 🔹 Google Login & Get Drive Token
   const login = useGoogleLogin({
     onSuccess: (tokenResponse) => {
       setGoogleToken(tokenResponse.access_token);
-      // ⭐ Token ko localStorage me save kar lein taaki connection bana rahe
       localStorage.setItem("googleDriveToken", tokenResponse.access_token);
       setStatus({ type: "success", msg: "Google Drive Connected Successfully!" });
     },
@@ -32,14 +34,12 @@ const BackupRestore: React.FC = () => {
     onError: () => setStatus({ type: "error", msg: "Google Login Failed!" })
   });
 
-  // 🔹 Disconnect Google Drive (Optional button agar account badalna ho)
   const handleDisconnect = () => {
     localStorage.removeItem("googleDriveToken");
     setGoogleToken(null);
     setStatus({ type: "success", msg: "Google Drive Disconnected." });
   };
 
-  // 🔹 Handle Backup Export
   const handleBackup = async () => {
     if (!googleToken) return alert("Please connect Google Drive first!");
     setLoading(true);
@@ -48,7 +48,7 @@ const BackupRestore: React.FC = () => {
       const authToken = localStorage.getItem("accessToken");
 
       await axios.post(
-        "http://localhost:5000/api/backup/export", 
+        `${API_BASE_URL}/api/backup/export`, 
         { googleToken }, 
         {
           headers: {
@@ -57,13 +57,13 @@ const BackupRestore: React.FC = () => {
         }
       );
       setStatus({ type: "success", msg: "Backup successfully saved to Google Drive!" });
-    } catch (error) {
-      setStatus({ type: "error", msg: "Failed to create backup." });
+    } catch (error: any) {
+      console.error("Backup Error:", error.response?.data || error.message);
+      setStatus({ type: "error", msg: error.response?.data?.msg || "Failed to create backup." });
     }
     setLoading(false);
   };
 
-  // 🔹 Handle Restore Import
   const handleRestore = async () => {
     if (!googleToken) return alert("Please connect Google Drive first!");
     if (!window.confirm("WARNING: This will overwrite your current database. Are you sure?")) return;
@@ -74,7 +74,7 @@ const BackupRestore: React.FC = () => {
       const authToken = localStorage.getItem("accessToken");
 
       await axios.post(
-        "http://localhost:5000/api/backup/import", 
+        `${API_BASE_URL}/api/backup/import`, 
         { googleToken },
         {
           headers: {
@@ -83,8 +83,9 @@ const BackupRestore: React.FC = () => {
         }
       );
       setStatus({ type: "success", msg: "System successfully restored from Backup!" });
-    } catch (error) {
-      setStatus({ type: "error", msg: "Failed to restore backup." });
+    } catch (error: any) {
+      console.error("Restore Error:", error.response?.data || error.message);
+      setStatus({ type: "error", msg: error.response?.data?.msg || "Failed to restore backup." });
     }
     setLoading(false);
   };
@@ -99,7 +100,6 @@ const BackupRestore: React.FC = () => {
           Secure your system data by linking your Google Drive account.
         </Typography>
 
-        {/* GOOGLE CONNECT BUTTON */}
         {!googleToken ? (
           <Button
             variant="contained"
@@ -123,7 +123,6 @@ const BackupRestore: React.FC = () => {
 
         <Divider sx={{ my: 4 }} />
 
-        {/* BACKUP & RESTORE ACTIONS */}
         <Box display="flex" gap={2} justifyContent="center" flexWrap="wrap">
           <Button
             variant="contained"
@@ -148,7 +147,6 @@ const BackupRestore: React.FC = () => {
           </Button>
         </Box>
 
-        {/* STATUS MESSAGES */}
         {status.msg && (
           <Typography mt={3} fontWeight={600} color={status.type === "success" ? "success.main" : "error.main"}>
             {status.msg}
