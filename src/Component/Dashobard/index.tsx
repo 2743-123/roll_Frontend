@@ -11,6 +11,7 @@ import MenuIcon from "@mui/icons-material/Menu";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import DashboardOutlinedIcon from "@mui/icons-material/DashboardOutlined";
+import useMediaQuery from "@mui/material/useMediaQuery";
 
 import Sidebar from "./Sidebar";
 import Logout from "../Logout";
@@ -76,17 +77,20 @@ const AppBar = styled(MuiAppBar, {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.standard,
   }),
-  ...(open && {
-    marginLeft: drawerWidth,
-    width: `calc(100% - ${drawerWidth}px)`,
-    transition: theme.transitions.create(["width", "margin"], {
-      easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.standard,
+  // Desktop AppBar adjustment
+  [theme.breakpoints.up("md")]: {
+    ...(open && {
+      marginLeft: drawerWidth,
+      width: `calc(100% - ${drawerWidth}px)`,
+      transition: theme.transitions.create(["width", "margin"], {
+        easing: theme.transitions.easing.sharp,
+        duration: theme.transitions.duration.standard,
+      }),
     }),
-  }),
+  },
 }));
 
-// ---------------- Drawer ----------------
+// ---------------- Desktop Drawer ----------------
 const Drawer = styled(MuiDrawer, {
   shouldForwardProp: (prop) => prop !== "open",
 })(({ theme, open }) => ({
@@ -114,7 +118,7 @@ const BreadcrumbPath: React.FC = () => {
   const pathnames = location.pathname.split("/").filter((x) => x);
 
   return (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 3 }}>
+    <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 3, flexWrap: "wrap" }}>
       <Typography
         variant="body2"
         sx={{
@@ -123,10 +127,7 @@ const BreadcrumbPath: React.FC = () => {
           fontWeight: 700,
           letterSpacing: 0.5,
           transition: "all 0.2s ease",
-          "&:hover": {
-            color: "#115293",
-            textDecoration: "underline",
-          },
+          "&:hover": { color: "#115293", textDecoration: "underline" },
         }}
         onClick={() => navigate("/")}
       >
@@ -143,10 +144,7 @@ const BreadcrumbPath: React.FC = () => {
               color: "text.secondary",
               fontWeight: 500,
               transition: "all 0.2s ease",
-              "&:hover": {
-                color: "#1976d2",
-                textDecoration: "underline",
-              },
+              "&:hover": { color: "#1976d2", textDecoration: "underline" },
             }}
             onClick={() => navigate(routeTo)}
           >
@@ -161,89 +159,134 @@ const BreadcrumbPath: React.FC = () => {
 // ---------------- Dashboard Component ----------------
 export default function Dashboard() {
   const theme = useTheme();
+  
+  // ⭐ Mobile Detection
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  
+  // Desktop state
   const [open, setOpen] = React.useState(true);
+  // Mobile state
+  const [mobileOpen, setMobileOpen] = React.useState(false);
 
-  const handleDrawerOpen = () => setOpen(true);
-  const handleDrawerClose = () => setOpen(false);
+  const handleDrawerToggle = () => {
+    if (isMobile) {
+      setMobileOpen(!mobileOpen);
+    } else {
+      setOpen(!open);
+    }
+  };
 
   return (
     <Box sx={{ display: "flex", backgroundColor: "#f8f9fa", minHeight: "100vh" }}>
       <CssBaseline />
 
-      {/* AppBar */}
-      <AppBar position="fixed" open={open}>
-        <Toolbar sx={{ display: "flex", justifyContent: "space-between", minHeight: "70px !important" }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+      {/* ================= APP BAR ================= */}
+      <AppBar position="fixed" open={!isMobile && open}>
+        <Toolbar sx={{ display: "flex", justifyContent: "space-between", minHeight: "70px !important", px: { xs: 1, sm: 3 } }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            
+            {/* Hamburger Icon */}
             <IconButton
               color="inherit"
               aria-label="open drawer"
-              onClick={handleDrawerOpen}
+              onClick={handleDrawerToggle}
               edge="start"
-              sx={{ marginRight: 1.5, ...(open && { display: "none" }) }}
+              sx={{ mr: { xs: 0, sm: 1.5 }, ...(!isMobile && open && { display: "none" }) }}
             >
               <MenuIcon />
             </IconButton>
-            <DashboardOutlinedIcon sx={{ fontSize: 28, color: "#64b5f6" }} />
+
+            <DashboardOutlinedIcon sx={{ fontSize: { xs: 24, sm: 28 }, color: "#64b5f6", display: { xs: "none", sm: "block" } }} />
             <Typography
               variant="h6"
               noWrap
-              sx={{ fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase" }}
+              sx={{ 
+                fontWeight: 700, 
+                letterSpacing: 0.5, 
+                textTransform: "uppercase", 
+                fontSize: { xs: "1rem", sm: "1.25rem" } 
+              }}
             >
-              Admin Dashboard
+              Admin dashboard
             </Typography>
           </Box>
 
           {/* Right Side Controls */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 1, sm: 2 } }}>
             <DropDownUserList />
             <Logout />
           </Box>
         </Toolbar>
       </AppBar>
 
-      {/* Drawer */}
-      <Drawer variant="permanent" open={open}>
+      {/* ================= MOBILE DRAWER (Temporary) ================= */}
+      <MuiDrawer
+        variant="temporary"
+        open={mobileOpen}
+        onClose={() => setMobileOpen(false)}
+        ModalProps={{ keepMounted: true }} // Better open performance on mobile
+        sx={{
+          display: { xs: "block", md: "none" },
+          "& .MuiDrawer-paper": { boxSizing: "border-box", width: drawerWidth, backgroundColor: "#ffffff" },
+        }}
+      >
+        <DrawerHeader>
+          <Box display="flex" alignItems="center" justifyContent="space-between" width="100%" px={1}>
+            <Box display="flex" alignItems="center" gap={1}>
+              <DashboardOutlinedIcon sx={{ fontSize: 24, color: "#1976d2" }} />
+              <Typography sx={{ fontWeight: 800, textTransform: "uppercase", color: "#1976d2", letterSpacing: 1, fontSize: "1.1rem" }}>
+                Bricks Admin
+              </Typography>
+            </Box>
+            <IconButton onClick={() => setMobileOpen(false)} sx={{ color: "#666" }}>
+              <ChevronLeftIcon />
+            </IconButton>
+          </Box>
+        </DrawerHeader>
+        {/* On mobile, clicking a link should close the drawer */}
+        <Box onClick={() => setMobileOpen(false)}>
+          <Sidebar />
+        </Box>
+      </MuiDrawer>
+
+      {/* ================= DESKTOP DRAWER (Permanent) ================= */}
+      <Drawer
+        variant="permanent"
+        open={open}
+        sx={{ display: { xs: "none", md: "block" } }}
+      >
         <DrawerHeader>
           {open ? (
             <Box display="flex" alignItems="center" justifyContent="space-between" width="100%" px={1}>
               <Box display="flex" alignItems="center" gap={1}>
                 <DashboardOutlinedIcon sx={{ fontSize: 28, color: "#1976d2" }} />
-                <Typography
-                  sx={{
-                    fontWeight: 800,
-                    textTransform: "uppercase",
-                    color: "#1976d2",
-                    letterSpacing: 1.5,
-                    fontSize: "1.2rem",
-                  }}
-                >
+                <Typography sx={{ fontWeight: 800, textTransform: "uppercase", color: "#1976d2", letterSpacing: 1.5, fontSize: "1.2rem" }}>
                   Bricks Admin
                 </Typography>
               </Box>
-              <IconButton onClick={handleDrawerClose} sx={{ color: "#666" }}>
+              <IconButton onClick={() => setOpen(false)} sx={{ color: "#666" }}>
                 {theme.direction === "rtl" ? <ChevronRightIcon /> : <ChevronLeftIcon />}
               </IconButton>
             </Box>
           ) : (
-            <IconButton onClick={handleDrawerOpen} sx={{ color: "#1976d2" }}>
+            <IconButton onClick={() => setOpen(true)} sx={{ color: "#1976d2" }}>
               <ChevronRightIcon />
             </IconButton>
           )}
         </DrawerHeader>
-
         <Sidebar />
       </Drawer>
 
-      {/* Main Content Area */}
+      {/* ================= MAIN CONTENT AREA ================= */}
       <Box
         component="main"
         sx={{
           flexGrow: 1,
-          p: 3,
-          mt: "70px", // matches toolbar height
+          p: { xs: 1.5, sm: 3 }, // ⭐ Responsive padding
+          mt: "70px",
           backgroundColor: "#f8f9fa",
           minHeight: "calc(100vh - 70px)",
-          overflowX: "hidden",
+          width: { xs: "100%", md: `calc(100% - ${open ? drawerWidth : 73}px)` }, // Prevents horizontal scrolling bug
         }}
       >
         <BreadcrumbPath />

@@ -39,6 +39,14 @@ const Sidebar: React.FC<SidebarProps> = ({ open = true }) => {
         0%, 100% { opacity: 1; }
         50% { opacity: 0.6; }
       }
+      /* Custom Scrollbar for sleek look on desktop, hidden naturally on mobile */
+      .sidebar-scroll::-webkit-scrollbar {
+        width: 4px;
+      }
+      .sidebar-scroll::-webkit-scrollbar-thumb {
+        background-color: #bdbdbd;
+        border-radius: 10px;
+      }
     `;
     document.head.appendChild(style);
     return () => {
@@ -60,16 +68,18 @@ const Sidebar: React.FC<SidebarProps> = ({ open = true }) => {
 
   return (
     <List 
+      className="sidebar-scroll"
       sx={{ 
         width: "100%", 
         bgcolor: "#ffffff", 
-        height: "calc(100vh - 110px)", 
+        height: "calc(100% - 110px)", 
         overflowY: "auto",
-        px: open ? 1.5 : 1,
-        py: 2,
+        overflowX: "hidden",
+        px: open ? { xs: 1, sm: 1.5 } : 1, 
+        py: { xs: 1, sm: 2 }, 
         display: "flex",
         flexDirection: "column",
-        gap: 0.8
+        gap: { xs: 0.5, sm: 0.8 }, 
       }}
     >
       {menuItems
@@ -82,9 +92,9 @@ const Sidebar: React.FC<SidebarProps> = ({ open = true }) => {
               key={item.path}
               onClick={() => navigate(item.path)}
               sx={{
-                minHeight: 48,
+                minHeight: { xs: 44, sm: 48 }, 
                 justifyContent: open ? "initial" : "center",
-                px: 2.5,
+                px: { xs: 2, sm: 2.5 },
                 borderRadius: 2.5,
                 mb: 0.5,
                 backgroundColor: isActive ? "#e3f2fd" : "transparent",
@@ -98,8 +108,12 @@ const Sidebar: React.FC<SidebarProps> = ({ open = true }) => {
               <ListItemIcon
                 sx={{
                   minWidth: 0,
-                  mr: open ? 2 : "auto",
+                  mr: open ? { xs: 1.5, sm: 2 } : "auto", 
                   justifyContent: "center",
+                  // ⭐ FIX: React.cloneElement hata kar yahan CSS se icon size control kiya hai
+                  "& svg": {
+                    fontSize: { xs: 22, sm: 24 }
+                  }
                 }}
               >
                 {item.icon}
@@ -110,7 +124,7 @@ const Sidebar: React.FC<SidebarProps> = ({ open = true }) => {
                   sx={{ 
                     opacity: open ? 1 : 0,
                     "& .MuiListItemText-primary": {
-                      fontSize: "0.9rem",
+                      fontSize: { xs: "0.85rem", sm: "0.9rem" }, 
                       fontWeight: isActive ? 700 : 500,
                     }
                   }} 
@@ -119,9 +133,8 @@ const Sidebar: React.FC<SidebarProps> = ({ open = true }) => {
             </ListItemButton>
           );
 
-          // Jab drawer closed ho toh hover karne par tooltip dikhega
           return !open ? (
-            <Tooltip key={item.path} title={item.label} placement="right" arrow>
+            <Tooltip key={item.path} title={item.label} placement="right" arrow disableInteractive>
               {buttonContent}
             </Tooltip>
           ) : (

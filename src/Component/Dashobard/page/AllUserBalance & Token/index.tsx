@@ -13,6 +13,7 @@ import {
   Button,
   CircularProgress,
   InputAdornment,
+  TableContainer,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
@@ -40,13 +41,13 @@ interface AdminToken {
   userName: string;
   remainingTons: string;
   createdAt: string;
-  updatedAt?: string; // ⭐ Added for 'Up' date tracking
+  updatedAt?: string;
   confirmedAt: string | null;
 }
 
 const FIFTEEN_DAYS = 15 * 24 * 60 * 60 * 1000;
 
-const AllUserTokens: React.FC = () => {
+const AllUserToken: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
 
   const { data, totalTokens, loading, error } = useSelector(
@@ -81,13 +82,11 @@ const AllUserTokens: React.FC = () => {
 
   const tokens: AdminToken[] = data ?? [];
 
-  /** 🔹 Safe number */
   const toNumber = (v: string | number | undefined) => {
     const n = Number(v);
     return isNaN(n) ? 0 : n;
   };
 
-  /** 🔹 Possible tokens after blocking pending */
   const getPossibleTokens = (userId: number, remaining: string | number) => {
     const totalRemaining = toNumber(remaining);
     if (totalRemaining <= 0) return 0;
@@ -102,7 +101,6 @@ const AllUserTokens: React.FC = () => {
     return Math.floor(adjustedRemaining / 27);
   };
 
-  /** 🔹 Largest negative carryForward of SAME CUSTOMER */
   const getCustomerNegativeTotal = (customerName: string) => {
     const negativeTokens = tokens.filter(
       (t) => t.customerName === customerName && Number(t.carryForward) < 0
@@ -115,7 +113,6 @@ const AllUserTokens: React.FC = () => {
     return Math.abs(minCarry);
   };
 
-  /** 🔹 Active tokens count (pending + updated) */
   const getCustomerActiveTokenCount = (customerName: string) => {
     return tokens.filter(
       (t) =>
@@ -124,10 +121,8 @@ const AllUserTokens: React.FC = () => {
     ).length;
   };
 
-  /** 🔹 Remaining < 27 */
   const isLowStock = (remaining: string | number) => toNumber(remaining) < 27;
 
-  /** 🔹 Status color */
   const getStatusColor = (status: string) => {
     if (status === "completed") return "success";
     if (status === "updated") return "warning";
@@ -137,7 +132,6 @@ const AllUserTokens: React.FC = () => {
   // ================= REMOVE AFTER 15 DAYS =================
   const visibleTokens = tokens.filter((t) => {
     if (t.status !== "completed" || !t.confirmedAt) return true;
-
     const confirmedTime = new Date(t.confirmedAt).getTime();
     return Date.now() - confirmedTime < FIFTEEN_DAYS;
   });
@@ -145,7 +139,6 @@ const AllUserTokens: React.FC = () => {
   // ================= SEARCH =================
   const filteredTokens = visibleTokens.filter((t) => {
     const q = search.toLowerCase();
-
     return (
       t.customerName?.toLowerCase().includes(q) ||
       t.userName?.toLowerCase().includes(q) ||
@@ -155,10 +148,17 @@ const AllUserTokens: React.FC = () => {
     );
   });
 
-  // ================= DRAG SELECT =================
+  // ================= DOUBLE CLICK SELECT =================
+  const handleDoubleClick = (id: number) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((selectedId) => selectedId !== id) : [...prev, id]
+    );
+  };
+
   const handleMouseDown = (id: number) => {
     setIsDragging(true);
-    setSelectedIds([id]);
+    // Remove auto select on mouse down to avoid clash with double click if preferred, 
+    // but kept here if you want drag select. For pure double click, you can remove mousedown/enter.
   };
 
   const handleMouseEnter = (id: number) => {
@@ -186,7 +186,6 @@ const AllUserTokens: React.FC = () => {
   // ================= HOVER =================
   const handleHover = (t: AdminToken, e: React.MouseEvent) => {
     const negativeTotal = getCustomerNegativeTotal(t.customerName);
-
     setHoverInfo({
       userName: t.userName,
       customerName: t.customerName,
@@ -203,6 +202,26 @@ const AllUserTokens: React.FC = () => {
 
   const handleLeaveHover = () => setHoverInfo(null);
 
+  /* ================= HELPERS ================= */
+  const formatCur = (val: string | number) => `₹${Number(val || 0).toLocaleString("en-IN")}`;
+
+  const formatDateTime = (dateStr?: string | null) => {
+    if (!dateStr) return null;
+    return new Date(dateStr).toLocaleString("en-IN", {
+      day: "2-digit", month: "short", year: "2-digit",
+      hour: "2-digit", minute: "2-digit", hour12: true
+    });
+  };
+
+  // Short format just for PDF to save space
+  const shortDateForPDF = (dateStr?: string | null) => {
+    if (!dateStr) return "-";
+    const d = new Date(dateStr);
+    return d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "2-digit" }) + 
+           " " + 
+           d.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: false });
+  };
+
   // ================= PDF =================
   const handleDownloadPDF = () => {
     const selected = filteredTokens.filter((t) =>
@@ -214,24 +233,61 @@ const AllUserTokens: React.FC = () => {
       return;
     }
 
-    const doc = new jsPDF();
-    doc.setFont("NotoSans-Regular", "normal");
-    doc.setFontSize(14);
-    doc.text("Admin Token Report", 14, 15);
+    // ⭐ 1. Set orientation to Landscape to fit 12 columns
+    const doc = new jsPDF("landscape");
 
+    // ⭐ 2. Professional Header Info
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(16);
+    doc.setTextColor(15, 32, 39);
+    doc.text("All User Tokens Report", 14, 15);
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Generated on: ${new Date().toLocaleString("en-IN")}`, 14, 22);
+    doc.text(`Total Records: ${selected.length}`, 14, 27);
+
+    // ⭐ 3. AutoTable Setup with optimized widths & alignments
     autoTable(doc, {
-      startY: 22,
-      styles: { font: "NotoSans-Regular", fontSize: 10 },
+      startY: 32,
+      theme: "grid", // Grid theme adds borders for a clean look
+      styles: { 
+        fontSize: 8, // Smaller font to fit everything
+        cellPadding: 3, 
+        overflow: 'linebreak',
+        valign: 'middle'
+      },
+      headStyles: {
+        fillColor: [20, 48, 59], // Dark bluish-green like your app header
+        textColor: [255, 255, 255],
+        fontStyle: "bold",
+        halign: "center", // Center align header titles
+      },
+      columnStyles: {
+        0: { halign: "left" },    // User
+        1: { halign: "left" },    // Customer
+        2: { halign: "center" },  // Truck
+        3: { halign: "center" },  // Material
+        4: { halign: "right" },   // Weight
+        5: { halign: "right" },   // Total
+        6: { halign: "right" },   // Commission
+        7: { halign: "right" },   // Carry
+        8: { halign: "right" },   // Remaining
+        9: { halign: "center" },  // Status
+        10: { halign: "center" }, // Created At
+        11: { halign: "center" }, // Confirmed At
+      },
       head: [
         [
           "User",
           "Customer",
-          "Truck",
+          "Truck No",
           "Material",
           "Weight",
-          "Total",
-          "Commission",
-          "Carry ₹",
+          "Total (Rs)",
+          "Comm (Rs)",
+          "Carry (Rs)",
           "Remaining",
           "Status",
           "Created At",
@@ -241,31 +297,33 @@ const AllUserTokens: React.FC = () => {
       body: selected.map((t) => [
         t.userName,
         t.customerName,
-        t.truckNumber,
-        t.materialType,
-        t.weight,
-        formatCur(t.totalAmount || 0),
-        formatCur(t.commission || 0),
-        `₹${t.carryForward}`,
-        t.remainingTons,
+        t.truckNumber || "-",
+        t.materialType.toUpperCase(),
+        `${t.weight} T`,
+        Number(t.totalAmount || 0).toLocaleString("en-IN"),
+        Number(t.commission || 0).toLocaleString("en-IN"),
+        Number(t.carryForward || 0).toLocaleString("en-IN"),
+        `${t.remainingTons} T`,
         t.status.toUpperCase(),
-        t.createdAt ? new Date(t.createdAt).toLocaleString() : "-",
-        t.confirmedAt ? new Date(t.confirmedAt).toLocaleString() : "-",
+        shortDateForPDF(t.createdAt),
+        shortDateForPDF(t.confirmedAt),
       ]),
+    didDrawPage: function (data: any) {
+        // ⭐ Fixed TypeScript Error by using data.pageNumber (AutoTable's built-in page tracker)
+        const str = "Page " + data.pageNumber;
+        
+        doc.setFontSize(8);
+        doc.setTextColor(150, 150, 150);
+        
+        const pageSize = doc.internal.pageSize;
+        const pageHeight = pageSize.height ? pageSize.height : pageSize.getHeight();
+        
+        doc.text(str, data.settings.margin.left, pageHeight - 10);
+      },
     });
 
-    doc.save("Token-Report.pdf");
-  };
-
-  /* ================= HELPERS ================= */
-  const formatCur = (val: string | number) => `₹${Number(val || 0).toLocaleString("en-IN")}`;
-
-  const formatDateTime = (dateStr?: string | null) => {
-    if (!dateStr) return null;
-    return new Date(dateStr).toLocaleString("en-IN", {
-      day: "2-digit", month: "short", year: "2-digit",
-      hour: "2-digit", minute: "2-digit", hour12: true
-    });
+    // Save with dynamic timestamp
+    doc.save(`Token-Report-${new Date().getTime()}.pdf`);
   };
 
   /* ================= LOADING & ERROR ================= */
@@ -285,7 +343,7 @@ const AllUserTokens: React.FC = () => {
 
   // ================= UI =================
   return (
-    <Box p={3} onMouseUp={handleMouseUp} sx={{ background: "#f8f9fa", minHeight: "85vh", borderRadius: 4 }}>
+    <Box p={{ xs: 1, sm: 3 }} onMouseUp={handleMouseUp} sx={{ background: "#f8f9fa", minHeight: "85vh", borderRadius: 4 }}>
       
       {/* ================= HEADER ================= */}
       <Box
@@ -293,30 +351,30 @@ const AllUserTokens: React.FC = () => {
           background: "linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%)",
           color: "white",
           borderRadius: 3,
-          px: 3,
+          px: { xs: 2, sm: 3 },
           py: 2.5,
           mb: 3,
           display: "flex",
+          flexDirection: { xs: "column", md: "row" },
           justifyContent: "space-between",
-          alignItems: "center",
-          flexWrap: "wrap",
+          alignItems: { xs: "flex-start", md: "center" },
           gap: 2,
           boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
         }}
       >
         <Box display="flex" alignItems="center" gap={1.5}>
-          <SupervisorAccountIcon sx={{ fontSize: 30, color: "#81c784" }} />
+          <SupervisorAccountIcon sx={{ fontSize: { xs: 24, sm: 30 }, color: "#81c784" }} />
           <Box>
-            <Typography variant="h5" fontWeight={700} letterSpacing={0.5}>
+            <Typography variant="h5" fontWeight={700} letterSpacing={0.5} sx={{ fontSize: { xs: "1.2rem", sm: "1.5rem" } }}>
               All User Tokens Report
             </Typography>
             <Typography variant="caption" sx={{ opacity: 0.8 }}>
-              Total Tokens: <strong>{totalTokens}</strong>
+              Total Tokens: <strong>{totalTokens}</strong> • <span style={{ color: "#ffeb3b" }}>Double tap row to select for PDF</span>
             </Typography>
           </Box>
         </Box>
 
-        <Box display="flex" gap={2} alignItems="center" flexWrap="wrap">
+        <Box display="flex" gap={2} alignItems="center" flexWrap="wrap" width={{ xs: "100%", md: "auto" }}>
           <TextField
             placeholder="Search tokens..."
             size="small"
@@ -347,6 +405,7 @@ const AllUserTokens: React.FC = () => {
             startIcon={<PictureAsPdfIcon />}
             disabled={!selectedIds.length}
             onClick={handleDownloadPDF}
+            fullWidth={window.innerWidth < 600}
             sx={{
               backgroundColor: "#ffeb3b",
               color: "#000",
@@ -364,17 +423,17 @@ const AllUserTokens: React.FC = () => {
       </Box>
 
       {/* ================= TABLE CONTAINER ================= */}
-      <Paper
+      <TableContainer
+        component={Paper}
         elevation={4}
         sx={{
           borderRadius: 3,
           border: "1px solid #e0e0e0",
-          overflow: "hidden",
           maxHeight: "68vh",
-          overflowY: "auto",
+          overflowX: "auto", 
         }}
       >
-        <Table stickyHeader size="medium">
+        <Table stickyHeader size="medium" sx={{ minWidth: 1200 }}> 
           <TableHead>
             <TableRow>
               {[
@@ -389,7 +448,7 @@ const AllUserTokens: React.FC = () => {
                 { label: "Remaining", align: "right" },
                 { label: "Timer", align: "center" },
                 { label: "Status", align: "center" },
-                { label: "Dates (Cr / Up / Co)", align: "left" }, // ⭐ Combined Date Header
+                { label: "Dates (Cr / Up / Co)", align: "left" },
               ].map((col) => (
                 <TableCell
                   key={col.label}
@@ -420,6 +479,7 @@ const AllUserTokens: React.FC = () => {
                   <TableRow
                     key={t.tokenId}
                     hover
+                    onDoubleClick={() => handleDoubleClick(t.tokenId)}
                     onMouseDown={() => handleMouseDown(t.tokenId)}
                     onMouseEnter={(e) => {
                       handleMouseEnter(t.tokenId);
@@ -443,28 +503,28 @@ const AllUserTokens: React.FC = () => {
                       },
                     }}
                   >
-                    <TableCell sx={{ fontWeight: 600, color: "#1976d2" }}>{t.userName}</TableCell>
-                    <TableCell sx={{ fontWeight: 500 }}>{t.customerName}</TableCell>
+                    <TableCell sx={{ fontWeight: 600, color: "#1976d2", whiteSpace: "nowrap" }}>{t.userName}</TableCell>
+                    <TableCell sx={{ fontWeight: 500, whiteSpace: "nowrap" }}>{t.customerName}</TableCell>
                     <TableCell>
                       <Chip label={t.truckNumber || "N/A"} size="small" variant="outlined" sx={{ borderRadius: 1 }} />
                     </TableCell>
                     <TableCell sx={{ textTransform: "capitalize", color: t.materialType?.toLowerCase() === 'bedash' ? '#ed6c02' : '#757575', fontWeight: 500 }}>
                       {t.materialType}
                     </TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 500 }}>{t.weight} T</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 500, whiteSpace: "nowrap" }}>{t.weight} T</TableCell>
                     
-                    <TableCell align="right" sx={{ fontWeight: 600, color: "#2e7d32" }}>
+                    <TableCell align="right" sx={{ fontWeight: 600, color: "#2e7d32", whiteSpace: "nowrap" }}>
                       {formatCur(t.totalAmount || 0)}
                     </TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 600, color: "#0288d1" }}>
+                    <TableCell align="right" sx={{ fontWeight: 600, color: "#0288d1", whiteSpace: "nowrap" }}>
                       {formatCur(t.commission || 0)}
                     </TableCell>
 
-                    <TableCell align="right" sx={{ fontWeight: 600 }}>{formatCur(t.carryForward)}</TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 700, color: low ? "#d32f2f" : "#2e7d32" }}>
+                    <TableCell align="right" sx={{ fontWeight: 600, whiteSpace: "nowrap" }}>{formatCur(t.carryForward)}</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 700, color: low ? "#d32f2f" : "#2e7d32", whiteSpace: "nowrap" }}>
                       {t.remainingTons} T
                     </TableCell>
-                    <TableCell align="center" sx={{ fontFamily: "monospace", fontSize: "0.85rem", fontWeight: 600 }}>
+                    <TableCell align="center" sx={{ fontFamily: "monospace", fontSize: "0.85rem", fontWeight: 600, whiteSpace: "nowrap" }}>
                       {t.status === "completed" ? getRemainingTime(t.confirmedAt) : "-"}
                     </TableCell>
                     <TableCell align="center">
@@ -476,7 +536,6 @@ const AllUserTokens: React.FC = () => {
                       />
                     </TableCell>
                     
-                    {/* ⭐ Combined Dates Box */}
                     <TableCell align="left" sx={{ whiteSpace: "nowrap" }}>
                       <Box display="flex" flexDirection="column" gap={0.5}>
                         {t.createdAt && (
@@ -511,7 +570,7 @@ const AllUserTokens: React.FC = () => {
             )}
           </TableBody>
         </Table>
-      </Paper>
+      </TableContainer>
 
       {/* ================= HOVER POPUP ================= */}
       {hoverInfo && (
@@ -556,4 +615,4 @@ const AllUserTokens: React.FC = () => {
   );
 };
 
-export default AllUserTokens;
+export default AllUserToken;

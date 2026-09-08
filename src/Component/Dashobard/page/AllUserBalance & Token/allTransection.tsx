@@ -12,6 +12,8 @@ import {
   Button,
   CircularProgress,
   InputAdornment,
+  TableContainer,
+  Chip,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
@@ -50,7 +52,6 @@ const AllTransection: React.FC = () => {
   useEffect(() => {
     dispatch(getAdminBalanceAction());
   }, [dispatch]);
-  console.log("Admin Balance API Data:", data);
 
   const users: AdminUserBalance[] = data ?? [];
 
@@ -110,10 +111,16 @@ const AllTransection: React.FC = () => {
       .reduce((sum, t) => sum + Number(t.totalAmount || 0), 0);
   };
 
-  /* ================= DRAG SELECT ================= */
+  /* ================= DOUBLE CLICK SELECT ================= */
+  const handleDoubleClick = (id: number) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((selectedId) => selectedId !== id) : [...prev, id]
+    );
+  };
+
+  /* ================= DRAG SELECT (Optional Backup) ================= */
   const handleMouseDown = (id: number) => {
     setIsDragging(true);
-    setSelectedIds([id]);
   };
 
   const handleMouseEnterSelect = (id: number) => {
@@ -136,7 +143,18 @@ const AllTransection: React.FC = () => {
 
   const handleLeave = () => setPopup(null);
 
-  /* ================= PDF ================= */
+  /* ================= FORMAT CURRENCY ================= */
+  const formatCur = (val: string | number) => `₹${Number(val || 0).toLocaleString("en-IN")}`;
+
+  const shortDateForPDF = (dateStr?: string | null) => {
+    if (!dateStr) return "-";
+    const d = new Date(dateStr);
+    return d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "2-digit" }) + 
+           " " + 
+           d.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: false });
+  };
+
+  /* ================= PDF GENERATION ================= */
   const generatePDF = () => {
     const selectedRows = rows.filter((r) => selectedIds.includes(r.tx.id));
 
@@ -145,23 +163,56 @@ const AllTransection: React.FC = () => {
       return;
     }
 
-    const doc = new jsPDF();
-    doc.setFont("NotoSans-Regular", "normal");
-    doc.setFontSize(14);
+    const doc = new jsPDF("landscape"); // Landscape mode
+    
+    // Header
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(16);
+    doc.setTextColor(15, 32, 39);
     doc.text("Transaction Report", 14, 15);
 
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Generated on: ${new Date().toLocaleString("en-IN")}`, 14, 22);
+    doc.text(`Total Selected Records: ${selectedRows.length}`, 14, 27);
+
     autoTable(doc, {
-      startY: 22,
-      styles: { font: "NotoSans-Regular", fontSize: 10 },
+      startY: 32,
+      theme: "grid",
+      styles: { 
+        fontSize: 8, 
+        cellPadding: 3, 
+        overflow: 'linebreak',
+        valign: 'middle'
+      },
+      headStyles: {
+        fillColor: [20, 48, 59], 
+        textColor: [255, 255, 255],
+        fontStyle: "bold",
+        halign: "center",
+      },
+      columnStyles: {
+        0: { halign: "left" },    // User
+        1: { halign: "center" },  // Date
+        2: { halign: "right" },   // Flyash (Rs)
+        3: { halign: "right" },   // Bedash (Rs)
+        4: { halign: "right" },   // Total (Rs)
+        5: { halign: "right" },   // Flyash (Tons)
+        6: { halign: "right" },   // Bedash (Tons)
+        7: { halign: "right" },   // Flyash Rem
+        8: { halign: "right" },   // Bedash Rem
+        9: { halign: "center" },  // Payment Status
+      },
       head: [
         [
           "User",
-          "Date",
-          "Flyash ₹",
-          "Bedash ₹",
-          "Total ₹",
-          "Flyash Tons",
-          "Bedash Tons",
+          "Date & Time",
+          "Flyash (Rs)",
+          "Bedash (Rs)",
+          "Total (Rs)",
+          "Flyash (T)",
+          "Bedash (T)",
           "Flyash Rem.",
           "Bedash Rem.",
           "Payment",
@@ -169,23 +220,29 @@ const AllTransection: React.FC = () => {
       ],
       body: selectedRows.map(({ user, tx }) => [
         user.userName,
-        new Date(tx.date).toLocaleString(),
-        tx.flyashAmount,
-        tx.bedashAmount,
-        tx.totalAmount,
-        tx.flyashTons,
-        tx.bedashTons,
-        user.flyash?.remaining ?? 0,
-        user.bedash?.remaining ?? 0,
-        tx.paymentMode,
+        shortDateForPDF(tx.date),
+        Number(tx.flyashAmount) > 0 ? Number(tx.flyashAmount).toLocaleString("en-IN") : "-",
+        Number(tx.bedashAmount) > 0 ? Number(tx.bedashAmount).toLocaleString("en-IN") : "-",
+        Number(tx.totalAmount).toLocaleString("en-IN"),
+        Number(tx.flyashTons) > 0 ? `${tx.flyashTons}` : "-",
+        Number(tx.bedashTons) > 0 ? `${tx.bedashTons}` : "-",
+        `${Number(user.flyash?.remaining ?? 0).toFixed(2)}`,
+        `${Number(user.bedash?.remaining ?? 0).toFixed(2)}`,
+        tx.paymentMode.toUpperCase(),
       ]),
+      didDrawPage: function (data: any) {
+        // Page numbers
+        const str = "Page " + data.pageNumber;
+        doc.setFontSize(8);
+        doc.setTextColor(150, 150, 150);
+        const pageSize = doc.internal.pageSize;
+        const pageHeight = pageSize.height ? pageSize.height : pageSize.getHeight();
+        doc.text(str, data.settings.margin.left, pageHeight - 10);
+      },
     });
 
-    doc.save("transactions.pdf");
+    doc.save(`Transactions-Report-${new Date().getTime()}.pdf`);
   };
-
-  /* ================= FORMAT CURRENCY ================= */
-  const formatCur = (val: string | number) => `₹${Number(val || 0).toLocaleString("en-IN")}`;
 
   /* ================= LOADING & ERROR ================= */
   if (loading)
@@ -204,7 +261,7 @@ const AllTransection: React.FC = () => {
 
   /* ================= UI ================= */
   return (
-    <Box p={3} onMouseUp={handleMouseUp} sx={{ background: "#f8f9fa", minHeight: "85vh", borderRadius: 4 }}>
+    <Box p={{ xs: 1, sm: 3 }} onMouseUp={handleMouseUp} sx={{ background: "#f8f9fa", minHeight: "85vh", borderRadius: 4 }}>
       
       {/* ================= HEADER ================= */}
       <Box
@@ -212,25 +269,30 @@ const AllTransection: React.FC = () => {
           background: "linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%)",
           color: "white",
           borderRadius: 3,
-          px: 3,
+          px: { xs: 2, sm: 3 },
           py: 2.5,
           mb: 3,
           display: "flex",
+          flexDirection: { xs: "column", md: "row" },
           justifyContent: "space-between",
-          alignItems: "center",
-          flexWrap: "wrap",
+          alignItems: { xs: "flex-start", md: "center" },
           gap: 2,
           boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
         }}
       >
         <Box display="flex" alignItems="center" gap={1.5}>
-          <ReceiptLongIcon sx={{ fontSize: 30, color: "#64b5f6" }} />
-          <Typography variant="h5" fontWeight={700} letterSpacing={0.5}>
-            All Transactions
-          </Typography>
+          <ReceiptLongIcon sx={{ fontSize: { xs: 24, sm: 30 }, color: "#64b5f6" }} />
+          <Box>
+            <Typography variant="h5" fontWeight={700} letterSpacing={0.5} sx={{ fontSize: { xs: "1.2rem", sm: "1.5rem" } }}>
+              All Transactions
+            </Typography>
+            <Typography variant="caption" sx={{ opacity: 0.8 }}>
+              Total Records: <strong>{rows.length}</strong> • <span style={{ color: "#ffeb3b" }}>Double tap row to select for PDF</span>
+            </Typography>
+          </Box>
         </Box>
 
-        <Box display="flex" gap={2} alignItems="center" flexWrap="wrap">
+        <Box display="flex" gap={2} alignItems="center" flexWrap="wrap" width={{ xs: "100%", md: "auto" }}>
           <TextField
             placeholder="Search transactions..."
             size="small"
@@ -261,6 +323,7 @@ const AllTransection: React.FC = () => {
             startIcon={<PictureAsPdfIcon />}
             disabled={!selectedIds.length}
             onClick={generatePDF}
+            fullWidth={window.innerWidth < 600}
             sx={{
               backgroundColor: "#ffeb3b",
               color: "#000",
@@ -278,17 +341,17 @@ const AllTransection: React.FC = () => {
       </Box>
 
       {/* ================= TABLE CONTAINER ================= */}
-      <Paper 
-        elevation={4} 
-        sx={{ 
-          borderRadius: 3, 
-          border: "1px solid #e0e0e0", 
-          overflow: "hidden",
+      <TableContainer
+        component={Paper}
+        elevation={4}
+        sx={{
+          borderRadius: 3,
+          border: "1px solid #e0e0e0",
           maxHeight: "68vh",
-          overflowY: "auto"
+          overflowX: "auto",
         }}
       >
-        <Table stickyHeader size="medium">
+        <Table stickyHeader size="medium" sx={{ minWidth: 1000 }}>
           <TableHead>
             <TableRow>
               {[
@@ -357,6 +420,7 @@ const AllTransection: React.FC = () => {
                   <TableRow
                     key={tx.id}
                     hover
+                    onDoubleClick={() => handleDoubleClick(tx.id)}
                     onMouseDown={() => handleMouseDown(tx.id)}
                     onMouseEnter={(e) => {
                       handleMouseEnterSelect(tx.id);
@@ -394,24 +458,34 @@ const AllTransection: React.FC = () => {
                       },
                     }}
                   >
-                    <TableCell sx={{ fontWeight: 600, color: "#1976d2" }}>{user.userName}</TableCell>
+                    <TableCell sx={{ fontWeight: 600, color: "#1976d2", whiteSpace: "nowrap" }}>{user.userName}</TableCell>
                     <TableCell sx={{ color: "text.secondary", whiteSpace: "nowrap" }}>
                       {new Date(tx.date).toLocaleString("en-IN", {
                         day: "2-digit", month: "short", year: "numeric",
                         hour: "2-digit", minute: "2-digit", hour12: true
                       })}
                     </TableCell>
-                    <TableCell align="right">{Number(tx.flyashAmount) > 0 ? formatCur(tx.flyashAmount) : "-"}</TableCell>
-                    <TableCell align="right" sx={{ color: "#ed6c02" }}>{Number(tx.bedashAmount) > 0 ? formatCur(tx.bedashAmount) : "-"}</TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 700, color: "#2e7d32" }}>{formatCur(tx.totalAmount)}</TableCell>
-                    <TableCell align="right">{Number(tx.flyashTons) > 0 ? `${tx.flyashTons} T` : "-"}</TableCell>
-                    <TableCell align="right">{Number(tx.bedashTons) > 0 ? `${tx.bedashTons} T` : "-"}</TableCell>
+                    <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>{Number(tx.flyashAmount) > 0 ? formatCur(tx.flyashAmount) : "-"}</TableCell>
+                    <TableCell align="right" sx={{ color: "#ed6c02", whiteSpace: "nowrap" }}>{Number(tx.bedashAmount) > 0 ? formatCur(tx.bedashAmount) : "-"}</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 700, color: "#2e7d32", whiteSpace: "nowrap" }}>{formatCur(tx.totalAmount)}</TableCell>
+                    <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>{Number(tx.flyashTons) > 0 ? `${tx.flyashTons} T` : "-"}</TableCell>
+                    <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>{Number(tx.bedashTons) > 0 ? `${tx.bedashTons} T` : "-"}</TableCell>
                     
                     {/* ✅ Safe Remaining Display */}
-                    <TableCell align="right" sx={{ fontWeight: 600 }}>{flyashRemaining.toFixed(3)} T</TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 600, color: "#ed6c02" }}>{bedashRemaining.toFixed(3)} T</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 600, whiteSpace: "nowrap" }}>{flyashRemaining.toFixed(3)} T</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 600, color: "#ed6c02", whiteSpace: "nowrap" }}>{bedashRemaining.toFixed(3)} T</TableCell>
                     
-                    <TableCell align="center" sx={{ textTransform: "capitalize", fontWeight: 600 }}>{tx.paymentMode}</TableCell>
+                    <TableCell align="center" sx={{ textTransform: "capitalize", fontWeight: 600, whiteSpace: "nowrap" }}>
+                       <Chip 
+                          label={tx.paymentMode} 
+                          size="small" 
+                          sx={{ 
+                            fontWeight: 700, 
+                            bgcolor: tx.paymentMode === 'online' ? '#e3f2fd' : '#f5f5f5',
+                            color: tx.paymentMode === 'online' ? '#1565c0' : '#424242'
+                          }} 
+                        />
+                    </TableCell>
                   </TableRow>
                 );
               })
@@ -427,7 +501,7 @@ const AllTransection: React.FC = () => {
             )}
           </TableBody>
         </Table>
-      </Paper>
+      </TableContainer>
 
       {/* ================= HOVER POPUP ================= */}
       {popup && (
