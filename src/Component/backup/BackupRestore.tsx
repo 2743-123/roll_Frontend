@@ -10,7 +10,7 @@ import axios from "axios";
 // ⭐ Dynamic API Base URL (Local ke liye localhost, Live ke liye aapka Backend URL)
 const API_BASE_URL = window.location.hostname === "localhost" 
   ? "http://localhost:5000" 
-  : "https://bricks-admin-backend.onrender.com/api"; // Yahan apne live backend ka URL daal dein (e.g. Render/Railway URL)
+  : "https://bricks-admin-backend.onrender.com"; // Yahan apne live backend ka URL daal dein (e.g. Render/Railway URL)
 
 const BackupRestore: React.FC = () => {
   const [googleToken, setGoogleToken] = useState<string | null>(null);
