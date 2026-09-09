@@ -11,8 +11,8 @@ import {
   CircularProgress,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
-import { useDispatch } from "react-redux";
-import { AppDispatch } from "../../../../../store";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "../../../../../store";
 import { updateUserAction } from "../../../../../Actions/Auth/user";
 import { User } from "../../../../../ActionType/user/userTypes";
 
@@ -24,12 +24,16 @@ interface EditUserProps {
 
 const EditUser: React.FC<EditUserProps> = ({ open, onClose, user }) => {
   const dispatch = useDispatch<AppDispatch>();
+  const loggedInUser = useSelector((state: RootState) => state.auth.user);
 
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     role: "user",
     isActive: true,
+    phone: "",
+    whatsappInstanceId: "",
+    whatsappToken: "",
   });
   const [loading, setLoading] = useState(false);
 
@@ -40,6 +44,9 @@ const EditUser: React.FC<EditUserProps> = ({ open, onClose, user }) => {
         email: user.email || "",
         role: user.role || "user",
         isActive: user.isActive ?? true,
+        phone: (user as any).phone || "",
+        whatsappInstanceId: (user as any).whatsappInstanceId || "",
+        whatsappToken: (user as any).whatsappToken || "",
       });
     }
   }, [user]);
@@ -120,18 +127,53 @@ const EditUser: React.FC<EditUserProps> = ({ open, onClose, user }) => {
             required
           />
 
+          {/* ⭐ Phone Number field for Dealer WhatsApp alerts */}
           <TextField
-            select
-            label="User Role"
-            name="role"
-            value={formData.role}
+            label="Phone Number (For Dealer WhatsApp)"
+            name="phone"
+            value={formData.phone}
             onChange={handleChange}
             fullWidth
-          >
-            <MenuItem value="user">User</MenuItem>
-            <MenuItem value="admin">Admin</MenuItem>
-            <MenuItem value="superadmin">Super Admin</MenuItem>
-          </TextField>
+            placeholder="e.g. 919876543210"
+          />
+
+          {/* ⭐ Admin / SuperAdmin credentials setup */}
+          {formData.role !== "user" && (
+            <>
+              <TextField
+                label="UltraMsg Instance ID (Admin Only)"
+                name="whatsappInstanceId"
+                value={formData.whatsappInstanceId}
+                onChange={handleChange}
+                fullWidth
+                placeholder="e.g. instance12345"
+              />
+
+              <TextField
+                label="UltraMsg Token (Admin Only)"
+                name="whatsappToken"
+                value={formData.whatsappToken}
+                onChange={handleChange}
+                fullWidth
+                placeholder="e.g. abcdef12345678"
+              />
+            </>
+          )}
+
+          {loggedInUser?.role === "superadmin" && (
+            <TextField
+              select
+              label="User Role"
+              name="role"
+              value={formData.role}
+              onChange={handleChange}
+              fullWidth
+            >
+              <MenuItem value="user">User</MenuItem>
+              <MenuItem value="admin">Admin</MenuItem>
+              <MenuItem value="superadmin">Super Admin</MenuItem>
+            </TextField>
+          )}
 
           <TextField
             select

@@ -37,6 +37,10 @@ export const addUserAction =
     email: string;
     password: string;
     role: "user" | "admin" | "superadmin";
+    phone?: string;               // 👈 Added
+    whatsappInstanceId?: string;  // 👈 Added
+    whatsappToken?: string;
+
   }) =>
   async (dispatch: AppDispatch) => {
     try {

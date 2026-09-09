@@ -30,16 +30,19 @@ const AddUsers: React.FC<AddUsersProps> = ({ open, onClose }) => {
 
   const loggedInUser = useSelector((state: RootState) => state.auth.user);
 
+  // ⭐ Naye fields ko state me add kiya gaya hai
   const [form, setForm] = React.useState({
     name: "",
     email: "",
     password: "",
     role: "user" as "user" | "admin" | "superadmin",
     isActive: true,
+    phone: "",
+    whatsappInstanceId: "",
+    whatsappToken: "",
   });
   const [loading, setLoading] = React.useState(false);
 
-  // 🧠 Generate role options dynamically based on who is logged in
   const getRoleOptions = () => {
     if (loggedInUser?.role === "superadmin") {
       return [
@@ -54,13 +57,11 @@ const AddUsers: React.FC<AddUsersProps> = ({ open, onClose }) => {
     return [{ value: "user", label: "User" }];
   };
 
-  // Input change
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setForm({ ...form, [name]: value });
   };
 
-  // Role change
   const handleRoleChange = (e: SelectChangeEvent<string>) => {
     setForm({
       ...form,
@@ -72,21 +73,29 @@ const AddUsers: React.FC<AddUsersProps> = ({ open, onClose }) => {
     e.preventDefault();
     try {
       setLoading(true);
+      // ⭐ Submit me naye fields bheje gaye hain
       await dispatch(
         addUserAction({
           name: form.name,
           email: form.email,
           password: form.password,
           role: form.role,
+          phone: form.phone,
+          whatsappInstanceId: form.whatsappInstanceId,
+          whatsappToken: form.whatsappToken,
         }),
       );
       onClose();
+      // ⭐ Form reset me naye fields clear kiye gaye hain
       setForm({
         name: "",
         email: "",
         password: "",
         role: "user",
         isActive: true,
+        phone: "",
+        whatsappInstanceId: "",
+        whatsappToken: "",
       });
     } catch (err) {
       console.error("Add user error:", err);
@@ -109,7 +118,6 @@ const AddUsers: React.FC<AddUsersProps> = ({ open, onClose }) => {
         },
       }}
     >
-      {/* ================= HEADER ================= */}
       <DialogTitle
         sx={{
           background: "linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%)",
@@ -125,7 +133,6 @@ const AddUsers: React.FC<AddUsersProps> = ({ open, onClose }) => {
       </DialogTitle>
 
       <form onSubmit={handleSubmit}>
-        {/* ================= CONTENT ================= */}
         <DialogContent
           sx={{
             p: 3,
@@ -158,7 +165,7 @@ const AddUsers: React.FC<AddUsersProps> = ({ open, onClose }) => {
                 />
               </Grid>
 
-              <Grid >
+              <Grid>
                 <TextField
                   label="Email Address"
                   name="email"
@@ -201,11 +208,51 @@ const AddUsers: React.FC<AddUsersProps> = ({ open, onClose }) => {
                   </Select>
                 </FormControl>
               </Grid>
+
+              {/* ⭐ NAYE FIELDS YAHAN ADD KIYE GAYE HAIN ⭐ */}
+              <Grid>
+                <TextField
+                  label="Phone Number (For Dealer WhatsApp)"
+                  name="phone"
+                  fullWidth
+                  value={form.phone}
+                  onChange={handleChange}
+                  variant="outlined"
+                  placeholder="e.g. 919876543210"
+                />
+              </Grid>
+
+              {form.role !== "user" && (
+                <>
+                  <Grid>
+                    <TextField
+                      label="UltraMsg Instance ID (Admin Only)"
+                      name="whatsappInstanceId"
+                      fullWidth
+                      value={form.whatsappInstanceId}
+                      onChange={handleChange}
+                      variant="outlined"
+                      placeholder="e.g. instance12345"
+                    />
+                  </Grid>
+
+                  <Grid >
+                    <TextField
+                      label="UltraMsg Token (Admin Only)"
+                      name="whatsappToken"
+                      fullWidth
+                      value={form.whatsappToken}
+                      onChange={handleChange}
+                      variant="outlined"
+                      placeholder="e.g. abcdef12345678"
+                    />
+                  </Grid>
+                </>
+              )}
             </Grid>
           </Box>
         </DialogContent>
 
-        {/* ================= FOOTER ================= */}
         <DialogActions
           sx={{
             p: 2.5,

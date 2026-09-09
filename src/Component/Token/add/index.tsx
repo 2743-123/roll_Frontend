@@ -39,6 +39,7 @@ const AddTokenDialog: React.FC<AddTokenDialogProps> = ({ open, onClose }) => {
   /** ================= FORM ================= */
   const [form, setForm] = useState({
     customerName: "",
+    customerPhone: "", // 👈 Naya field WhatsApp/Phone ke liye add kiya gaya hai
     materialType: "",
   });
   const [loading, setLoading] = useState(false);
@@ -78,7 +79,7 @@ const AddTokenDialog: React.FC<AddTokenDialogProps> = ({ open, onClose }) => {
       );
 
       /** reset */
-      setForm({ customerName: "", materialType: "" });
+      setForm({ customerName: "", customerPhone: "", materialType: "" });
       onClose();
     } catch (err) {
       console.error("Create token error:", err);
@@ -89,20 +90,20 @@ const AddTokenDialog: React.FC<AddTokenDialogProps> = ({ open, onClose }) => {
 
   /** ================= VALIDATION ================= */
   const isFormInvalid =
-    !form.customerName.trim() || !form.materialType || !selectedUser;
+    !form.customerName.trim() || !form.customerPhone.trim() || !form.materialType || !selectedUser;
 
   /** ================= UI ================= */
   return (
-    <Dialog 
-      open={open} 
-      onClose={onClose} 
-      fullWidth 
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
       maxWidth="sm"
       PaperProps={{
-        sx: { 
-          borderRadius: 3, 
-          boxShadow: "0 12px 40px rgba(0,0,0,0.2)", 
-          overflow: "hidden" 
+        sx: {
+          borderRadius: 3,
+          boxShadow: "0 12px 40px rgba(0,0,0,0.2)",
+          overflow: "hidden"
         }
       }}
     >
@@ -123,10 +124,10 @@ const AddTokenDialog: React.FC<AddTokenDialogProps> = ({ open, onClose }) => {
 
       {/* ================= CONTENT ================= */}
       <DialogContent sx={{ p: 3, bgcolor: "#f8f9fa", borderBottom: "1px solid #e0e0e0" }}>
-        <Box 
-          display="flex" 
-          flexDirection="column" 
-          gap={2.5} 
+        <Box
+          display="flex"
+          flexDirection="column"
+          gap={2.5}
           mt={1}
           sx={{
             "& .MuiTextField-root, & .MuiAutocomplete-root": {
@@ -153,6 +154,19 @@ const AddTokenDialog: React.FC<AddTokenDialogProps> = ({ open, onClose }) => {
             )}
           />
 
+          {/* ⭐ CUSTOMER PHONE / WHATSAPP NUMBER */}
+          <TextField
+            label="Customer WhatsApp Number"
+            variant="outlined"
+            fullWidth
+            required
+            placeholder="e.g. 919876543210"
+            value={form.customerPhone}
+            onChange={(e) =>
+              setForm((prev) => ({ ...prev, customerPhone: e.target.value }))
+            }
+          />
+
           {/* MATERIAL TYPE */}
           <TextField
             select
@@ -176,8 +190,8 @@ const AddTokenDialog: React.FC<AddTokenDialogProps> = ({ open, onClose }) => {
 
       {/* ================= FOOTER ================= */}
       <DialogActions sx={{ p: 2.5, bgcolor: "#f8f9fa", justifyContent: "flex-end" }}>
-        <Button 
-          onClick={onClose} 
+        <Button
+          onClick={onClose}
           color="error"
           variant="outlined"
           sx={{ borderRadius: 2, mr: 1, px: 3, fontWeight: 600 }}
@@ -189,10 +203,10 @@ const AddTokenDialog: React.FC<AddTokenDialogProps> = ({ open, onClose }) => {
           onClick={handleSubmit}
           variant="contained"
           disabled={isFormInvalid || loading}
-          sx={{ 
-            borderRadius: 2, 
-            px: 4, 
-            fontWeight: 600, 
+          sx={{
+            borderRadius: 2,
+            px: 4,
+            fontWeight: 600,
             background: "linear-gradient(90deg, #1976d2, #42a5f5)",
             boxShadow: "none"
           }}
