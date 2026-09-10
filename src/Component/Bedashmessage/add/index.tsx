@@ -28,6 +28,10 @@ interface AddBedashDialogProps {
 
 const AddBedashDialog: React.FC<AddBedashDialogProps> = ({ open, onClose }) => {
   const dispatch = useDispatch<AppDispatch>();
+  
+  // 🟢 1. Get logged-in user from Redux Auth State
+  const loggedInUser = useSelector((state: any) => state.auth?.user || state.user?.user); 
+  
   const { users } = useSelector((state: RootState) => state.user);
 
   const userList = Array.isArray(users) ? users : [users];
@@ -41,12 +45,18 @@ const AddBedashDialog: React.FC<AddBedashDialogProps> = ({ open, onClose }) => {
     customDate: "",
     targetDate: "",
     amount: "",
+    reminderPhone: "", // 👈 🟢 Naya field add kiya
   });
   const [loading, setLoading] = React.useState(false);
 
   React.useEffect(() => {
-    dispatch(getuserAction());
-  }, [dispatch]);
+    // 🟢 2. Auto-set userId for normal user, fetch list only for admin
+    if (loggedInUser?.role === "user") {
+      setForm((prev) => ({ ...prev, userId: loggedInUser.id }));
+    } else {
+      dispatch(getuserAction());
+    }
+  }, [dispatch, loggedInUser]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -66,12 +76,14 @@ const AddBedashDialog: React.FC<AddBedashDialogProps> = ({ open, onClose }) => {
       await dispatch(addBedashAction(form));
       dispatch(getBedashListAction());
       onClose();
+      // Reset form but keep userId if it's a normal user
       setForm({
-        userId: "",
+        userId: loggedInUser?.role === "user" ? loggedInUser.id : "",
         materialType: "bedash",
         customDate: "",
         targetDate: "",
         amount: "",
+        reminderPhone: "", // 👈 🟢 Submit ke baad isey bhi khali karein
       });
     } catch (error) {
       console.error("Add bedash error:", error);
@@ -109,27 +121,44 @@ const AddBedashDialog: React.FC<AddBedashDialogProps> = ({ open, onClose }) => {
       <DialogContent sx={{ p: 3, bgcolor: "#f8f9fa", borderBottom: "1px solid #e0e0e0" }}>
         <Box display="flex" flexDirection="column" gap={2.5} mt={1}>
           
-          {/* 🧍 Select User */}
-          <TextField
-            select
-            label="Select Customer / User"
-            name="userId"
-            value={form.userId}
-            onChange={handleChange}
-            fullWidth
-            required
-            sx={{ bgcolor: "white", borderRadius: 1 }}
-          >
-            {onlyUsers.length > 0 ? (
-              onlyUsers.map((user: any) => (
-                <MenuItem key={user.id} value={user.id}>
-                  {user.name}
-                </MenuItem>
-              ))
-            ) : (
-              <MenuItem disabled>No users found</MenuItem>
-            )}
-          </TextField>
+          {/* 🟢 3. Conditional Rendering for User Selection */}
+          {loggedInUser?.role === "user" ? (
+            <TextField
+              label="Customer / User"
+              value={loggedInUser.name} // Khudh ka naam dikhega
+              fullWidth
+              disabled
+              sx={{ 
+                bgcolor: "#f5f5f5", 
+                borderRadius: 1,
+                "& .MuiInputBase-input.Mui-disabled": {
+                  WebkitTextFillColor: "#333",
+                  fontWeight: 600
+                }
+              }}
+            />
+          ) : (
+            <TextField
+              select
+              label="Select Customer / User"
+              name="userId"
+              value={form.userId}
+              onChange={handleChange}
+              fullWidth
+              required
+              sx={{ bgcolor: "white", borderRadius: 1 }}
+            >
+              {onlyUsers.length > 0 ? (
+                onlyUsers.map((user: any) => (
+                  <MenuItem key={user.id} value={user.id}>
+                    {user.name}
+                  </MenuItem>
+                ))
+              ) : (
+                <MenuItem disabled>No users found</MenuItem>
+              )}
+            </TextField>
+          )}
 
           {/* 🧱 Material Type */}
           <TextField
@@ -151,7 +180,7 @@ const AddBedashDialog: React.FC<AddBedashDialogProps> = ({ open, onClose }) => {
 
           {/* 📅 Dates (Side by Side Grid) */}
           <Grid container spacing={2}>
-            <Grid >
+            <Grid>
               <TextField
                 label="Custom Date"
                 name="customDate"
@@ -191,6 +220,19 @@ const AddBedashDialog: React.FC<AddBedashDialogProps> = ({ open, onClose }) => {
             InputProps={{
               startAdornment: <InputAdornment position="start">₹</InputAdornment>,
             }}
+            sx={{ bgcolor: "white", borderRadius: 1 }}
+          />
+
+          {/* 📱 🟢 Optional Reminder Phone */}
+          <TextField
+            label="Reminder WhatsApp No. (Optional)"
+            name="reminderPhone"
+            type="text"
+            value={form.reminderPhone}
+            onChange={handleChange}
+            fullWidth
+            placeholder="e.g. 919876543210"
+            helperText="Enter number with country code (e.g., 91) to send a direct WhatsApp alert to the user."
             sx={{ bgcolor: "white", borderRadius: 1 }}
           />
         </Box>

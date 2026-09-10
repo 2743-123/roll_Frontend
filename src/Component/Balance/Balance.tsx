@@ -57,6 +57,13 @@ const BalanceTable: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { data, loading } = useSelector((state: RootState) => state.balance);
   const { selectedUser } = useSelector((state: RootState) => state.user);
+  
+  // 🟢 1. Logged-in user nikalna
+  const loggedInUser = useSelector((state: any) => state.auth?.user || state.user?.user);
+
+  // 🟢 2. Active User ID & Name determine karna
+  const activeUserId = loggedInUser?.role === "user" ? loggedInUser.id : selectedUser?.id;
+  const activeUserName = loggedInUser?.role === "user" ? loggedInUser.name : selectedUser?.name;
 
   /** 🔹 Pagination & search */
   const [page, setPage] = React.useState(0);
@@ -70,10 +77,10 @@ const BalanceTable: React.FC = () => {
 
   /** 🔄 Fetch balance */
   React.useEffect(() => {
-    if (selectedUser?.id) {
-      dispatch(getBalanceAction(selectedUser.id));
+    if (activeUserId) {
+      dispatch(getBalanceAction(activeUserId));
     }
-  }, [selectedUser, dispatch]);
+  }, [activeUserId, dispatch]);
 
   /** 🔹 Pagination handlers */
   const handleChangePage = (_: unknown, newPage: number) => setPage(newPage);
@@ -102,14 +109,15 @@ const BalanceTable: React.FC = () => {
   const handleEdit = (tx: Transaction) => setEditTx(tx);
   const handleDelete = (id: number) => setDeleteId(id);
 
+  // 🟢 3. Update Edit/Delete dispatch to use activeUserId
   const confirmDelete = async () => {
-    if (!selectedUser || !deleteId) return;
-    await dispatch(deleteBalanceAction(deleteId, selectedUser.id));
+    if (!activeUserId || !deleteId) return;
+    await dispatch(deleteBalanceAction(deleteId, activeUserId));
     setDeleteId(null);
   };
 
   const confirmEdit = async () => {
-    if (!selectedUser || !editTx) return;
+    if (!activeUserId || !editTx) return;
     await dispatch(
       editBalanceAction(
         editTx.id,
@@ -117,7 +125,7 @@ const BalanceTable: React.FC = () => {
           flyashAmount: Number(editTx.flyashAmount),
           bedashAmount: Number(editTx.bedashAmount),
         },
-        selectedUser.id
+        activeUserId
       )
     );
     setEditTx(null);
@@ -139,7 +147,8 @@ const BalanceTable: React.FC = () => {
       );
     }) || [];
 
-  if (!selectedUser) {
+  // 🟢 4. Bypassed "Please select user" screen for normal users
+  if (!activeUserId) {
     return (
       <Box display="flex" justifyContent="center" mt={10}>
         <Paper sx={{ p: 4, borderRadius: 3, textAlign: "center", bgcolor: "#f8f9fa" }}>
@@ -181,7 +190,7 @@ const BalanceTable: React.FC = () => {
         <Box display="flex" alignItems="center" gap={1.5}>
           <AccountBalanceWalletIcon sx={{ fontSize: 28, color: "#4caf50" }} />
           <Typography variant="h5" fontWeight={700} letterSpacing={0.5}>
-            Balance <span style={{ opacity: 0.7, fontWeight: 400 }}>| {selectedUser.name}</span>
+            Balance <span style={{ opacity: 0.7, fontWeight: 400 }}>| {activeUserName}</span>
           </Typography>
         </Box>
 

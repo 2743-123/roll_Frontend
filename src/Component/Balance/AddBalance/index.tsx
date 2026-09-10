@@ -41,6 +41,10 @@ const AddBalanceDialog: React.FC<AddBalanceDialogProps> = ({
   onClose,
 }) => {
   const dispatch = useDispatch<AppDispatch>();
+  
+  // 🟢 1. Logged-in user nikalna (Apne auth state path ke hisab se check kar lein)
+  const loggedInUser = useSelector((state: any) => state.auth?.user || state.user?.user);
+
   const { users } = useSelector((state: RootState) => state.user);
 
   const userList = Array.isArray(users) ? users : [users];
@@ -57,12 +61,16 @@ const AddBalanceDialog: React.FC<AddBalanceDialogProps> = ({
   const [referenceNumber, setReferenceNumber] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // ⭐ Auto select first user
+  // ⭐ 2. Auto select user logic update
   useEffect(() => {
-    if (open && selectedUserId === "" && onlyUsers.length > 0) {
+    if (loggedInUser?.role === "user") {
+      // Agar normal user hai to khud ka ID set karega
+      setSelectedUserId(loggedInUser.id);
+    } else if (open && selectedUserId === "" && onlyUsers.length > 0) {
+      // Admin/Superadmin ke case me list ka pehla user
       setSelectedUserId(onlyUsers[0].id);
     }
-  }, [open, onlyUsers, selectedUserId]);
+  }, [open, onlyUsers, selectedUserId, loggedInUser]);
 
   // ================= REAL-TIME TONS =================
   const flyashTons = flyashAmount ? (Number(flyashAmount) / RATE_PER_TON).toFixed(2) : "0.00";
@@ -92,11 +100,11 @@ const AddBalanceDialog: React.FC<AddBalanceDialogProps> = ({
 
       await dispatch(
         addBalanceAction({
-          userId: selectedUserId,
-          flyashAmount: flyashAmount || 0,
-          bedashAmount: bedashAmount || 0,
+          userId: Number(selectedUserId),
+          flyashAmount: Number(flyashAmount) || 0,
+          bedashAmount: Number(bedashAmount) || 0,
           paymentMode,
-          bankName: paymentMode === "cash" ? bankName : bankName, // Retained user's logic
+          bankName: paymentMode === "cash" ? bankName : bankName,
           accountHolder: paymentMode === "online" ? accountHolder : "",
           referenceNumber: paymentMode === "online" ? referenceNumber : "",
         })
@@ -109,6 +117,11 @@ const AddBalanceDialog: React.FC<AddBalanceDialogProps> = ({
       setAccountHolder("");
       setReferenceNumber("");
       setPaymentMode("cash");
+      
+      // 🟢 Agar normal user hai to ID clear mat karo
+      if (loggedInUser?.role !== "user") {
+        setSelectedUserId(""); 
+      }
       onClose();
     } catch (err) {
       console.error("Add balance error:", err);
@@ -145,21 +158,38 @@ const AddBalanceDialog: React.FC<AddBalanceDialogProps> = ({
       <DialogContent sx={{ p: 3, bgcolor: "#f8f9fa" }}>
         <Box display="flex" flexDirection="column" gap={2.5} mt={1}>
           
-          {/* USER SELECTION */}
-          <TextField
-            select
-            label="Select Customer / User"
-            value={selectedUserId}
-            onChange={(e) => setSelectedUserId(Number(e.target.value))}
-            fullWidth
-            sx={{ bgcolor: "white", borderRadius: 1 }}
-          >
-            {onlyUsers.map((user: any) => (
-              <MenuItem key={user.id} value={user.id}>
-                {user.name}
-              </MenuItem>
-            ))}
-          </TextField>
+          {/* 🟢 3. USER SELECTION (Conditional Render) */}
+          {loggedInUser?.role === "user" ? (
+            <TextField
+              label="Customer / User"
+              value={loggedInUser.name} // Khud ka naam fixed dikhega
+              fullWidth
+              disabled
+              sx={{ 
+                bgcolor: "#f5f5f5", 
+                borderRadius: 1,
+                "& .MuiInputBase-input.Mui-disabled": {
+                  WebkitTextFillColor: "#333",
+                  fontWeight: 600
+                }
+              }}
+            />
+          ) : (
+            <TextField
+              select
+              label="Select Customer / User"
+              value={selectedUserId}
+              onChange={(e) => setSelectedUserId(Number(e.target.value))}
+              fullWidth
+              sx={{ bgcolor: "white", borderRadius: 1 }}
+            >
+              {onlyUsers.map((user: any) => (
+                <MenuItem key={user.id} value={user.id}>
+                  {user.name}
+                </MenuItem>
+              ))}
+            </TextField>
+          )}
 
           {/* AMOUNTS (Side by Side) */}
           <Grid container spacing={2}>
@@ -205,15 +235,15 @@ const AddBalanceDialog: React.FC<AddBalanceDialogProps> = ({
             </Typography>
             
             <Grid container spacing={2} textAlign="center">
-              <Grid >
+              <Grid>
                 <Typography variant="caption" color="text.secondary" display="block">Flyash</Typography>
                 <Typography variant="body1" fontWeight={700} color="text.primary">{flyashTons} T</Typography>
               </Grid>
-              <Grid  sx={{ borderLeft: "1px solid #bbdefb", borderRight: "1px solid #bbdefb" }}>
+              <Grid sx={{ borderLeft: "1px solid #bbdefb", borderRight: "1px solid #bbdefb" }}>
                 <Typography variant="caption" color="text.secondary" display="block">Bedash</Typography>
                 <Typography variant="body1" fontWeight={700} color="text.primary">{bedashTons} T</Typography>
               </Grid>
-              <Grid >
+              <Grid>
                 <Typography variant="caption" color="text.secondary" display="block">Total Capacity</Typography>
                 <Typography variant="body1" fontWeight={700} color="success.main">{totalTons} T</Typography>
               </Grid>
@@ -248,7 +278,7 @@ const AddBalanceDialog: React.FC<AddBalanceDialogProps> = ({
 
           {paymentMode === "online" && (
             <Grid container spacing={2}>
-              <Grid >
+              <Grid>
                 <TextField
                   label="Bank Name"
                   value={bankName}
@@ -257,7 +287,7 @@ const AddBalanceDialog: React.FC<AddBalanceDialogProps> = ({
                   sx={{ bgcolor: "white", borderRadius: 1 }}
                 />
               </Grid>
-              <Grid >
+              <Grid>
                 <TextField
                   label="Account Holder"
                   value={accountHolder}
@@ -266,7 +296,7 @@ const AddBalanceDialog: React.FC<AddBalanceDialogProps> = ({
                   sx={{ bgcolor: "white", borderRadius: 1 }}
                 />
               </Grid>
-              <Grid >
+              <Grid>
                 <TextField
                   label="Reference Number"
                   value={referenceNumber}

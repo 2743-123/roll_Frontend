@@ -162,6 +162,7 @@ const AddUsers: React.FC<AddUsersProps> = ({ open, onClose }) => {
                   value={form.name}
                   onChange={handleChange}
                   variant="outlined"
+                  autoComplete="name"
                 />
               </Grid>
 
@@ -175,6 +176,7 @@ const AddUsers: React.FC<AddUsersProps> = ({ open, onClose }) => {
                   value={form.email}
                   onChange={handleChange}
                   variant="outlined"
+                  autoComplete="email"
                 />
               </Grid>
 
@@ -188,6 +190,7 @@ const AddUsers: React.FC<AddUsersProps> = ({ open, onClose }) => {
                   value={form.password}
                   onChange={handleChange}
                   variant="outlined"
+                  autoComplete="current-password"
                 />
               </Grid>
 

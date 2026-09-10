@@ -39,7 +39,7 @@ const PendingBedash: React.FC = () => {
   );
 
   const [visibleList, setVisibleList] = useState<any[]>([]);
-  const [, setTick] = useState(0); // trigger re-render every second
+  const [, setTick] = useState(0); 
 
   /* ================= FETCH DATA ================= */
   useEffect(() => {
@@ -53,7 +53,6 @@ const PendingBedash: React.FC = () => {
     const interval = setInterval(() => {
       setTick((prev) => prev + 1);
     }, 1000);
-
     return () => clearInterval(interval);
   }, []);
 
@@ -70,7 +69,6 @@ const PendingBedash: React.FC = () => {
         const diff = Date.now() - confirmTimes[item.id];
         return diff < BLINK_DURATION;
       }
-
       return false;
     });
 
@@ -152,7 +150,8 @@ const PendingBedash: React.FC = () => {
       >
         <Inventory2Icon sx={{ fontSize: 26, color: "#ffb74d" }} />
         <Typography variant="h6" fontWeight={700} letterSpacing={0.5}>
-          Pending Bedash List
+          {/* 🟢 Role ke hisab se Title change */}
+          {user.role === "user" ? "My Pending Bedash" : "Pending Bedash List"}
         </Typography>
       </Box>
 
@@ -161,7 +160,7 @@ const PendingBedash: React.FC = () => {
         {visibleList.length === 0 ? (
           <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" py={6} >
             <Typography variant="h6" fontWeight={600}>All Clear!</Typography>
-            <Typography variant="body2">🎉 All bedash items are completed.</Typography>
+            <Typography variant="body2">🎉 No pending bedash items found.</Typography>
           </Box>
         ) : (
           <Grid container spacing={2}>
@@ -173,7 +172,7 @@ const PendingBedash: React.FC = () => {
                 Date.now() - confirmTimes[item.id] < BLINK_DURATION;
 
               return (
-                <Grid  key={item.id}>
+                <Grid key={item.id}>
                   <Paper
                     elevation={2}
                     sx={{
@@ -200,6 +199,7 @@ const PendingBedash: React.FC = () => {
                       mb={1.5}
                     >
                       <Typography variant="subtitle1" fontWeight={700} color="text.primary">
+                        {/* Normal User ko apna naam dikhega, Admin ko customer ka */}
                         {item.userName}
                       </Typography>
 
