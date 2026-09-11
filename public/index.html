@@ -2,6 +2,11 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <!-- Manifest link karein -->
+<link rel="manifest" href="/manifest.json">
+<!-- Mobile top bar color -->
+<meta name="theme-color" content="#1976d2">
+<link rel="apple-touch-icon" href="/icon-192.png">
 
     <!-- 🔹 Favicon for browsers
     <link rel="icon" type="image/jpeg" sizes="32x32" href="%PUBLIC_URL%/logo2.png" />
@@ -25,5 +30,16 @@
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
+    <script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').then((registration) => {
+        console.log('Service Worker registered successfully');
+      }).catch((error) => {
+        console.log('Service Worker registration failed:', error);
+      });
+    });
+  }
+</script>
   </body>
 </html>
