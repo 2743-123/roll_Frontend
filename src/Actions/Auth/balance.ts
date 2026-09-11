@@ -134,13 +134,13 @@ export const getAdminBalanceAction = () => async (dispatch: AppDispatch) => {
     dispatch({ type: GET_ADMIN_BALANCE, payload: data });
 
     if (data?.msg) {
-      dispatch(showNotification({ type: "success", message: data.msg }));
+      dispatch({ type: "success", message: data.msg });
     }
   } catch (error: any) {
     const msg = error?.response?.data?.msg || error.message;
 
     dispatch({ type: ERROR, payload: { msg } });
 
-    dispatch(showNotification({ type: "error", message: msg }));
+    dispatch({ type: "error", message: msg });
   }
 };
