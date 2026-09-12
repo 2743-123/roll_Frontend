@@ -33,11 +33,37 @@ const AddBedashDialog: React.FC<AddBedashDialogProps> = ({ open, onClose }) => {
   const loggedInUser = useSelector((state: any) => state.auth?.user || state.user?.user); 
   
   const { users } = useSelector((state: RootState) => state.user);
+  
+  // 🟢 2. Fetch Bedash list to check pending status
+  const { data: bedashList } = useSelector((state: RootState) => state.bedash);
 
   const userList = Array.isArray(users) ? users : [users];
-  const onlyUsers = userList.filter(
-    (u: any) => u.role?.toLowerCase() === "user"
-  );
+
+  // 🟢 3. Find IDs/Names of users who already have a "pending" bedash
+  const pendingUsers = (bedashList || [])
+    .filter((item: any) => item.status === "pending");
+  
+  const pendingUserIds = pendingUsers.map((item: any) => item.userId); 
+  const pendingUserNames = pendingUsers.map((item: any) => item.userName);
+
+  // 🟢 4. Filter Dropdown: Exclude pending & inactive users, then sort A-Z
+  const onlyUsers = userList
+    .filter((u: any) => {
+      const isRoleUser = u.role?.toLowerCase() === "user";
+      const isActiveUser = Boolean(u.isActive);
+      
+      const isNotPending = !pendingUserIds.includes(u.id) && !pendingUserNames.includes(u.name);
+      
+      return isRoleUser && isActiveUser && isNotPending;
+    })
+    .sort((a: any, b: any) => {
+      const nameA = (a.name || "").trim().toLowerCase();
+      const nameB = (b.name || "").trim().toLowerCase();
+      return nameA.localeCompare(nameB, undefined, {
+        numeric: true,
+        sensitivity: "base",
+      });
+    });
 
   const [form, setForm] = React.useState({
     userId: "",
@@ -45,18 +71,61 @@ const AddBedashDialog: React.FC<AddBedashDialogProps> = ({ open, onClose }) => {
     customDate: "",
     targetDate: "",
     amount: "",
-    reminderPhone: "", // 👈 🟢 Naya field add kiya
+    reminderPhone: "",
   });
   const [loading, setLoading] = React.useState(false);
 
+  // ⭐ 5. Custom Type-Ahead Search Logic (Substring match + Scroll + Highlight)
+  const searchTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  const searchStringRef = React.useRef<string>("");
+
+  const handleMenuKeyDown = (event: React.KeyboardEvent<HTMLUListElement>) => {
+    if (["ArrowDown", "ArrowUp", "Enter", "Escape", "Tab"].includes(event.key)) {
+      return;
+    }
+
+    event.stopPropagation();
+    event.preventDefault(); // Default single-letter search roko
+
+    if (event.key === "Backspace") {
+      searchStringRef.current = searchStringRef.current.slice(0, -1);
+    } else if (event.key.length === 1) {
+      searchStringRef.current += event.key.toLowerCase();
+    }
+
+    if (searchStringRef.current) {
+      const match = onlyUsers.find((u: any) =>
+        u.name.toLowerCase().includes(searchStringRef.current)
+      );
+
+      if (match) {
+        const el = document.getElementById(`add-bedash-user-${match.id}`);
+        if (el) {
+          el.focus();
+          el.scrollIntoView({ block: "nearest", behavior: "auto" });
+        }
+      }
+    }
+
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    searchTimeoutRef.current = setTimeout(() => {
+      searchStringRef.current = "";
+    }, 1500);
+  };
+
   React.useEffect(() => {
-    // 🟢 2. Auto-set userId for normal user, fetch list only for admin
     if (loggedInUser?.role === "user") {
       setForm((prev) => ({ ...prev, userId: loggedInUser.id }));
     } else {
       dispatch(getuserAction());
     }
   }, [dispatch, loggedInUser]);
+
+  React.useEffect(() => {
+    if (!open) {
+      searchStringRef.current = ""; // Dialog band hone pe search reset
+    }
+  }, [open]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -76,14 +145,13 @@ const AddBedashDialog: React.FC<AddBedashDialogProps> = ({ open, onClose }) => {
       await dispatch(addBedashAction(form));
       dispatch(getBedashListAction());
       onClose();
-      // Reset form but keep userId if it's a normal user
       setForm({
         userId: loggedInUser?.role === "user" ? loggedInUser.id : "",
         materialType: "bedash",
         customDate: "",
         targetDate: "",
         amount: "",
-        reminderPhone: "", // 👈 🟢 Submit ke baad isey bhi khali karein
+        reminderPhone: "",
       });
     } catch (error) {
       console.error("Add bedash error:", error);
@@ -102,7 +170,6 @@ const AddBedashDialog: React.FC<AddBedashDialogProps> = ({ open, onClose }) => {
         sx: { borderRadius: 3, boxShadow: "0 12px 40px rgba(0,0,0,0.2)", overflow: "hidden" }
       }}
     >
-      {/* 🔷 Header */}
       <DialogTitle
         sx={{
           background: "linear-gradient(135deg, #1976d2, #42a5f5)",
@@ -117,15 +184,13 @@ const AddBedashDialog: React.FC<AddBedashDialogProps> = ({ open, onClose }) => {
         <InventoryIcon /> Add Bedash Material
       </DialogTitle>
 
-      {/* 🧾 Content */}
       <DialogContent sx={{ p: 3, bgcolor: "#f8f9fa", borderBottom: "1px solid #e0e0e0" }}>
         <Box display="flex" flexDirection="column" gap={2.5} mt={1}>
           
-          {/* 🟢 3. Conditional Rendering for User Selection */}
           {loggedInUser?.role === "user" ? (
             <TextField
               label="Customer / User"
-              value={loggedInUser.name} // Khudh ka naam dikhega
+              value={loggedInUser.name} 
               fullWidth
               disabled
               sx={{ 
@@ -143,24 +208,58 @@ const AddBedashDialog: React.FC<AddBedashDialogProps> = ({ open, onClose }) => {
               label="Select Customer / User"
               name="userId"
               value={form.userId}
-              onChange={handleChange}
+              onChange={(e) => {
+                handleChange(e);
+                searchStringRef.current = ""; // Selection hone pe search string reset
+              }}
               fullWidth
               required
               sx={{ bgcolor: "white", borderRadius: 1 }}
+              SelectProps={{
+                MenuProps: {
+                  MenuListProps: {
+                    onKeyDown: handleMenuKeyDown, // 🟢 Handle Keydown Logic attach kiya
+                  },
+                  PaperProps: {
+                    sx: {
+                      maxHeight: 250, // Scrollable view
+                    }
+                  }
+                }
+              }}
             >
               {onlyUsers.length > 0 ? (
                 onlyUsers.map((user: any) => (
-                  <MenuItem key={user.id} value={user.id}>
+                  <MenuItem 
+                    key={user.id} 
+                    value={user.id}
+                    id={`add-bedash-user-${user.id}`} // 🟢 ID add kiya focus scroll ke liye
+                    sx={{
+                      "&:focus": {
+                        backgroundColor: "#1976d2 !important",
+                        color: "white !important",
+                        fontWeight: 700,
+                      },
+                      "&.Mui-selected": {
+                        backgroundColor: "#e3f2fd",
+                        color: "#1976d2",
+                        fontWeight: 700,
+                      },
+                      "&.Mui-selected:focus": {
+                        backgroundColor: "#1565c0 !important",
+                        color: "white !important",
+                      }
+                    }}
+                  >
                     {user.name}
                   </MenuItem>
                 ))
               ) : (
-                <MenuItem disabled>No users found</MenuItem>
+                <MenuItem disabled>No eligible active users found</MenuItem>
               )}
             </TextField>
           )}
 
-          {/* 🧱 Material Type */}
           <TextField
             label="Material Type"
             name="materialType"
@@ -178,9 +277,8 @@ const AddBedashDialog: React.FC<AddBedashDialogProps> = ({ open, onClose }) => {
             }}
           />
 
-          {/* 📅 Dates (Side by Side Grid) */}
           <Grid container spacing={2}>
-            <Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 label="Custom Date"
                 name="customDate"
@@ -193,7 +291,7 @@ const AddBedashDialog: React.FC<AddBedashDialogProps> = ({ open, onClose }) => {
                 sx={{ bgcolor: "white", borderRadius: 1 }}
               />
             </Grid>
-            <Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 label="Target Date"
                 name="targetDate"
@@ -208,7 +306,6 @@ const AddBedashDialog: React.FC<AddBedashDialogProps> = ({ open, onClose }) => {
             </Grid>
           </Grid>
 
-          {/* 💰 Amount */}
           <TextField
             label="Initial Amount"
             name="amount"
@@ -223,7 +320,6 @@ const AddBedashDialog: React.FC<AddBedashDialogProps> = ({ open, onClose }) => {
             sx={{ bgcolor: "white", borderRadius: 1 }}
           />
 
-          {/* 📱 🟢 Optional Reminder Phone */}
           <TextField
             label="Reminder WhatsApp No. (Optional)"
             name="reminderPhone"
@@ -238,7 +334,6 @@ const AddBedashDialog: React.FC<AddBedashDialogProps> = ({ open, onClose }) => {
         </Box>
       </DialogContent>
 
-      {/* ⚙️ Footer */}
       <DialogActions sx={{ p: 2.5, bgcolor: "#f8f9fa", justifyContent: "flex-end" }}>
         <Button
           onClick={onClose}

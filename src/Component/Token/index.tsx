@@ -15,6 +15,10 @@ import {
   TextField,
   InputAdornment,
   Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import AddIcon from "@mui/icons-material/Add";
@@ -59,6 +63,10 @@ const TokenPage: React.FC = () => {
   const [selectedToken, setSelectedToken] = useState<Token | null>(null);
   const [search, setSearch] = useState("");
 
+  // ⭐ Delete Dialog ke liye naye states
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [tokenToDelete, setTokenToDelete] = useState<number | null>(null);
+
   useEffect(() => {
     if (selectedUser?.id) {
       dispatch(getTokenAction(selectedUser.id));
@@ -70,11 +78,25 @@ const TokenPage: React.FC = () => {
     setOpenEditDialog(true);
   };
 
+  // ⭐ Delete click ab popup open karega
   const handleDeleteClick = (tokenId: number) => {
-    if (!selectedUser?.id) return;
-    if (window.confirm("Are you sure you want to delete this pending token?")) {
-      dispatch(deleteTokenAction(tokenId, selectedUser.id));
+    setTokenToDelete(tokenId);
+    setDeleteDialogOpen(true);
+  };
+
+  // ⭐ Popup me Confirm Delete press karne par
+  const confirmDelete = () => {
+    if (tokenToDelete && selectedUser?.id) {
+      dispatch(deleteTokenAction(tokenToDelete, selectedUser.id));
     }
+    setDeleteDialogOpen(false);
+    setTokenToDelete(null);
+  };
+
+  // ⭐ Popup me Cancel press karne par
+  const cancelDelete = () => {
+    setDeleteDialogOpen(false);
+    setTokenToDelete(null);
   };
 
   const handleDataRefresh = () => {
@@ -404,6 +426,57 @@ const TokenPage: React.FC = () => {
           onRefresh={handleDataRefresh}
         />
       )}
+
+      {/* ⭐ CUSTOM DELETE CONFIRMATION DIALOG */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={cancelDelete}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{
+          sx: { borderRadius: 3, boxShadow: "0 12px 40px rgba(0,0,0,0.2)" }
+        }}
+      >
+        <DialogTitle
+          sx={{
+            background: "linear-gradient(135deg, #d32f2f 0%, #f44336 100%)",
+            color: "white",
+            fontWeight: 700,
+            display: "flex",
+            alignItems: "center",
+            gap: 1.5,
+            p: 2.5,
+          }}
+        >
+          <DeleteOutlineIcon /> Delete Token
+        </DialogTitle>
+        <DialogContent sx={{ p: 3, pt: 4, bgcolor: "#f8f9fa" }}>
+          <Typography variant="body1" color="text.primary" fontSize="1.1rem" fontWeight={600}>
+            Are you sure you want to delete this token?
+          </Typography>
+          <Typography variant="body2" color="text.secondary" mt={1}>
+            This action is permanent and cannot be undone. All data related to this token will be removed.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ p: 2.5, bgcolor: "#f8f9fa", borderTop: "1px solid #e0e0e0" }}>
+          <Button 
+            onClick={cancelDelete} 
+            color="inherit" 
+            variant="outlined" 
+            sx={{ borderRadius: 2, px: 3, fontWeight: 600 }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={confirmDelete} 
+            variant="contained" 
+            color="error" 
+            sx={{ borderRadius: 2, px: 4, fontWeight: 600, boxShadow: "none" }}
+          >
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Paper>
   );
 };

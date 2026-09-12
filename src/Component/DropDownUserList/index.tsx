@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import {
   FormControl,
   InputLabel,
@@ -67,7 +67,7 @@ const DropDownUserList: React.FC = () => {
   }, [users]);
 
   /**
-   * ✅ Default selection logic (Runs ONLY ONCE when users are loaded and nothing is selected yet)
+   * ✅ Default selection logic
    */
   useEffect(() => {
     if (!user) return;
@@ -89,11 +89,52 @@ const DropDownUserList: React.FC = () => {
   }, [user, sortedActiveUsers, dispatch, selected]);
 
   /**
+   * ✅ Custom Search Logic (Anywhere Match / Substring Type-ahead)
+   */
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const searchStringRef = useRef<string>("");
+
+  const handleMenuKeyDown = (event: React.KeyboardEvent<HTMLUListElement>) => {
+    if (["ArrowDown", "ArrowUp", "Enter", "Escape", "Tab"].includes(event.key)) {
+      return;
+    }
+
+    event.stopPropagation();
+    event.preventDefault(); // Stop default starting-letter search of MUI
+
+    if (event.key === "Backspace") {
+      searchStringRef.current = searchStringRef.current.slice(0, -1);
+    } else if (event.key.length === 1) {
+      searchStringRef.current += event.key.toLowerCase();
+    }
+
+    if (searchStringRef.current) {
+      const match = sortedActiveUsers.find((u) =>
+        u.name.toLowerCase().includes(searchStringRef.current)
+      );
+
+      if (match) {
+        const el = document.getElementById(`dropdown-userlist-${match.id}`);
+        if (el) {
+          el.focus();
+          el.scrollIntoView({ block: "nearest", behavior: "auto" });
+        }
+      }
+    }
+
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    searchTimeoutRef.current = setTimeout(() => {
+      searchStringRef.current = "";
+    }, 1500);
+  };
+
+  /**
    * ✅ Handle dropdown change (User manually changes selection)
    */
   const handleChange = (event: SelectChangeEvent) => {
     const selectedId = Number(event.target.value);
     setSelected(event.target.value);
+    searchStringRef.current = ""; // Selection ke baad reset
 
     const selectedUserObj = users.find((u) => u.id === selectedId);
 
@@ -144,7 +185,13 @@ const DropDownUserList: React.FC = () => {
         value={selected}
         label="Active Customer"
         onChange={handleChange}
+        onClose={() => {
+          searchStringRef.current = ""; // Band hone par search reset
+        }}
         MenuProps={{
+          MenuListProps: {
+            onKeyDown: handleMenuKeyDown, // 🟢 KeyDown logic yaha attach kiya gaya
+          },
           PaperProps: {
             sx: {
               backgroundColor: "#ffffff",
@@ -152,6 +199,7 @@ const DropDownUserList: React.FC = () => {
               borderRadius: "12px",
               boxShadow: "0 8px 30px rgba(0,0,0,0.15)",
               mt: 1,
+              maxHeight: 300, // Thoda scrollable view ke liye
               "& .MuiMenuItem-root": {
                 py: 1.2,
                 px: 2,
@@ -165,6 +213,13 @@ const DropDownUserList: React.FC = () => {
                   backgroundColor: "#f0f7ff",
                   color: "#1976d2",
                 },
+                // 🟢 Highlight jab search jump karega
+                "&:focus": {
+                  backgroundColor: "#1976d2 !important",
+                  color: "white !important",
+                  fontWeight: 700,
+                  "& .MuiListItemText-primary": { color: "white !important", fontWeight: 700 }
+                },
                 "&.Mui-selected": {
                   backgroundColor: "#e3f2fd",
                   color: "#1565c0",
@@ -173,6 +228,11 @@ const DropDownUserList: React.FC = () => {
                     backgroundColor: "#bbdefb",
                   },
                 },
+                "&.Mui-selected:focus": {
+                  backgroundColor: "#1565c0 !important",
+                  color: "white !important",
+                  "& .MuiListItemText-primary": { color: "white !important" }
+                }
               },
             },
           },
@@ -180,14 +240,16 @@ const DropDownUserList: React.FC = () => {
       >
         {/* ✅ Normal user */}
         {user?.role === "user" && (
-          <MenuItem value={user.id}>{user.name}</MenuItem>
+          <MenuItem value={user.id} id={`dropdown-userlist-${user.id}`}>
+            {user.name}
+          </MenuItem>
         )}
 
         {/* ✅ Admin / Superadmin */}
         {(user?.role === "admin" || user?.role === "superadmin") &&
           (sortedActiveUsers.length > 0 ? (
             sortedActiveUsers.map((u) => (
-              <MenuItem key={u.id} value={u.id}>
+              <MenuItem key={u.id} value={u.id} id={`dropdown-userlist-${u.id}`}>
                 <ListItemText primary={u.name} />
               </MenuItem>
             ))
