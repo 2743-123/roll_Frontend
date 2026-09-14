@@ -18,6 +18,9 @@ import Logout from "../Logout";
 import DropDownUserList from "../DropDownUserList";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 
+// ⭐ AI Assistant Import (Path apne hisaab se check karein)
+import AIAssistantDrawer from "./aiAsistent/AIAssistantDrawer"; 
+
 const drawerWidth = 260;
 
 // ---------------- Drawer Styles ----------------
@@ -77,7 +80,6 @@ const AppBar = styled(MuiAppBar, {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.standard,
   }),
-  // Desktop AppBar adjustment
   [theme.breakpoints.up("md")]: {
     ...(open && {
       marginLeft: drawerWidth,
@@ -160,12 +162,8 @@ const BreadcrumbPath: React.FC = () => {
 export default function Dashboard() {
   const theme = useTheme();
   
-  // ⭐ Mobile Detection
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
-  
-  // Desktop state
   const [open, setOpen] = React.useState(true);
-  // Mobile state
   const [mobileOpen, setMobileOpen] = React.useState(false);
 
   const handleDrawerToggle = () => {
@@ -180,12 +178,9 @@ export default function Dashboard() {
     <Box sx={{ display: "flex", backgroundColor: "#f8f9fa", minHeight: "100vh" }}>
       <CssBaseline />
 
-      {/* ================= APP BAR ================= */}
       <AppBar position="fixed" open={!isMobile && open}>
         <Toolbar sx={{ display: "flex", justifyContent: "space-between", minHeight: "70px !important", px: { xs: 1, sm: 3 } }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            
-            {/* Hamburger Icon */}
             <IconButton
               color="inherit"
               aria-label="open drawer"
@@ -211,7 +206,6 @@ export default function Dashboard() {
             </Typography>
           </Box>
 
-          {/* Right Side Controls */}
           <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 1, sm: 2 } }}>
             <DropDownUserList />
             <Logout />
@@ -219,12 +213,11 @@ export default function Dashboard() {
         </Toolbar>
       </AppBar>
 
-      {/* ================= MOBILE DRAWER (Temporary) ================= */}
       <MuiDrawer
         variant="temporary"
         open={mobileOpen}
         onClose={() => setMobileOpen(false)}
-        ModalProps={{ keepMounted: true }} // Better open performance on mobile
+        ModalProps={{ keepMounted: true }}
         sx={{
           display: { xs: "block", md: "none" },
           "& .MuiDrawer-paper": { boxSizing: "border-box", width: drawerWidth, backgroundColor: "#ffffff" },
@@ -243,13 +236,11 @@ export default function Dashboard() {
             </IconButton>
           </Box>
         </DrawerHeader>
-        {/* On mobile, clicking a link should close the drawer */}
         <Box onClick={() => setMobileOpen(false)}>
           <Sidebar />
         </Box>
       </MuiDrawer>
 
-      {/* ================= DESKTOP DRAWER (Permanent) ================= */}
       <Drawer
         variant="permanent"
         open={open}
@@ -277,21 +268,24 @@ export default function Dashboard() {
         <Sidebar />
       </Drawer>
 
-      {/* ================= MAIN CONTENT AREA ================= */}
       <Box
         component="main"
         sx={{
           flexGrow: 1,
-          p: { xs: 1.5, sm: 3 }, // ⭐ Responsive padding
+          p: { xs: 1.5, sm: 3 },
           mt: "70px",
           backgroundColor: "#f8f9fa",
           minHeight: "calc(100vh - 70px)",
-          width: { xs: "100%", md: `calc(100% - ${open ? drawerWidth : 73}px)` }, // Prevents horizontal scrolling bug
+          width: { xs: "100%", md: `calc(100% - ${open ? drawerWidth : 73}px)` },
         }}
       >
         <BreadcrumbPath />
         <Outlet />
       </Box>
+
+      {/* ⭐ Floating AI Assistant (Appears globally inside Dashboard) */}
+      <AIAssistantDrawer />
+
     </Box>
   );
 }

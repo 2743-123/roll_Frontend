@@ -8,7 +8,8 @@ import Notification from "../CommonCoponent/Notification/NotificationReduer";
 import bedashReducer from "./bedash/bedashReducer";
 import adminBalanceReducer from "./balance/adminBalanceReducer";
 import adminTokenReducer from "./tokenReducer/adminToken";
-import paymentHistoryReducer from "./paymentHistoryReducer.ts/paymentHistoryReducer"; // ✅ Import the new reducer
+import paymentHistoryReducer from "./paymentHistoryReducer.ts/paymentHistoryReducer";
+import aiReducer from "./aiReducer/aiReducer"; // ✅ Import the AI reducer (path check kar lena)
 
 const appReducer = combineReducers({
   auth: authReducer,
@@ -19,8 +20,8 @@ const appReducer = combineReducers({
   bedash: bedashReducer,
   adminBalanceReducer,
   adminTokenReducer,
-  paymentHistoryReducer
-  , // ✅ Added the new reducer
+  paymentHistoryReducer,
+  aiReducer, // ✅ Added the AI reducer here
 });
 
 const rootReducer = (state: any, action: any) => {
