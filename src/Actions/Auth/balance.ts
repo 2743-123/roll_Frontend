@@ -28,7 +28,7 @@ export const getBalanceAction =
     }
   };
 
-
+/** ================= ADD BALANCE ================= */
 export const addBalanceAction =
   (payload: AddBalancePayload) => async (dispatch: AppDispatch) => {
     try {
@@ -60,7 +60,6 @@ export const addBalanceAction =
       throw error;
     }
   };
-
 
 /** ================= EDIT BALANCE ================= */
 export const editBalanceAction =
@@ -132,15 +131,13 @@ export const getAdminBalanceAction = () => async (dispatch: AppDispatch) => {
     const data = await getAdminBalanceService();
 
     dispatch({ type: GET_ADMIN_BALANCE, payload: data });
-
-    if (data?.msg) {
-      dispatch({ type: "success", message: data.msg });
-    }
+    
+    // ✅ Yahan se notification hata di gayi hai
   } catch (error: any) {
     const msg = error?.response?.data?.msg || error.message;
 
     dispatch({ type: ERROR, payload: { msg } });
-
-    dispatch({ type: "error", message: msg });
+    
+    // ✅ Yahan se bhi notification hata di gayi hai
   }
 };

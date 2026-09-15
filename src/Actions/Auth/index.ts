@@ -5,17 +5,18 @@ import {
   LOGIN_SUCCESS,
   LOGOUT,
 } from "../../ActionType/auth";
-import { clearAccessToken, setAccessToken } from "../../AuthToekn";
+import { clearAccessToken, setAccessToken } from "../../AuthToekn"; // 'AuthToken' spelling check kar lein
 import { AppDispatch } from "../../store";
 import { loginUser, logoutuserServices } from "../auth services";
 import { showNotification } from "../../CommonCoponent/Notification/NotificationReduer";
 
-export interface role {
+// Convention: Interfaces ka pehla letter capital hona chahiye (Role, Message)
+export interface Role {
   role: string;
   token: string;
 }
 
-export interface message {
+export interface Message {
   msg: string;
 }
 
@@ -33,23 +34,25 @@ export const login =
       const data = await loginUser(email, password);
       const { token } = data;
       const decoded: DecodedToken = jwtDecode(token);
+      
       const user = {
         id: decoded.id,
-        name: decoded.name, // or decoded.name if backend encodes it as "name"
+        name: decoded.name, 
         role: decoded.role,
       };
 
       dispatch({ type: LOGIN_SUCCESS, payload: { token, user } });
+      
       dispatch(
         showNotification({
           type: "success",
-          message: "Login Success successfully!",
+          message: "Login successful!", // 👈 Message theek kiya
         }),
       );
 
       localStorage.setItem("user", JSON.stringify(user));
-
       setAccessToken(token);
+      
     } catch (error: any) {
       dispatch({
         type: ERROR,
@@ -66,14 +69,18 @@ export const login =
 
 export const logoutAction = () => async (dispatch: AppDispatch) => {
   try {
-    const data = await logoutuserServices(); // wait for API to finish
+    const data = await logoutuserServices(); 
     console.log("LOGOUT", data);
+    
     clearAccessToken();
+    localStorage.removeItem("user"); // 👈 YAHAN ADD KIYA: Local storage user clear karna zaroori hai
+    
     dispatch({ type: LOGOUT });
+    
     dispatch(
       showNotification({
         type: "success",
-        message: "Logout Success successfully!",
+        message: "Logout successful!", // 👈 Message theek kiya
       }),
     );
     return true;

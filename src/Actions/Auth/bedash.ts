@@ -1,6 +1,6 @@
 import { ERROR } from "../../ActionType/auth";
 import {
-  ADD_BEDASH_SUCCESS, // ✅ Import kiya
+  ADD_BEDASH_SUCCESS, 
   CONFIRM_BEDASH_SUCCESS,
   GET_BEDASH_LIST,
 } from "../../ActionType/bedash/bedash";
@@ -30,7 +30,6 @@ export const confirmBedashAction =
       const data = await confirmBedashService(id);
       dispatch({ type: CONFIRM_BEDASH_SUCCESS, payload: data });
       
-      // ✅ Success notification add ki
       dispatch(
         showNotification({
           type: "success",
@@ -50,14 +49,11 @@ export const confirmBedashAction =
   };
 
 export const addBedashAction =
-  (payload: any) => async (dispatch: AppDispatch) => {
+  (payload: any) => async (dispatch: AppDispatch) => { // Tip: Replace 'any' with your payload Interface
     try {
       const data = await addBedashService(payload);
       
-      // ✅ Reducer ko update karne ke liye dispatch bheja
       dispatch({ type: ADD_BEDASH_SUCCESS, payload: data });
-
-      // ✅ List ko refresh karne ke liye list action call ki
       dispatch(getBedashListAction());
 
       dispatch(
@@ -68,6 +64,13 @@ export const addBedashAction =
       );
     } catch (error: any) {
       const msg = error?.response?.data?.msg || error.message;
+      
+      // 👈 FIX: Yahan ERROR action dispatch karna zaroori hai
+      dispatch({
+        type: ERROR,
+        payload: { msg }, 
+      });
+
       dispatch(
         showNotification({ type: "error", message: msg || "Failed to add Bedash" }),
       );

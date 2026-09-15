@@ -18,86 +18,25 @@ import {
   updateTokenService,
 } from "../auth services/tokenServices";
 
+/** ================= GET TOKENS (No Notification) ================= */
 export const getTokenAction =
   (userId: number) => async (dispatch: AppDispatch) => {
     try {
       dispatch({ type: TOKEN_CLEAR });
       const tokens = await getTokensService(userId);
       dispatch({ type: TOKEN_GET_SUCCESS, payload: tokens });
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
       dispatch({ type: ERROR, payload: err });
     }
   };
 
-export const createTokenAction =
-  (tokenData: any) => async (dispatch: AppDispatch) => {
-    try {
-      const data = await createTokenService(tokenData);
-      dispatch({ type: TOKEN_CREATE_SUCCESS, payload: data });
-      dispatch(getTokenAction(tokenData.userId)); // refresh list
-      dispatch(
-        showNotification({
-          type: "success",
-          message: "Token Create successfully!",
-        }),
-      );
-    } catch (err: any) {
-      dispatch({
-        type: ERROR,
-        payload: err.response?.data?.msg || "Failed to create token",
-      });
-    }
-  };
-
-export const updateTokenAction =
-  (payload: any) => async (dispatch: AppDispatch) => {
-    try {
-      const res = await updateTokenService(payload);
-      dispatch({ type: TOKEN_UPDATE_SUCCESS, payload: res });
-      dispatch(
-        showNotification({
-          type: "success",
-          message: "Token Update successfully!",
-        }),
-      );
-    } catch (err: any) {
-      dispatch({
-        type: ERROR,
-        payload: err.response?.data?.msg || "Update failed",
-      });
-    }
-  };
-
-export const confirmPaymentAction =
-  (payload: any) => async (dispatch: AppDispatch) => {
-    try {
-      const res = await confirmPaymentService(payload);
-      dispatch({ type: TOKEN_CONFIRM_SUCCESS, payload: res });
-      dispatch(
-        showNotification({
-          type: "success",
-          message: "Token Confirm successfully!",
-        }),
-      );
-    } catch (err: any) {
-      dispatch({
-        type: ERROR,
-        payload: err.response?.data?.msg || "Confirm failed",
-      });
-    }
-  };
-
+/** ================= ADMIN GET TOKENS (No Notification) ================= */
 export const getAdminTokensAction = () => async (dispatch: AppDispatch) => {
   try {
     dispatch({ type: "GET_ADMIN_TOKENS_REQUEST" });
-
     const data = await getAdminTokensService();
-
-    dispatch({
-      type: GET_ADMIN_TOKENS,
-      payload: data,
-    });
+    dispatch({ type: GET_ADMIN_TOKENS, payload: data });
   } catch (error: any) {
     dispatch({
       type: ERROR,
@@ -106,24 +45,87 @@ export const getAdminTokensAction = () => async (dispatch: AppDispatch) => {
   }
 };
 
+/** ================= CREATE TOKEN (With Notification) ================= */
+export const createTokenAction =
+  (tokenData: any) => async (dispatch: AppDispatch) => {
+    try {
+      const data = await createTokenService(tokenData);
+      dispatch({ type: TOKEN_CREATE_SUCCESS, payload: data });
+      
+      // Refresh list
+      dispatch(getTokenAction(tokenData.userId)); 
+      
+      dispatch(
+        showNotification({
+          type: "success",
+          message: "Token Created successfully!",
+        })
+      );
+    } catch (err: any) {
+      const errorMsg = err.response?.data?.msg || "Failed to create token";
+      dispatch({ type: ERROR, payload: errorMsg });
+      dispatch(showNotification({ type: "error", message: errorMsg }));
+    }
+  };
+
+/** ================= UPDATE TOKEN (With Notification) ================= */
+export const updateTokenAction =
+  (payload: any) => async (dispatch: AppDispatch) => {
+    try {
+      const res = await updateTokenService(payload);
+      dispatch({ type: TOKEN_UPDATE_SUCCESS, payload: res });
+      
+      dispatch(
+        showNotification({
+          type: "success",
+          message: "Token Updated successfully!",
+        })
+      );
+    } catch (err: any) {
+      const errorMsg = err.response?.data?.msg || "Update failed";
+      dispatch({ type: ERROR, payload: errorMsg });
+      dispatch(showNotification({ type: "error", message: errorMsg }));
+    }
+  };
+
+/** ================= CONFIRM PAYMENT (With Notification) ================= */
+export const confirmPaymentAction =
+  (payload: any) => async (dispatch: AppDispatch) => {
+    try {
+      const res = await confirmPaymentService(payload);
+      dispatch({ type: TOKEN_CONFIRM_SUCCESS, payload: res });
+      
+      dispatch(
+        showNotification({
+          type: "success",
+          message: "Token Confirmed successfully!",
+        })
+      );
+    } catch (err: any) {
+      const errorMsg = err.response?.data?.msg || "Confirm failed";
+      dispatch({ type: ERROR, payload: errorMsg });
+      dispatch(showNotification({ type: "error", message: errorMsg }));
+    }
+  };
+
+/** ================= DELETE TOKEN (With Notification) ================= */
 export const deleteTokenAction =
   (tokenId: number, userId: number) => async (dispatch: AppDispatch) => {
     try {
       await deleteTokenService(tokenId);
 
-      // refresh token list after delete
+      // Refresh token list after delete
       dispatch(getTokenAction(userId));
 
       dispatch(
         showNotification({
           type: "success",
           message: "Token deleted successfully!",
-        }),
+        })
       );
     } catch (err: any) {
-      dispatch({
-        type: ERROR,
-        payload: err.response?.data?.msg || "Delete failed",
-      });
+      const errorMsg = err.response?.data?.msg || "Delete failed";
+      dispatch({ type: ERROR, payload: errorMsg });
+      dispatch(showNotification({ type: "error", message: errorMsg }));
     }
   };
