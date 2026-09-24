@@ -1,24 +1,8 @@
 import React, { useEffect, useState } from "react";
 import {
-  Box,
-  Typography,
-  CircularProgress,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Button,
-  Chip,
-  TextField,
-  InputAdornment,
-  Tooltip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
+  Box, Typography, CircularProgress, Table, TableBody, TableCell,
+  TableContainer, TableHead, TableRow, Paper, Button, Chip, TextField,
+  InputAdornment, Tooltip, Dialog, DialogTitle, DialogContent, DialogActions,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import AddIcon from "@mui/icons-material/Add";
@@ -27,50 +11,27 @@ import PaymentIcon from "@mui/icons-material/Payment";
 import ReceiptIcon from "@mui/icons-material/Receipt";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../store";
-import {
-  getTokenAction,
-  deleteTokenAction,
-} from "../../Actions/Auth/TokenAction";
+import { getTokenAction, deleteTokenAction } from "../../Actions/Auth/TokenAction";
 import AddTokenDialog from "./add";
 import EditTokenDialog from "./edit";
-
-interface Token {
-  id: number;
-  customerName: string;
-  truckNumber: string;
-  materialType: string;
-  weight: number | string;
-  ratePerTon: number | string;
-  commission: number | string;
-  totalAmount: number | string;
-  paidAmount: number | string;
-  carryForward: number | string;
-  status: string;
-  createdAt: string;
-  updatedAt?: string;
-  confirmedAt?: string;
-}
+import { Token } from "../../ActionType/UserTokenTypes";
 
 const TokenPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { selectedUser } = useSelector((state: RootState) => state.user);
-  const { tokens, loading, error } = useSelector(
-    (state: RootState) => state.token
-  );
+  
+  const { tokens, loading, error } = useSelector((state: RootState) => state.token) as { tokens: Token[], loading: boolean, error: string | null };
 
   const [openAddDialog, setOpenAddDialog] = useState(false);
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [selectedToken, setSelectedToken] = useState<Token | null>(null);
   const [search, setSearch] = useState("");
 
-  // ⭐ Delete Dialog ke liye naye states
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [tokenToDelete, setTokenToDelete] = useState<number | null>(null);
 
   useEffect(() => {
-    if (selectedUser?.id) {
-      dispatch(getTokenAction(selectedUser.id));
-    }
+    if (selectedUser?.id) dispatch(getTokenAction(selectedUser.id));
   }, [dispatch, selectedUser?.id]);
 
   const handleEditClick = (token: Token) => {
@@ -78,13 +39,11 @@ const TokenPage: React.FC = () => {
     setOpenEditDialog(true);
   };
 
-  // ⭐ Delete click ab popup open karega
   const handleDeleteClick = (tokenId: number) => {
     setTokenToDelete(tokenId);
     setDeleteDialogOpen(true);
   };
 
-  // ⭐ Popup me Confirm Delete press karne par
   const confirmDelete = () => {
     if (tokenToDelete && selectedUser?.id) {
       dispatch(deleteTokenAction(tokenToDelete, selectedUser.id));
@@ -93,22 +52,20 @@ const TokenPage: React.FC = () => {
     setTokenToDelete(null);
   };
 
-  // ⭐ Popup me Cancel press karne par
   const cancelDelete = () => {
     setDeleteDialogOpen(false);
     setTokenToDelete(null);
   };
 
   const handleDataRefresh = () => {
-    if (selectedUser?.id) {
-      dispatch(getTokenAction(selectedUser.id));
-    }
+    if (selectedUser?.id) dispatch(getTokenAction(selectedUser.id));
   };
 
-  const formatCur = (val: number | string) => `₹${Number(val || 0).toLocaleString("en-IN")}`;
+  // Safe Currency Formatter
+  const formatCur = (val: number | string | null | undefined) => `₹${Number(val || 0).toLocaleString("en-IN")}`;
 
-  // 📅 Date Formatting Helper
-  const formatDateTime = (dateStr?: string) => {
+  // Safe Date Formatter
+  const formatDateTime = (dateStr?: string | null) => {
     if (!dateStr) return null;
     return new Date(dateStr).toLocaleString("en-IN", {
       day: "2-digit", month: "short", year: "2-digit",
@@ -120,361 +77,202 @@ const TokenPage: React.FC = () => {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" height="60vh">
         <Paper elevation={3} sx={{ p: 5, borderRadius: 4, textAlign: "center", bgcolor: "#ffffff", maxWidth: 400 }}>
-          <Typography variant="h6" color="text.primary" fontWeight={700} gutterBottom>
-            No User Selected
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Please select a customer from the top navigation dropdown to manage their tokens.
-          </Typography>
+          <Typography variant="h6" color="text.primary" fontWeight={700} gutterBottom>No User Selected</Typography>
+          <Typography variant="body2" color="text.secondary">Please select a customer from the top navigation dropdown.</Typography>
         </Paper>
       </Box>
     );
 
-  if (loading)
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="50vh">
-        <CircularProgress size={50} thickness={4} />
-      </Box>
-    );
+  if (loading) return <Box display="flex" justifyContent="center" alignItems="center" height="50vh"><CircularProgress size={50} thickness={4} /></Box>;
+  if (error) return <Typography color="error" align="center" variant="h6" sx={{ mt: 5 }}>{error}</Typography>;
 
-  if (error)
-    return (
-      <Typography color="error" align="center" variant="h6" sx={{ mt: 5 }}>
-        {error}
-      </Typography>
-    );
-
-  const filteredTokens = tokens?.filter((token: Token) => {
+  // Safe Search Filter
+  const filteredTokens = (tokens || []).filter((token: Token) => {
     const query = search.toLowerCase();
     return (
-      token.customerName?.toLowerCase().includes(query) ||
-      token.truckNumber?.toLowerCase().includes(query) ||
-      token.materialType?.toLowerCase().includes(query) ||
-      token.status?.toLowerCase().includes(query)
+      (token.customerName || "").toLowerCase().includes(query) ||
+      (token.truckNumber || "").toLowerCase().includes(query) ||
+      (token.materialType || "").toLowerCase().includes(query) ||
+      (token.status || "").toLowerCase().includes(query) ||
+      (token.cartingOwnerName || "").toLowerCase().includes(query) ||
+      (token.anotherTokenOwnerName || "").toLowerCase().includes(query)
     );
   });
 
   return (
-    <Paper
-      elevation={4}
-      sx={{
-        p: 3,
-        borderRadius: 4,
-        background: "#ffffff",
-        width: "100%",
-        minHeight: "80vh",
-      }}
-    >
-      {/* ================= HEADER ================= */}
-      <Box
-        sx={{
-          background: "linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%)",
-          color: "white",
-          borderRadius: 3,
-          px: 3,
-          py: 2.5,
-          mb: 3,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          flexWrap: "wrap",
-          gap: 2,
-          boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
-        }}
-      >
+    <Paper elevation={4} sx={{ p: 3, borderRadius: 4, background: "#ffffff", width: "100%", minHeight: "80vh" }}>
+      {/* HEADER */}
+      <Box sx={{ background: "linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%)", color: "white", borderRadius: 3, px: 3, py: 2.5, mb: 3, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 2 }}>
         <Box display="flex" alignItems="center" gap={1.5}>
           <ReceiptIcon sx={{ fontSize: 30, color: "#81c784" }} />
           <Box>
-            <Typography variant="h5" fontWeight={700} letterSpacing={0.5}>
-              Tokens Management
-            </Typography>
-            <Typography variant="caption" sx={{ opacity: 0.8 }}>
-              Active Customer: <strong>{selectedUser.name}</strong>
-            </Typography>
+            <Typography variant="h5" fontWeight={700}>Tokens Management</Typography>
+            <Typography variant="caption">Active Customer: <strong>{selectedUser.name}</strong></Typography>
           </Box>
         </Box>
-
         <Box display="flex" gap={2} alignItems="center" flexWrap="wrap">
           <TextField
-            placeholder="Search tokens..."
-            variant="outlined"
-            size="small"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon sx={{ color: "gray" }} />
-                </InputAdornment>
-              ),
-            }}
-            sx={{
-              backgroundColor: "white",
-              borderRadius: 2,
-              width: { xs: "100%", sm: "280px" },
-              "& .MuiOutlinedInput-root": {
-                borderRadius: 2,
-                "& fieldset": { borderColor: "transparent" },
-                "&:hover fieldset": { borderColor: "#1976d2" },
-                "&.Mui-focused fieldset": { borderColor: "#1976d2" },
-              },
-            }}
+            placeholder="Search tokens..." variant="outlined" size="small" value={search} onChange={(e) => setSearch(e.target.value)}
+            InputProps={{ startAdornment: (<InputAdornment position="start"><SearchIcon sx={{ color: "gray" }} /></InputAdornment>) }}
+            sx={{ backgroundColor: "white", borderRadius: 2, width: { xs: "100%", sm: "280px" } }}
           />
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => setOpenAddDialog(true)}
-            sx={{
-              backgroundColor: "#ffeb3b",
-              color: "#000",
-              fontWeight: 700,
-              borderRadius: 2,
-              px: 3,
-              textTransform: "none",
-              "&:hover": { backgroundColor: "#fbc02d" },
-            }}
-          >
+          <Button variant="contained" startIcon={<AddIcon />} onClick={() => setOpenAddDialog(true)} sx={{ backgroundColor: "#ffeb3b", color: "#000", fontWeight: 700, borderRadius: 2, px: 3, "&:hover": { backgroundColor: "#fbc02d" } }}>
             Add Token
           </Button>
         </Box>
       </Box>
 
-      {/* ================= TABLE CONTAINER ================= */}
-      <TableContainer
-        sx={{
-          borderRadius: 3,
-          border: "1px solid #e0e0e0",
-          backgroundColor: "white",
-          maxHeight: "68vh",
-          overflowY: "auto",
-        }}
-      >
-        <Table stickyHeader size="medium">
+      {/* TABLE */}
+      <TableContainer sx={{ borderRadius: 3, border: "1px solid #e0e0e0", backgroundColor: "white", maxHeight: "68vh" }}>
+        <Table stickyHeader size="small">
           <TableHead>
             <TableRow>
-              {[
-                { label: "ID", align: "left" },
-                { label: "Customer", align: "left" },
-                { label: "Truck No", align: "left" },
-                { label: "Material", align: "left" },
-                { label: "Weight", align: "right" },
-                { label: "Rate", align: "right" },
-                { label: "Commission", align: "right" },
-                { label: "Total", align: "right" },
-                { label: "Paid", align: "right" },
-                { label: "Carry Fwd", align: "right" },
-                { label: "Status", align: "center" },
-                { label: "Dates (Cr / Up / Co)", align: "left" },
-                { label: "Action", align: "center" },
-              ].map((col) => (
-                <TableCell
-                  key={col.label}
-                  align={col.align as any}
-                  sx={{
-                    backgroundColor: "#f4f6f8",
-                    color: "#333",
-                    fontWeight: 700,
-                    textTransform: "uppercase",
-                    fontSize: "0.75rem",
-                    letterSpacing: 0.5,
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {col.label}
+              {["ID", "Customer / Stakeholders", "Truck", "Material", "Weight", "Rate", "Commission", "Total Amount", "Paid", "Carry Fwd", "Status", "Dates", "Action"].map((col) => (
+                <TableCell key={col} sx={{ backgroundColor: "#f4f6f8", color: "#333", fontWeight: 700, textTransform: "uppercase", fontSize: "0.75rem", whiteSpace: "nowrap" }}>
+                  {col}
                 </TableCell>
               ))}
             </TableRow>
           </TableHead>
-
           <TableBody>
-            {filteredTokens?.length ? (
-              filteredTokens.map((token: Token) => (
-                <TableRow
-                  key={token.id}
-                  hover
-                  sx={{
-                    "&:hover": { backgroundColor: "#f9fafb" },
-                    "& td": { borderBottom: "1px solid #f0f0f0" },
-                  }}
-                >
+            {filteredTokens.length ? filteredTokens.map((token: Token) => {
+              
+              const isBedash = (token.materialType || "").toLowerCase() === "bedash";
+              const isAnother = (token.tokenOwnerType || "").toLowerCase() === "another";
+              const isPending = (token.status || "").toLowerCase() === "pending";
+              const isCompleted = (token.status || "").toLowerCase() === "completed";
+
+              return (
+                <TableRow key={token.id} hover sx={{ "&:hover": { backgroundColor: "#f9fafb" } }}>
                   <TableCell sx={{ fontWeight: 600, color: "#1976d2" }}>#{token.id}</TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: "text.primary" }}>{token.customerName}</TableCell>
-                  <TableCell>
-                    <Chip label={token.truckNumber || "N/A"} size="small" variant="outlined" sx={{ borderRadius: 1 }} />
-                  </TableCell>
-                  <TableCell sx={{ textTransform: "capitalize", fontWeight: 600, color: token.materialType?.toLowerCase() === 'bedash' ? '#ed6c02' : '#757575' }}>
-                    {token.materialType}
-                  </TableCell>
                   
-                  <TableCell align="right" sx={{ fontWeight: 600 }}>{token.weight} T</TableCell>
-                  <TableCell align="right">{formatCur(token.ratePerTon)}</TableCell>
-                  <TableCell align="right">{formatCur(token.commission)}</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 700, color: "#2e7d32" }}>{formatCur(token.totalAmount)}</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 600 }}>{formatCur(token.paidAmount)}</TableCell>
-                  <TableCell align="right">
-                    <Typography
-                      variant="body2"
-                      fontWeight={700}
-                      color={Number(token.carryForward) < 0 ? "error.main" : "text.secondary"}
-                    >
-                      {formatCur(token.carryForward)}
-                    </Typography>
+                  {/* 🟢 STAKEHOLDERS COLUMN */}
+                  <TableCell>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>{token.customerName || "N/A"}</Typography>
+                    {isBedash && (
+                      <Box mt={0.5}>
+                        {token.cartingOwnerName && (
+                          <Typography variant="caption" display="block" color="error.main">
+                            <b>Ca:</b> {token.cartingOwnerName}
+                          </Typography>
+                        )}
+                        {isAnother && token.anotherTokenOwnerName && (
+                          <Typography variant="caption" display="block" color="secondary.main">
+                            <b>Ow:</b> {token.anotherTokenOwnerName}
+                          </Typography>
+                        )}
+                      </Box>
+                    )}
+                  </TableCell>
+
+                  <TableCell><Chip label={token.truckNumber || "N/A"} size="small" variant="outlined" /></TableCell>
+                  <TableCell sx={{ textTransform: "capitalize", fontWeight: 600, color: isBedash ? '#ed6c02' : '#757575' }}>
+                    {token.materialType || "N/A"}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{token.weight || 0} T</TableCell>
+
+                  {/* 💰 RATES */}
+                  <TableCell sx={{ fontSize: "0.75rem" }}>
+                    {isBedash ? (
+                      <>
+                        <Typography variant="caption" display="block">Cu: <b>{formatCur(token.sellRate)}</b></Typography>
+                        <Typography variant="caption" display="block" color="error.main">Ca: <b>{formatCur(token.cartingRate)}</b></Typography>
+                        {isAnother && <Typography variant="caption" display="block" color="secondary.main">Ow: <b>{formatCur(token.tokenOwnerRate)}</b></Typography>}
+                      </>
+                    ) : (
+                      <Typography variant="body2">{formatCur(token.ratePerTon)}</Typography>
+                    )}
+                  </TableCell>
+
+                  {/* 💰 COMMISSION */}
+                  <TableCell sx={{ fontSize: "0.75rem" }}>
+                    {isBedash ? (
+                      <Typography variant="caption" display="block" color="primary.main">Comm: <b>{formatCur(token.commission)}</b></Typography>
+                    ) : (
+                      <Typography variant="body2">{formatCur(token.commission)}</Typography>
+                    )}
+                  </TableCell>
+
+                  {/* 💰 TOTALS */}
+                  <TableCell sx={{ fontSize: "0.75rem" }}>
+                    {isBedash ? (
+                      <>
+                        <Typography variant="caption" display="block" color="success.main">Bill: <b>{formatCur(token.totalAmount)}</b></Typography>
+                        <Typography variant="caption" display="block" color="error.main">Cart: <b>{formatCur(token.totalCarting)}</b></Typography>
+                        {isAnother && <Typography variant="caption" display="block" color="secondary.main">Own: <b>{formatCur(token.totalTokenOwnerAmount)}</b></Typography>}
+                      </>
+                    ) : (
+                      <Typography variant="body2" sx={{ fontWeight: 700, color: "#2e7d32" }}>{formatCur(token.totalAmount)}</Typography>
+                    )}
+                  </TableCell>
+
+                  {/* 💰 PAID */}
+                  <TableCell sx={{ fontWeight: 600 }}>{formatCur(token.paidAmount)}</TableCell>
+
+                  {/* 📊 CARRY FORWARD */}
+                  <TableCell sx={{ fontSize: "0.75rem" }}>
+                    {isBedash ? (
+                      <>
+                        <Typography variant="caption" display="block" color={Number(token.carryForward) < 0 ? "error.main" : "text.secondary"}>
+                          Cu: <b>{formatCur(token.carryForward)}</b>
+                        </Typography>
+                        <Typography variant="caption" display="block" color="warning.main">
+                          Ca: <b>+{formatCur(token.cartingCarryForward)}</b>
+                        </Typography>
+                        {isAnother && (
+                          <Typography variant="caption" display="block" color="info.main">
+                            Ow: <b>+{formatCur(token.tokenOwnerCarryForward)}</b>
+                          </Typography>
+                        )}
+                      </>
+                    ) : (
+                      <Typography variant="body2" fontWeight={700} color={Number(token.carryForward) < 0 ? "error.main" : "text.secondary"}>
+                        {formatCur(token.carryForward)}
+                      </Typography>
+                    )}
                   </TableCell>
 
                   <TableCell align="center">
-                    <Chip
-                      label={token.status}
-                      size="small"
-                      sx={{
-                        textTransform: "capitalize",
-                        fontWeight: 700,
-                        backgroundColor: 
-                          token.status === "completed" ? "#e8f5e9" : 
-                          token.status === "pending" ? "#ffebee" : "#fff3e0",
-                        color: 
-                          token.status === "completed" ? "#2e7d32" : 
-                          token.status === "pending" ? "#c62828" : "#ef6c00",
-                      }}
-                    />
+                    <Chip label={token.status || "Unknown"} size="small" sx={{ textTransform: "capitalize", fontWeight: 700, backgroundColor: isCompleted ? "#e8f5e9" : isPending ? "#ffebee" : "#fff3e0", color: isCompleted ? "#2e7d32" : isPending ? "#c62828" : "#ef6c00" }} />
                   </TableCell>
 
-                  {/* 📅 Dates Box */}
-                  <TableCell align="left" sx={{ whiteSpace: "nowrap" }}>
+                  <TableCell sx={{ whiteSpace: "nowrap" }}>
                     <Box display="flex" flexDirection="column" gap={0.5}>
-                      {token.createdAt && (
-                        <Typography variant="caption" sx={{ display: "flex", gap: 1, color: "text.secondary" }}>
-                          <span style={{ fontWeight: 700, minWidth: "20px" }}>Cr:</span> {formatDateTime(token.createdAt)}
-                        </Typography>
-                      )}
-                      {token.updatedAt && (
-                        <Typography variant="caption" sx={{ display: "flex", gap: 1, color: "primary.main" }}>
-                          <span style={{ fontWeight: 700, minWidth: "20px" }}>Up:</span> {formatDateTime(token.updatedAt)}
-                        </Typography>
-                      )}
-                      {token.confirmedAt && (
-                        <Typography variant="caption" sx={{ display: "flex", gap: 1, color: "success.main" }}>
-                          <span style={{ fontWeight: 700, minWidth: "20px" }}>Co:</span> {formatDateTime(token.confirmedAt)}
-                        </Typography>
-                      )}
+                      {token.createdAt && <Typography variant="caption" color="text.secondary"><b>Cr:</b> {formatDateTime(token.createdAt)}</Typography>}
+                      {token.updatedAt && <Typography variant="caption" color="primary.main"><b>Up:</b> {formatDateTime(token.updatedAt)}</Typography>}
                     </Box>
                   </TableCell>
 
                   <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>
-                    {token.status === "pending" && (
+                    {isPending && (
                       <Tooltip title="Delete Token">
-                        <Button
-                          variant="outlined"
-                          color="error"
-                          size="small"
-                          onClick={() => handleDeleteClick(token.id)}
-                          sx={{ minWidth: "36px", height: "32px", p: 0, mr: 1, borderRadius: 1.5 }}
-                        >
-                          <DeleteOutlineIcon fontSize="small" />
-                        </Button>
+                        <Button variant="outlined" color="error" size="small" onClick={() => handleDeleteClick(token.id)} sx={{ minWidth: "36px", p: 0, mr: 1 }}><DeleteOutlineIcon fontSize="small" /></Button>
                       </Tooltip>
                     )}
-
-                    {token.status !== "completed" ? (
-                      <Button
-                        variant="contained"
-                        color="primary"
-                        size="small"
-                        startIcon={<PaymentIcon fontSize="small" />}
-                        onClick={() => handleEditClick(token)}
-                        sx={{
-                          textTransform: "none",
-                          fontWeight: 600,
-                          borderRadius: 1.5,
-                          boxShadow: "none",
-                          height: "32px",
-                          "&:hover": { boxShadow: "0 2px 8px rgba(25,118,210,0.3)" },
-                        }}
-                      >
-                        Action / Pay
-                      </Button>
-                    ) : (
-                      <Chip label="Cleared" size="small" variant="outlined" color="success" sx={{ border: "none", fontWeight: 700 }} />
-                    )}
+                    {!isCompleted ? (
+                      <Button variant="contained" color="primary" size="small" startIcon={<PaymentIcon />} onClick={() => handleEditClick(token)} sx={{ textTransform: "none", height: "32px" }}>Pay/Edit</Button>
+                    ) : <Chip label="Cleared" size="small" color="success" variant="outlined" />}
                   </TableCell>
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={13} align="center" sx={{ py: 6 }}>
-                  <Box display="flex" flexDirection="column" alignItems="center" sx={{ opacity: 0.5 }}>
-                    <Typography variant="h6" fontWeight={600}>No Tokens Found</Typography>
-                    <Typography variant="body2">Try adjusting your search query or add a new token.</Typography>
-                  </Box>
-                </TableCell>
-              </TableRow>
+              );
+            }) : (
+              <TableRow><TableCell colSpan={13} align="center" sx={{ py: 6 }}><Typography variant="h6" color="text.secondary">No Tokens Found</Typography></TableCell></TableRow>
             )}
           </TableBody>
         </Table>
       </TableContainer>
 
-      {/* ================= DIALOGS ================= */}
-      <AddTokenDialog
-        open={openAddDialog}
-        onClose={() => setOpenAddDialog(false)}
-      />
-
-      {selectedToken && (
-        <EditTokenDialog
-          open={openEditDialog}
-          onClose={() => setOpenEditDialog(false)}
-          token={selectedToken}
-          onRefresh={handleDataRefresh}
-        />
-      )}
-
-      {/* ⭐ CUSTOM DELETE CONFIRMATION DIALOG */}
-      <Dialog
-        open={deleteDialogOpen}
-        onClose={cancelDelete}
-        maxWidth="xs"
-        fullWidth
-        PaperProps={{
-          sx: { borderRadius: 3, boxShadow: "0 12px 40px rgba(0,0,0,0.2)" }
-        }}
-      >
-        <DialogTitle
-          sx={{
-            background: "linear-gradient(135deg, #d32f2f 0%, #f44336 100%)",
-            color: "white",
-            fontWeight: 700,
-            display: "flex",
-            alignItems: "center",
-            gap: 1.5,
-            p: 2.5,
-          }}
-        >
-          <DeleteOutlineIcon /> Delete Token
-        </DialogTitle>
-        <DialogContent sx={{ p: 3, pt: 4, bgcolor: "#f8f9fa" }}>
-          <Typography variant="body1" color="text.primary" fontSize="1.1rem" fontWeight={600}>
-            Are you sure you want to delete this token?
-          </Typography>
-          <Typography variant="body2" color="text.secondary" mt={1}>
-            This action is permanent and cannot be undone. All data related to this token will be removed.
-          </Typography>
-        </DialogContent>
-        <DialogActions sx={{ p: 2.5, bgcolor: "#f8f9fa", borderTop: "1px solid #e0e0e0" }}>
-          <Button 
-            onClick={cancelDelete} 
-            color="inherit" 
-            variant="outlined" 
-            sx={{ borderRadius: 2, px: 3, fontWeight: 600 }}
-          >
-            Cancel
-          </Button>
-          <Button 
-            onClick={confirmDelete} 
-            variant="contained" 
-            color="error" 
-            sx={{ borderRadius: 2, px: 4, fontWeight: 600, boxShadow: "none" }}
-          >
-            Delete
-          </Button>
+      {/* DIALOGS */}
+      <AddTokenDialog open={openAddDialog} onClose={() => setOpenAddDialog(false)} />
+      {selectedToken && <EditTokenDialog open={openEditDialog} onClose={() => setOpenEditDialog(false)} token={selectedToken} onRefresh={handleDataRefresh} />}
+      
+      {/* DELETE CONFIRM DIALOG */}
+      <Dialog open={deleteDialogOpen} onClose={cancelDelete} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ background: "#d32f2f", color: "white" }}>Delete Token</DialogTitle>
+        <DialogContent sx={{ p: 3, pt: 4 }}><Typography>Are you sure you want to delete this token?</Typography></DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={cancelDelete} color="inherit">Cancel</Button>
+          <Button onClick={confirmDelete} variant="contained" color="error">Delete</Button>
         </DialogActions>
       </Dialog>
     </Paper>

@@ -6,35 +6,48 @@ export const TOKEN_UPDATE_SUCCESS = "TOKEN_UPDATE_SUCCESS";
 export const GET_ADMIN_TOKENS = "GET_ADMIN_TOKENS";
 export const TOKEN_DELETE_SUCCESS = "TOKEN_DELETE_SUCCESS";
 
-// types/tokenTypes.ts
 export interface User {
   id: number;
   name: string;
   email: string;
-  role: "user" | "admin" | "superadmin";
+  role: "user" | "admin" | "superadmin" | string;
 }
 
 export interface Token {
   id: number;
-  customerName: string;
-  truckNumber: string;
-  materialType: string;
-  weight: string;
-  ratePerTon: string;
-  commission: string;
-  totalAmount: string;
-  paidAmount: string;
-  carryForward: string;
-  status: string;
-  createdAt: string;
-  user: {
-    id: number;
-    name: string;
-    email: string;
-    role: string;
-    isActive: boolean;
-    createdAt: string;
-  };
+  customerName?: string | null;
+  customerPhone?: string | null; 
+  truckNumber?: string | null;
+  materialType?: string | null;
+  weight?: string | number | null;
+  ratePerTon?: string | number | null;
+  commission?: string | number | null;
+  totalAmount?: string | number | null;
+  paidAmount?: string | number | null;
+  carryForward?: string | number | null;
+
+  cartingOwnerName?: string | null;
+  cartingOwnerPhone?: string | null;
+  tokenOwnerType?: "owner" | "another" | string | null;
+  anotherTokenOwnerName?: string | null;
+  anotherTokenOwnerPhone?: string | null;
+
+  sellRate?: string | number | null;
+  cartingRate?: string | number | null;
+  totalCarting?: string | number | null;
+  tokenOwnerRate?: string | number | null;
+  totalTokenOwnerAmount?: string | number | null;
+
+  cartingPaidAmount?: string | number | null;
+  cartingCarryForward?: string | number | null;
+  tokenOwnerPaidAmount?: string | number | null;
+  tokenOwnerCarryForward?: string | number | null;
+
+  status?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  confirmedAt?: string | null;
+  user?: any;
 }
 
 export interface TokenState {
@@ -43,19 +56,43 @@ export interface TokenState {
   error: string | null;
 }
 
+// ⭐ YAHAN DHYAN DEIN: Isme weight aur baaki sab shamil hai
 export interface AdminToken {
   tokenId: number;
   customerName: string;
   truckNumber: string;
-  materialType: "flyash" | "bedash";
-  weight: string;
-  carryForward: string;
-  status: "pending" | "updated" | "completed";
+  materialType: string;
+  weight: string | number | null;           // <-- YAHAN WEIGHT HAI
+  carryForward: string | number | null;
+  status: string;
   userId: number;
   userName: string;
-  remainingTons: string;
+  remainingTons: string | number | null;
   createdAt: string;
-  confirmedAt: string | null;
+  updatedAt?: string | null;
+  confirmedAt?: string | null;
+
+  ratePerTon?: string | number | null;
+  commission?: string | number | null;
+  totalAmount?: string | number | null;
+  paidAmount?: string | number | null;
+  
+  cartingOwnerName?: string | null;
+  cartingOwnerPhone?: string | null;
+  tokenOwnerType?: string | null;
+  anotherTokenOwnerName?: string | null;
+  anotherTokenOwnerPhone?: string | null;
+
+  sellRate?: string | number | null;
+  cartingRate?: string | number | null;
+  totalCarting?: string | number | null;
+  tokenOwnerRate?: string | number | null;
+  totalTokenOwnerAmount?: string | number | null;
+
+  cartingPaidAmount?: string | number | null;
+  cartingCarryForward?: string | number | null;
+  tokenOwnerPaidAmount?: string | number | null;
+  tokenOwnerCarryForward?: string | number | null;
 }
 
 export interface AdminTokenResponse {

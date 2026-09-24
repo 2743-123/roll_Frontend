@@ -16,7 +16,8 @@ import PersonIcon from "@mui/icons-material/Person";
 import TokenIcon from "@mui/icons-material/Token";
 import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
-import SettingsBackupRestoreIcon from "@mui/icons-material/SettingsBackupRestore"; // ⭐ Backup Icon Import
+import SettingsBackupRestoreIcon from "@mui/icons-material/SettingsBackupRestore";
+import RequestQuoteIcon from "@mui/icons-material/RequestQuote"; // ⭐ Payment Recovery Icon
 
 interface SidebarProps {
   open?: boolean;
@@ -31,7 +32,7 @@ const Sidebar: React.FC<SidebarProps> = ({ open = true }) => {
   const canSeeAdminTab = user?.role === "superadmin";
   const canSeeOnlyAdmin = user?.role === "admin";
   const canSeePaymentHistory = user?.role === "admin" || user?.role === "superadmin";
-  const canSeeBackup = user?.role === "admin" || user?.role === "superadmin"; // ⭐ Backup Permission
+  const canSeeBackup = user?.role === "admin" || user?.role === "superadmin";
 
   // 🔹 Flash animation keyframes
   React.useEffect(() => {
@@ -65,8 +66,9 @@ const Sidebar: React.FC<SidebarProps> = ({ open = true }) => {
     { label: "Balance", path: "/balance", icon: <AccountBalanceWalletOutlinedIcon sx={{ color: "#00e676", animation: "flash 1.5s infinite" }} />, show: true },
     { label: "All User Balance", path: "/AllTransection", icon: <AccountBalanceIcon sx={{ color: "#76ff03", animation: "flash 1.5s infinite" }} />, show: canSeeOnlyAdmin },
     { label: "Payment History", path: "/PaymentHistory", icon: <ReceiptLongIcon sx={{ color: "#f50057", animation: "flash 1.5s infinite" }} />, show: canSeePaymentHistory },
+    // ⭐ New Payment Recovery Route
+    { label: "Payment Recovery", path: "/PaymentRecovery", icon: <RequestQuoteIcon sx={{ color: "#d32f2f", animation: "flash 1.5s infinite" }} />, show: canSeePaymentHistory },
     { label: "Bedash", path: "/bedash", icon: <ConstructionIcon sx={{ color: "#ff6d00", animation: "flash 1.5s infinite" }} />, show: true },
-    // ⭐ New Backup Route Item
     { label: "Backup / Restore", path: "/backup", icon: <SettingsBackupRestoreIcon sx={{ color: "#9c27b0", animation: "flash 1.5s infinite" }} />, show: canSeeBackup },
   ];
 

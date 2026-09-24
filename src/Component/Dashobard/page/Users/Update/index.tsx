@@ -16,6 +16,9 @@ import { AppDispatch, RootState } from "../../../../../store";
 import { updateUserAction } from "../../../../../Actions/Auth/user";
 import { User } from "../../../../../ActionType/user/userTypes";
 
+// Naye WhatsApp QR Component ko import karein (Path apne hisab se check kar lein)
+import AdminWhatsAppConnect from "./AdminWhatsAppConnect"; // 👈 Ye humne abhi banaya tha
+
 interface EditUserProps {
   open: boolean;
   onClose: () => void;
@@ -32,8 +35,6 @@ const EditUser: React.FC<EditUserProps> = ({ open, onClose, user }) => {
     role: "user",
     isActive: true,
     phone: "",
-    whatsappInstanceId: "",
-    whatsappToken: "",
   });
   const [loading, setLoading] = useState(false);
 
@@ -45,8 +46,6 @@ const EditUser: React.FC<EditUserProps> = ({ open, onClose, user }) => {
         role: user.role || "user",
         isActive: user.isActive ?? true,
         phone: (user as any).phone || "",
-        whatsappInstanceId: (user as any).whatsappInstanceId || "",
-        whatsappToken: (user as any).whatsappToken || "",
       });
     }
   }, [user]);
@@ -127,38 +126,14 @@ const EditUser: React.FC<EditUserProps> = ({ open, onClose, user }) => {
             required
           />
 
-          {/* ⭐ Phone Number field for Dealer WhatsApp alerts */}
           <TextField
-            label="Phone Number (For Dealer WhatsApp)"
+            label="Phone Number (Optional)"
             name="phone"
             value={formData.phone}
             onChange={handleChange}
             fullWidth
             placeholder="e.g. 919876543210"
           />
-
-          {/* ⭐ Admin / SuperAdmin credentials setup */}
-          {formData.role !== "user" && (
-            <>
-              <TextField
-                label="UltraMsg Instance ID (Admin Only)"
-                name="whatsappInstanceId"
-                value={formData.whatsappInstanceId}
-                onChange={handleChange}
-                fullWidth
-                placeholder="e.g. instance12345"
-              />
-
-              <TextField
-                label="UltraMsg Token (Admin Only)"
-                name="whatsappToken"
-                value={formData.whatsappToken}
-                onChange={handleChange}
-                fullWidth
-                placeholder="e.g. abcdef12345678"
-              />
-            </>
-          )}
 
           {loggedInUser?.role === "superadmin" && (
             <TextField
@@ -191,6 +166,13 @@ const EditUser: React.FC<EditUserProps> = ({ open, onClose, user }) => {
             <MenuItem value="true">Active</MenuItem>
             <MenuItem value="false">Inactive</MenuItem>
           </TextField>
+          
+          {/* ⭐ FREE WHATSAPP QR INTEGRATION ⭐ */}
+          {/* Agar edit hone wala user 'admin' ya 'superadmin' hai toh QR Code show karega */}
+          {user && (formData.role === "admin" || formData.role === "superadmin") && (
+            <AdminWhatsAppConnect adminId={user.id.toString()} />
+          )}
+
         </Box>
       </DialogContent>
 

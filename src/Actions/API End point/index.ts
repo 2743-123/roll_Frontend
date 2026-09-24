@@ -36,6 +36,7 @@ export const API_ADD_BEDASH = `${ENVIRONMENT_VARIABLES.Base_API_URL}/message/add
 
 /* ================= PAYMENT HISTORY ================= */
 export const API_GET_PAYMENT_HISTORY = `${ENVIRONMENT_VARIABLES.Base_API_URL}/payment-history/`;
+export const API_GET_PAYMENT_RECOVERY = `${ENVIRONMENT_VARIABLES.Base_API_URL}/payment-history/recovery`; // ⭐ YAHAN ADD KIYA HAI
 
 /* ================= AI ASSISTANT ================= */
 export const API_AI_COMMAND = `${ENVIRONMENT_VARIABLES.Base_API_URL}/ai/command`;

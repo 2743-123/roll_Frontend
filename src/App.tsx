@@ -16,9 +16,12 @@ import AllUserToken from "./Component/Dashobard/page/AllUserBalance & Token/inde
 import AllTransection from "./Component/Dashobard/page/AllUserBalance & Token/allTransection";
 import PayentHistory from "./Component/Dashobard/page/Payemnt History/PaymentHistory";
 import BackupRestore from "./Component/backup/BackupRestore";
+// ⭐ Naya Import (Apne folder path ke hisaab se check kar lena)
+import PaymentRecoveryPage from "./Component/Dashobard/page/Payemnt History/PaymentRecovery"; 
 
 function App() {
   const dispatch = useDispatch<AppDispatch>();
+  
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
     const user = localStorage.getItem("user");
@@ -29,6 +32,7 @@ function App() {
       });
     }
   }, [dispatch]);
+
   return (
     <>
       <BrowserRouter>
@@ -57,9 +61,12 @@ function App() {
             <Route path="admin" element={<AdminList />} />
             <Route path="AllUserToken" element={<AllUserToken />} />
             <Route path="AllTransection" element={<AllTransection />} />
-            <Route path="PaymentHistory" element={<PayentHistory
-             />} />
-             <Route path="Backup" element={<BackupRestore />} />
+            <Route path="PaymentHistory" element={<PayentHistory />} />
+            
+            {/* ⭐ Yahan Payment Recovery ka naya route add kiya hai */}
+            <Route path="PaymentRecovery" element={<PaymentRecoveryPage />} />
+            
+            <Route path="Backup" element={<BackupRestore />} />
           </Route>
         </Routes>
       </BrowserRouter>
