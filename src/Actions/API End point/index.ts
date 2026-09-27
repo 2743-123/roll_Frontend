@@ -34,9 +34,20 @@ export const API_GET_BEDASH = `${ENVIRONMENT_VARIABLES.Base_API_URL}/message/all
 export const API_CONFIRM_BEDASH = `${ENVIRONMENT_VARIABLES.Base_API_URL}/message/complete/:id`;
 export const API_ADD_BEDASH = `${ENVIRONMENT_VARIABLES.Base_API_URL}/message/add`;
 
-/* ================= PAYMENT HISTORY ================= */
+/* ================= PAYMENT HISTORY & RECOVERY ================= */
 export const API_GET_PAYMENT_HISTORY = `${ENVIRONMENT_VARIABLES.Base_API_URL}/payment-history/`;
-export const API_GET_PAYMENT_RECOVERY = `${ENVIRONMENT_VARIABLES.Base_API_URL}/payment-history/recovery`; // ⭐ YAHAN ADD KIYA HAI
+export const API_GET_PAYMENT_RECOVERY = `${ENVIRONMENT_VARIABLES.Base_API_URL}/payment-history/recovery`;
+export const API_SETTLE_PAYMENT_RECOVERY = `${ENVIRONMENT_VARIABLES.Base_API_URL}/payment-history/settle-recovery`;
+
+/* ================= ⭐ MASTER LEDGER (ACCOUNT SETTLEMENT) ================= */
+export const API_CREATE_MASTER_ACCOUNT = `${ENVIRONMENT_VARIABLES.Base_API_URL}/payment-history/master-account`;
+export const API_GET_MASTER_ACCOUNTS = `${ENVIRONMENT_VARIABLES.Base_API_URL}/payment-history/master-account`;
+export const API_PROCESS_MASTER_TRANSACTION = `${ENVIRONMENT_VARIABLES.Base_API_URL}/payment-history/master-transaction`;
+export const API_GET_MASTER_TRANSACTIONS = `${ENVIRONMENT_VARIABLES.Base_API_URL}/payment-history/master-account`; // Note: Frontend se API call karte waqt iske aage `/${accountId}/transactions` lagayenge
+
+/* ================= ⭐ PENDING SETTLEMENT QUEUE (NEW) ================= */
+export const API_ADD_PENDING_SETTLEMENT = `${ENVIRONMENT_VARIABLES.Base_API_URL}/payment-history/pending-settlement`;
+export const API_GET_PENDING_SETTLEMENTS = `${ENVIRONMENT_VARIABLES.Base_API_URL}/payment-history/pending-settlement`;
 
 /* ================= AI ASSISTANT ================= */
 export const API_AI_COMMAND = `${ENVIRONMENT_VARIABLES.Base_API_URL}/ai/command`;

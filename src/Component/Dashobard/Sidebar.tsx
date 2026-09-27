@@ -4,6 +4,8 @@ import ListItemButton from "@mui/material/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import Tooltip from "@mui/material/Tooltip";
+import Box from "@mui/material/Box";
+import Chip from "@mui/material/Chip";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store";
@@ -17,7 +19,8 @@ import TokenIcon from "@mui/icons-material/Token";
 import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import SettingsBackupRestoreIcon from "@mui/icons-material/SettingsBackupRestore";
-import RequestQuoteIcon from "@mui/icons-material/RequestQuote"; // ⭐ Payment Recovery Icon
+import RequestQuoteIcon from "@mui/icons-material/RequestQuote"; 
+import CurrencyExchangeIcon from "@mui/icons-material/CurrencyExchange"; // ⭐ Account Settlement Icon
 
 interface SidebarProps {
   open?: boolean;
@@ -26,13 +29,19 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ open = true }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  
+  // Auth state
   const { user } = useSelector((state: RootState) => state.auth);
+  
+  // ⭐ Redux se pending settlement amount nikal rahe hain
+  const { pendingSettlement } = useSelector((state: RootState) => state.paymentHistoryReducer);
 
   const canSeeUsersTab = user?.role === "admin" || user?.role === "superadmin";
   const canSeeAdminTab = user?.role === "superadmin";
   const canSeeOnlyAdmin = user?.role === "admin";
   const canSeePaymentHistory = user?.role === "admin" || user?.role === "superadmin";
   const canSeeBackup = user?.role === "admin" || user?.role === "superadmin";
+  const canSeeAccountSettlement = user?.role === "admin" || user?.role === "superadmin"; 
 
   // 🔹 Flash animation keyframes
   React.useEffect(() => {
@@ -65,8 +74,17 @@ const Sidebar: React.FC<SidebarProps> = ({ open = true }) => {
     { label: "All User Token", path: "/AllUserToken", icon: <TokenIcon sx={{ color: "#00b0ff", animation: "flash 1.5s infinite" }} />, show: canSeeOnlyAdmin },
     { label: "Balance", path: "/balance", icon: <AccountBalanceWalletOutlinedIcon sx={{ color: "#00e676", animation: "flash 1.5s infinite" }} />, show: true },
     { label: "All User Balance", path: "/AllTransection", icon: <AccountBalanceIcon sx={{ color: "#76ff03", animation: "flash 1.5s infinite" }} />, show: canSeeOnlyAdmin },
+    
+    // ⭐ New Account Settlement Route (With dynamic badge)
+    { 
+      label: "Account Settlement", 
+      path: "/AccountSettlement", 
+      icon: <CurrencyExchangeIcon sx={{ color: "#009688", animation: "flash 1.5s infinite" }} />, 
+      show: canSeeAccountSettlement,
+      badge: pendingSettlement && pendingSettlement.amount > 0 ? `₹${pendingSettlement.amount}` : null
+    },
+    
     { label: "Payment History", path: "/PaymentHistory", icon: <ReceiptLongIcon sx={{ color: "#f50057", animation: "flash 1.5s infinite" }} />, show: canSeePaymentHistory },
-    // ⭐ New Payment Recovery Route
     { label: "Payment Recovery", path: "/PaymentRecovery", icon: <RequestQuoteIcon sx={{ color: "#d32f2f", animation: "flash 1.5s infinite" }} />, show: canSeePaymentHistory },
     { label: "Bedash", path: "/bedash", icon: <ConstructionIcon sx={{ color: "#ff6d00", animation: "flash 1.5s infinite" }} />, show: true },
     { label: "Backup / Restore", path: "/backup", icon: <SettingsBackupRestoreIcon sx={{ color: "#9c27b0", animation: "flash 1.5s infinite" }} />, show: canSeeBackup },
@@ -123,17 +141,35 @@ const Sidebar: React.FC<SidebarProps> = ({ open = true }) => {
               >
                 {item.icon}
               </ListItemIcon>
+              
               {open && (
-                <ListItemText 
-                  primary={item.label} 
-                  sx={{ 
-                    opacity: open ? 1 : 0,
-                    "& .MuiListItemText-primary": {
-                      fontSize: { xs: "0.85rem", sm: "0.9rem" }, 
-                      fontWeight: isActive ? 700 : 500,
-                    }
-                  }} 
-                />
+                <Box display="flex" justifyContent="space-between" alignItems="center" width="100%">
+                  <ListItemText 
+                    primary={item.label} 
+                    sx={{ 
+                      opacity: open ? 1 : 0,
+                      "& .MuiListItemText-primary": {
+                        fontSize: { xs: "0.85rem", sm: "0.9rem" }, 
+                        fontWeight: isActive ? 700 : 500,
+                      }
+                    }} 
+                  />
+                  {/* ⭐ PENDING SETTLEMENT BLINKING BADGE */}
+                  {item.badge && (
+                    <Chip 
+                      label={item.badge} 
+                      size="small" 
+                      sx={{ 
+                        backgroundColor: "#ff1744", 
+                        color: "white", 
+                        fontWeight: 800,
+                        height: 22,
+                        fontSize: "0.7rem",
+                        animation: "flash 1.5s infinite"
+                      }} 
+                    />
+                  )}
+                </Box>
               )}
             </ListItemButton>
           );

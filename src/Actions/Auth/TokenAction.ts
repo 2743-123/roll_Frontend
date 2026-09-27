@@ -18,6 +18,9 @@ import {
   updateTokenService,
 } from "../auth services/tokenServices";
 
+// ⭐ 1. PENDING SETTLEMENT ACTION IMPORT KAREIN (Path apne folder ke hisaab se adjust kar lena)
+import { setPendingSettlementAction } from "./paymentHistoryAction"; 
+
 /** ================= GET TOKENS (No Notification) ================= */
 export const getTokenAction =
   (userId: number) => async (dispatch: AppDispatch) => {
@@ -89,24 +92,44 @@ export const updateTokenAction =
   };
 
 /** ================= CONFIRM PAYMENT (With Notification) ================= */
-export const confirmPaymentAction =
-  (payload: any) => async (dispatch: AppDispatch) => {
-    try {
-      const res = await confirmPaymentService(payload);
-      dispatch({ type: TOKEN_CONFIRM_SUCCESS, payload: res });
-      
-      dispatch(
-        showNotification({
-          type: "success",
-          message: "Token Confirmed successfully!",
-        })
+export const confirmPaymentAction = (payload: any) => async (dispatch: AppDispatch) => {
+  try {
+    const res = await confirmPaymentService(payload);
+    dispatch({ type: TOKEN_CONFIRM_SUCCESS, payload: res });
+    
+    // Backend se aane wala paidAmount yahan catch ho raha hai
+    const paidAmount = Number(
+      (res as any)?.paidAmount || 
+      (payload as any).paidThisTime || 
+      (payload as any).amount || 
+      (payload as any).paidAmount || 0
+    );
+
+    const tokenIdentifier = (res as any)?.tokenId || (payload as any).tokenId || "N/A";
+    const customerNameVal = (res as any)?.customerName || (payload as any).customerName || "Customer Settlement";
+
+    if (paidAmount > 0) {
+      // ⭐ 2. YAHAN CHANGE KIYA HAI: Local dispatch ki jagah seedha Database Queue me bheja
+      await dispatch(
+        setPendingSettlementAction(
+          paidAmount,
+          `Token/Bedash Payment Confirmed (Token ID: ${tokenIdentifier}) - Paid by ${customerNameVal}`
+        ) as any
       );
-    } catch (err: any) {
-      const errorMsg = err.response?.data?.msg || "Confirm failed";
-      dispatch({ type: ERROR, payload: errorMsg });
-      dispatch(showNotification({ type: "error", message: errorMsg }));
     }
-  };
+
+    dispatch(
+      showNotification({
+        type: "success",
+        message: "Payment Confirmed successfully!",
+      })
+    );
+  } catch (err: any) {
+    const errorMsg = err.response?.data?.msg || "Confirm failed";
+    dispatch({ type: ERROR, payload: errorMsg });
+    dispatch(showNotification({ type: "error", message: errorMsg }));
+  }
+};
 
 /** ================= DELETE TOKEN (With Notification) ================= */
 export const deleteTokenAction =

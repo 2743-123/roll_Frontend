@@ -13,6 +13,8 @@ import {
   getAdminBalanceService,
   getBalanceService,
 } from "../auth services/balance";
+import { setPendingSettlementAction } from "./paymentHistoryAction"; 
+
 
 /** ================= GET USER BALANCE ================= */
 export const getBalanceAction =
@@ -29,6 +31,14 @@ export const getBalanceAction =
   };
 
 /** ================= ADD BALANCE ================= */
+/** ================= ADD BALANCE ================= */
+/** ================= ADD BALANCE ================= */
+/** ================= ADD BALANCE ================= */
+/** ================= ADD BALANCE ================= */
+// ⭐ 1. Ye import sabse upar add karein (path apne project ke hisaab se dekh lijiyega)
+
+
+/** ================= ADD BALANCE ================= */
 export const addBalanceAction =
   (payload: AddBalancePayload) => async (dispatch: AppDispatch) => {
     try {
@@ -36,8 +46,30 @@ export const addBalanceAction =
 
       dispatch({ type: "ADD_BALANCE_SUCCESS" });
 
-      // ⭐ IMPORTANT — refresh balance
-      dispatch(getBalanceAction(Number(payload.userId)));
+      // Flyash aur Bedash amounts ko jodh kar total amount nikal rahe hain
+      const flyash = Number((payload as any).flyashAmount || 0);
+      const bedash = Number((payload as any).bedashAmount || 0);
+      const totalAmount = flyash + bedash;
+
+      const userIdVal = (payload as any).userId;
+      const paymentModeVal = (payload as any).paymentMode || "Cash";
+
+      console.log("🟢 Calculated Total Add Balance:", { flyash, bedash, totalAmount });
+
+      if (totalAmount > 0) {
+        // ⭐ 2. YAHAN CHANGE KIYA HAI: Local dispatch ki jagah seedha Database Queue me bhej rahe hain
+        await dispatch(
+          setPendingSettlementAction(
+            totalAmount,
+            `Balance Added (User ID: ${userIdVal}) - Flyash: ₹${flyash}, Bedash: ₹${bedash} (${paymentModeVal})`
+          ) as any
+        );
+      }
+
+      // Refresh balance
+      if (userIdVal) {
+        dispatch(getBalanceAction(Number(userIdVal)));
+      }
 
       dispatch(
         showNotification({
@@ -60,7 +92,6 @@ export const addBalanceAction =
       throw error;
     }
   };
-
 /** ================= EDIT BALANCE ================= */
 export const editBalanceAction =
   (

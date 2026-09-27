@@ -16,8 +16,10 @@ import AllUserToken from "./Component/Dashobard/page/AllUserBalance & Token/inde
 import AllTransection from "./Component/Dashobard/page/AllUserBalance & Token/allTransection";
 import PayentHistory from "./Component/Dashobard/page/Payemnt History/PaymentHistory";
 import BackupRestore from "./Component/backup/BackupRestore";
-// ⭐ Naya Import (Apne folder path ke hisaab se check kar lena)
 import PaymentRecoveryPage from "./Component/Dashobard/page/Payemnt History/PaymentRecovery"; 
+
+// ⭐ Naya Import (Apne folder path ke hisaab se check kar lena)
+import AccountSettlementPage from "./Component/Dashobard/page/Payemnt History/AccountSettlementPage"; 
 
 function App() {
   const dispatch = useDispatch<AppDispatch>();
@@ -62,9 +64,10 @@ function App() {
             <Route path="AllUserToken" element={<AllUserToken />} />
             <Route path="AllTransection" element={<AllTransection />} />
             <Route path="PaymentHistory" element={<PayentHistory />} />
-            
-            {/* ⭐ Yahan Payment Recovery ka naya route add kiya hai */}
             <Route path="PaymentRecovery" element={<PaymentRecoveryPage />} />
+            
+            {/* ⭐ Yahan Account Settlement ka naya route add kiya hai */}
+            <Route path="AccountSettlement" element={<AccountSettlementPage />} />
             
             <Route path="Backup" element={<BackupRestore />} />
           </Route>

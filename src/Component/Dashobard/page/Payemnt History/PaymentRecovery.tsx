@@ -17,23 +17,42 @@ import {
   Button,
   Collapse,
   IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  FormControl,
+  FormLabel,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+  Alert,
+  Stack,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
+import PaidIcon from "@mui/icons-material/Paid";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../../../store";
-import { getPaymentRecoveryAction } from "../../../../Actions/Auth/paymentHistoryAction";
+import { 
+  getPaymentRecoveryAction,
+  settlePaymentRecoveryAction 
+} from "../../../../Actions/Auth/paymentHistoryAction";
 
 /** ==============================================
  *  ROW COMPONENT (COLLAPSIBLE)
  *  ============================================== */
-const RecoveryRow = ({ row }: { row: any }) => {
+interface RecoveryRowProps {
+  row: any;
+  onOpenSettleModal: (row: any) => void;
+}
+
+const RecoveryRow: React.FC<RecoveryRowProps> = ({ row, onOpenSettleModal }) => {
   const [open, setOpen] = useState(false);
 
-  // Rang (Colors) type ke hisaab se set karne ke liye
   const getTypeColor = (type: string) => {
     if (type === "Customer") return "primary";
     if (type === "Carting") return "error";
@@ -81,16 +100,31 @@ const RecoveryRow = ({ row }: { row: any }) => {
           </Typography>
         </TableCell>
         <TableCell align="center">
-          <Button
-            variant="contained"
-            size="small"
-            color="warning"
-            startIcon={<NotificationsActiveIcon />}
-            sx={{ textTransform: "none", borderRadius: 2, fontWeight: 700 }}
-            onClick={() => alert(`Reminder feature coming soon for ${row.entityName}!`)}
-          >
-            Remind
-          </Button>
+          <Stack direction="row" spacing={1} justifyContent="center">
+            {/* 💰 ACTION BUTTON: Settle / Adjust */}
+            <Button
+              variant="contained"
+              size="small"
+              color="success"
+              startIcon={<PaidIcon />}
+              sx={{ textTransform: "none", borderRadius: 2, fontWeight: 700 }}
+              onClick={() => onOpenSettleModal(row)}
+            >
+              Action / Paid
+            </Button>
+
+            {/* 🔔 REMIND BUTTON */}
+            <Button
+              variant="outlined"
+              size="small"
+              color="warning"
+              startIcon={<NotificationsActiveIcon />}
+              sx={{ textTransform: "none", borderRadius: 2, fontWeight: 700 }}
+              onClick={() => alert(`Reminder feature coming soon for ${row.entityName}!`)}
+            >
+              Remind
+            </Button>
+          </Stack>
         </TableCell>
       </TableRow>
 
@@ -115,7 +149,6 @@ const RecoveryRow = ({ row }: { row: any }) => {
                 </TableHead>
                 <TableBody>
                   {row.tokens.map((token: any) => {
-                    // ⭐ Entity Type ke hisaab se calculation formula banana
                     let calcText = "";
                     if (row.entityType === "Customer") {
                       const rate = token.materialType === "bedash" ? token.sellRate : token.ratePerTon;
@@ -140,17 +173,14 @@ const RecoveryRow = ({ row }: { row: any }) => {
                             🚛 {token.truckNumber || "Pending"}
                           </Typography>
                         </TableCell>
-                        
-                        {/* ⭐ Yahan par Details, Weight, Rate aur User Name show ho raha hai */}
                         <TableCell>
                           <Typography variant="caption" display="block" color="text.secondary" fontWeight={500}>
-                             👤 <b>User:</b> {token.userName || "Unknown"}
+                            👤 <b>User:</b> {token.userName || "Unknown"}
                           </Typography>
                           <Typography variant="caption" display="block" fontWeight={700} color="#0d47a1" sx={{ mt: 0.3 }}>
-                             🧮 {calcText}
+                            🧮 {calcText}
                           </Typography>
                         </TableCell>
-
                         <TableCell align="center">
                           <Chip 
                             label={token.status.toUpperCase()} 
@@ -189,6 +219,15 @@ const PaymentRecoveryPage: React.FC = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
+  // ⭐ Modal State
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedRow, setSelectedRow] = useState<any>(null);
+  const [actionType, setActionType] = useState<"positive" | "negative">("positive");
+  const [amountInput, setAmountInput] = useState<string>("");
+  const [reasonInput, setReasonInput] = useState<string>("");
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+
   useEffect(() => {
     dispatch(getPaymentRecoveryAction());
   }, [dispatch]);
@@ -199,10 +238,58 @@ const PaymentRecoveryPage: React.FC = () => {
     setPage(0);
   };
 
-  // Safe extraction of array data
+  const handleOpenSettleModal = (row: any) => {
+    setSelectedRow(row);
+    setActionType("positive"); // Default always positive payment
+    setAmountInput(String(row.totalOverallDue || ""));
+    setReasonInput("");
+    setFormError(null);
+    setModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setModalOpen(false);
+    setSelectedRow(null);
+    setSubmitting(false);
+  };
+
+  const handleProcessSettlement = async () => {
+    const numericVal = parseFloat(amountInput);
+    if (!numericVal || isNaN(numericVal) || numericVal <= 0) {
+      setFormError("Kripya 0 se bada valid amount enter karein");
+      return;
+    }
+
+    if (!reasonInput.trim()) {
+      setFormError("Reason / Remarks likhna zaroori hai");
+      return;
+    }
+
+    setSubmitting(true);
+    setFormError(null);
+
+    // Negative action me value minus banegi
+    const finalAmount = actionType === "positive" ? numericVal : -numericVal;
+
+    const res: any = await dispatch(settlePaymentRecoveryAction({
+      entityName: selectedRow.entityName,
+      entityType: selectedRow.entityType,
+      amount: finalAmount,
+      reason: reasonInput.trim()
+    }));
+
+    setSubmitting(false);
+    if (res?.success) {
+      handleCloseModal();
+      // Optional: Refresh the recovery list after successful settlement
+      dispatch(getPaymentRecoveryAction());
+    } else {
+      setFormError(res?.msg || "Process karne me error aaya.");
+    }
+  };
+
   const recoveryList = Array.isArray(recoveryData) ? recoveryData : recoveryData?.data || [];
   
-  // Filtering logic
   const filteredRecovery = recoveryList.filter((item: any) => {
     const query = search.toLowerCase();
     return (
@@ -275,7 +362,7 @@ const PaymentRecoveryPage: React.FC = () => {
           <TableBody>
             {filteredRecovery.length ? (
               filteredRecovery.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row: any, index: number) => (
-                <RecoveryRow key={index} row={row} />
+                <RecoveryRow key={index} row={row} onOpenSettleModal={handleOpenSettleModal} />
               ))
             ) : (
               <TableRow>
@@ -296,6 +383,89 @@ const PaymentRecoveryPage: React.FC = () => {
           sx={{ borderBottom: "none" }}
         />
       </Box>
+
+      {/* ⭐ SETTLEMENT / ADJUSTMENT DIALOG (MODAL) */}
+      <Dialog open={modalOpen} onClose={handleCloseModal} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ fontWeight: 800, pb: 1 }}>
+          {selectedRow?.entityName} ({selectedRow?.entityType})
+          <Typography variant="body2" color="text.secondary">
+            Current Outstanding Due: <strong>₹{Number(selectedRow?.totalOverallDue || 0).toLocaleString("en-IN")}</strong>
+          </Typography>
+        </DialogTitle>
+
+        <DialogContent dividers>
+          {formError && <Alert severity="error" sx={{ mb: 2 }}>{formError}</Alert>}
+
+          <Stack spacing={3} sx={{ mt: 1 }}>
+            {/* ⭐ Nature Selection: Token Owner ke case me Negative hide rahega */}
+            <FormControl component="fieldset">
+              <FormLabel component="legend" sx={{ fontWeight: 600, mb: 0.5 }}>Transaction Nature</FormLabel>
+              <RadioGroup row value={actionType} onChange={(e) => setActionType(e.target.value as any)}>
+                <FormControlLabel 
+                  value="positive" 
+                  control={<Radio color="success" />} 
+                  label="Paid (+) Due Kam Karein" 
+                />
+                {selectedRow?.entityType !== "Token Owner" && (
+                  <FormControlLabel 
+                    value="negative" 
+                    control={<Radio color="error" />} 
+                    label="Add Due (-) Bakaya Badhayein" 
+                  />
+                )}
+              </RadioGroup>
+            </FormControl>
+
+            {/* Amount Input */}
+            <TextField
+              label={actionType === "positive" ? "Paid Amount (₹)" : "Extra Due Amount (₹)"}
+              type="number"
+              fullWidth
+              value={amountInput}
+              onChange={(e) => setAmountInput(e.target.value)}
+              InputProps={{
+                startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+              }}
+              helperText={
+                actionType === "positive" 
+                  ? "Puraane tokens se shuru hokar naye tokens tak auto-settle hoga." 
+                  : "Yeh amount recovery ledger me add ho jayega (Payment History me tab aayega jab token confirm hoga)."
+              }
+            />
+
+            {/* Reason Input */}
+            <TextField
+              label="Reason / Remarks"
+              placeholder="e.g. Cash received by driver / Token penalty adjustment / Dispute"
+              fullWidth
+              multiline
+              rows={2}
+              value={reasonInput}
+              onChange={(e) => setReasonInput(e.target.value)}
+            />
+          </Stack>
+        </DialogContent>
+
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={handleCloseModal} color="inherit" disabled={submitting}>
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleProcessSettlement} 
+            variant="contained" 
+            color={actionType === "positive" ? "success" : "error"}
+            disabled={submitting}
+          >
+            {submitting ? (
+              <CircularProgress size={24} color="inherit" />
+            ) : actionType === "positive" ? (
+              "Confirm Settlement"
+            ) : (
+              "Confirm Due Addition"
+            )}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Paper>
   );
 };
