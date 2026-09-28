@@ -48,7 +48,8 @@ import {
   createMasterAccountAction,
   processMasterTransactionAction,
   getMasterAccountTransactionsAction,
-  getPendingSettlementsAction
+  getPendingSettlementsAction,
+  deletePendingSettlementAction // ⭐ ❌ Delete pending action import kiya
 } from "../../../../Actions/Auth/paymentHistoryAction";
 
 // 🌟 Blinking Animations
@@ -115,6 +116,20 @@ const AccountSettlementPage: React.FC = () => {
     }));
   };
 
+  // ⭐ ❌ Pending Ticket ko delete karne ka handler (Cross Icon Click)
+  const handleDeletePendingItem = async (e: React.MouseEvent, id: number) => {
+    e.stopPropagation(); // Chip click trigger na ho isliye roka
+    await dispatch(deletePendingSettlementAction(id));
+    
+    // Agar wahi ticket active thi, toh state reset kar do
+    if (activePendingId === id) {
+      setGlobalAmount("");
+      setIsBlinking(false);
+      setActivePendingId(null);
+      setTxnPayload(prev => ({ ...prev, pendingSettlementId: null, reason: "", amount: "" }));
+    }
+  };
+
   // Agar manually amount change kiya toh ticket unselect ho jayega
   const handleGlobalAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -155,7 +170,6 @@ const AccountSettlementPage: React.FC = () => {
       paymentMode: txnPayload.paymentMode as any,
       reason: txnPayload.reason,
       destAccountId: txnPayload.type === "TRANSFER" ? Number(txnPayload.destAccountId) : undefined,
-      // ⭐ TypeScript error fix: null ko undefined me bheja
       pendingSettlementId: txnPayload.pendingSettlementId !== null ? txnPayload.pendingSettlementId : undefined 
     };
 
@@ -223,6 +237,17 @@ const AccountSettlementPage: React.FC = () => {
                 key={item.id}
                 label={`₹${Number(item.amount).toLocaleString()} - ${item.sourceDetails.substring(0, 25)}...`}
                 onClick={() => handlePendingChipClick(item)}
+                // ⭐ ❌ Yahan Delete icon (delete button) add kar diya hai
+                onDelete={(e) => handleDeletePendingItem(e, item.id)}
+                deleteIcon={
+                  <CloseIcon 
+                    sx={{ 
+                      fontSize: "16px !important", 
+                      color: "white !important", 
+                      "&:hover": { color: "#ffcdd2 !important" } 
+                    }} 
+                  />
+                }
                 sx={{
                   fontWeight: 800,
                   fontSize: "0.85rem",
@@ -230,7 +255,7 @@ const AccountSettlementPage: React.FC = () => {
                   animation: activePendingId === item.id ? "none" : `${flashRedAnimation} 1.5s infinite`,
                   bgcolor: activePendingId === item.id ? "#4caf50" : "error.main",
                   color: "white",
-                  "&:hover": { bgcolor: "#2e7d32" },
+                  "&:hover": { bgcolor: activePendingId === item.id ? "#388e3c" : "#c62828" },
                   boxShadow: activePendingId === item.id ? "0 0 10px #4caf50" : "none"
                 }}
               />

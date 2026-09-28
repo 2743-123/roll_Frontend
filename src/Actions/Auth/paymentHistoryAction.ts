@@ -25,7 +25,8 @@ import {
   getMasterAccountTransactionsService,
   // ⭐ PENDING SETTLEMENT SERVICES
   addPendingSettlementService,
-  getPendingSettlementsService
+  getPendingSettlementsService,
+  deletePendingSettlementService
 } from "../auth services/paymentHistory";
 
 /** ================= GET PAYMENT HISTORY ================= */
@@ -162,4 +163,19 @@ export const getPendingSettlementsAction = () => async (dispatch: AppDispatch) =
 // 3. Local UI state clear karne ke liye (Optional)
 export const clearPendingSettlementAction = () => (dispatch: AppDispatch) => {
   dispatch({ type: CLEAR_PENDING_SETTLEMENT });
+};
+
+export const deletePendingSettlementAction = (id: number) => async (dispatch: AppDispatch) => {
+  try {
+    // 💡 Note: Is service ko hum next step me auth service file me likhenge
+    await deletePendingSettlementService(id);
+    
+    // Delete hone ke baad queue ko turant refresh karo taaki ticket gayab ho jaye
+    dispatch(getPendingSettlementsAction());
+    return { success: true };
+  } catch (error: any) {
+    const msg = error?.response?.data?.msg || error.message || "Failed to delete pending settlement";
+    console.error(msg);
+    return { success: false, msg };
+  }
 };

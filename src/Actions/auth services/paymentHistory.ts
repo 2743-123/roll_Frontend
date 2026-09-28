@@ -10,7 +10,8 @@ import {
   API_GET_MASTER_TRANSACTIONS,
   // ⭐ PENDING SETTLEMENT QUEUE IMPORTS
   API_ADD_PENDING_SETTLEMENT,
-  API_GET_PENDING_SETTLEMENTS
+  API_GET_PENDING_SETTLEMENTS,
+  API_DELETE_PENDING_SETTLEMENT // ❌ YE NAYA IMPORT ADD KIYA HAI
 } from "../API End point";
 import { 
   PaymentHistoryResponse, 
@@ -160,6 +161,20 @@ export const getPendingSettlementsService = async () => {
     return data;
   } catch (error: any) {
     console.error("❌ getPendingSettlementsService:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+// 3. ❌ Pending Settlement ko Queue se delete karne ki service
+export const deletePendingSettlementService = async (id: number) => {
+  try {
+    const url = API_DELETE_PENDING_SETTLEMENT.replace(":id", String(id));
+    const { data } = await api.delete(url, {
+      headers: authHeader(),
+    });
+    return data;
+  } catch (error: any) {
+    console.error("❌ deletePendingSettlementService:", error.response?.data || error.message);
     throw error;
   }
 };

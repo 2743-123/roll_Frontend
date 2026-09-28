@@ -10,12 +10,12 @@ import {
   // ⭐ PENDING SETTLEMENT IMPORTS
   SET_PENDING_SETTLEMENT,
   CLEAR_PENDING_SETTLEMENT,
-  GET_PENDING_SETTLEMENTS, // ⭐ Naya Import (DB Queue ke liye)
+  GET_PENDING_SETTLEMENTS,
   PaymentHistoryResponse,
   PaymentRecoveryResponse,
   MasterAccount, 
   MasterTransaction,
-  PendingSettlement // ⭐ Naya Type Import
+  PendingSettlement 
 } from "../../ActionType/paymentHistoryTypes/paymentHistoryTypes";
 
 export interface PaymentHistoryState {
@@ -29,7 +29,7 @@ export interface PaymentHistoryState {
   // ⭐ PENDING SETTLEMENT QUEUE (Nayi Database List)
   pendingSettlementsList: PendingSettlement[] | null;
   
-  // Purana local state (Optional, safety ke liye rakha hai)
+  // Purana local state (Optional)
   pendingSettlement: { amount: number; sourceDetails: string } | null;
   
   loading: boolean;
@@ -41,7 +41,7 @@ const initialState: PaymentHistoryState = {
   recoveryData: null,
   masterAccounts: null,
   masterTransactions: null, 
-  pendingSettlementsList: null, // Nayi List initialize ki
+  pendingSettlementsList: null, 
   pendingSettlement: null, 
   loading: false,
   error: null,
@@ -74,11 +74,9 @@ const paymentHistoryReducer = (
         ⭐ MASTER LEDGER REDUCER CASES ⭐
     ========================================== */
 
-    /** Saare Accounts Fetch karna (Success) */
     case GET_MASTER_ACCOUNTS:
       return { ...state, loading: false, masterAccounts: action.payload, error: null };
 
-    /** Specific Account ki Transactions Lana (Success) */
     case GET_MASTER_TRANSACTIONS:
       return {
         ...state,
@@ -94,22 +92,30 @@ const paymentHistoryReducer = (
         ⭐ PENDING SETTLEMENT CASES (DB QUEUE) ⭐
     ========================================== */
     
-    /** 🚀 Database se aayi hui poori Pending List (Queue) ko save karna */
     case GET_PENDING_SETTLEMENTS:
-    case "GET_PENDING_SETTLEMENTS_LIST": // Backup string from action
+    case "GET_PENDING_SETTLEMENTS_LIST": 
       return {
         ...state,
-        pendingSettlementsList: action.payload, // Yahan array set hoga
+        pendingSettlementsList: action.payload, 
       };
 
-    /** Local Pending state (Fallback) */
+    // ⭐ Naya case: Agar aap chahen toh action payload se id filter kar sakte hain, 
+    // par kyunki hum action ke baad `getPendingSettlementsAction()` call kar rahe hain, 
+    // ye auto-refresh ho jayega. Phir bhi safety ke liye ise rakh sakte hain.
+    case "DELETE_PENDING_SETTLEMENT_SUCCESS":
+      return {
+        ...state,
+        pendingSettlementsList: state.pendingSettlementsList 
+          ? state.pendingSettlementsList.filter(item => item.id !== action.payload)
+          : null,
+      };
+
     case SET_PENDING_SETTLEMENT:
       return {
         ...state,
         pendingSettlement: action.payload,
       };
 
-    /** Local Pending state ko clear karna */
     case CLEAR_PENDING_SETTLEMENT:
       return {
         ...state,

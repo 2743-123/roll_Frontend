@@ -48,6 +48,7 @@ export const API_GET_MASTER_TRANSACTIONS = `${ENVIRONMENT_VARIABLES.Base_API_URL
 /* ================= ⭐ PENDING SETTLEMENT QUEUE (NEW) ================= */
 export const API_ADD_PENDING_SETTLEMENT = `${ENVIRONMENT_VARIABLES.Base_API_URL}/payment-history/pending-settlement`;
 export const API_GET_PENDING_SETTLEMENTS = `${ENVIRONMENT_VARIABLES.Base_API_URL}/payment-history/pending-settlement`;
+export const API_DELETE_PENDING_SETTLEMENT = `${ENVIRONMENT_VARIABLES.Base_API_URL}/payment-history/pending-settlement/:id`; // ❌ YE NAYA URL ADD KIYA HAI 
 
 /* ================= AI ASSISTANT ================= */
 export const API_AI_COMMAND = `${ENVIRONMENT_VARIABLES.Base_API_URL}/ai/command`;
