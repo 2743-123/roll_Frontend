@@ -11,7 +11,8 @@ import {
   // ⭐ PENDING SETTLEMENT QUEUE IMPORTS
   API_ADD_PENDING_SETTLEMENT,
   API_GET_PENDING_SETTLEMENTS,
-  API_DELETE_PENDING_SETTLEMENT // ❌ YE NAYA IMPORT ADD KIYA HAI
+  API_DELETE_PENDING_SETTLEMENT, // ❌ YE NAYA IMPORT ADD KIYA HAI
+  API_TOGGLE_MASTER_ACCOUNT_FAVORITE
 } from "../API End point";
 import { 
   PaymentHistoryResponse, 
@@ -177,4 +178,13 @@ export const deletePendingSettlementService = async (id: number) => {
     console.error("❌ deletePendingSettlementService:", error.response?.data || error.message);
     throw error;
   }
+};
+
+export const toggleMasterAccountFavoriteService = async (accountId: number) => {
+  const { data } = await api.patch(
+    `${API_TOGGLE_MASTER_ACCOUNT_FAVORITE}/${accountId}`,
+    {},
+    { headers: authHeader() }
+  );
+  return data;
 };

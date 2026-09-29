@@ -10,6 +10,7 @@ export const CREATE_MASTER_ACCOUNT = "CREATE_MASTER_ACCOUNT";
 export const GET_MASTER_ACCOUNTS = "GET_MASTER_ACCOUNTS";
 export const PROCESS_MASTER_TRANSACTION = "PROCESS_MASTER_TRANSACTION";
 export const GET_MASTER_TRANSACTIONS = "GET_MASTER_TRANSACTIONS";
+export const TOGGLE_MASTER_ACCOUNT_FAVORITE = "TOGGLE_MASTER_ACCOUNT_FAVORITE";
 
 // ⭐ NAYE ACTION TYPES FOR PENDING SETTLEMENT QUEUE (DB)
 export const SET_PENDING_SETTLEMENT = "SET_PENDING_SETTLEMENT";
@@ -70,7 +71,7 @@ export interface PaymentHistoryDetail {
   excessUnallocated?: number;
   unadjustedPenalty?: number;
   settledTokens?: SettledTokenSummary[];
-  tokensBreakdown?: SettledTokenSummary[]; 
+  tokensBreakdown?: SettledTokenSummary[];
 
   // ⭐ RICH DETAILS (New fields for Payment Recovery Timeline)
   isSingleTokenRecord?: boolean;
@@ -93,8 +94,8 @@ export interface PaymentHistoryDetail {
     stakeholder: string;
     amount: number;
     remainingDue: number;
-    advanceLeft?: number; 
-    reason?: string; 
+    advanceLeft?: number;
+    reason?: string;
   }>;
 }
 
@@ -173,6 +174,7 @@ export interface MasterAccount {
   accountType: "Cash" | "Bank" | "Customer" | "Carting" | "Token Owner" | "General";
   balance: number;
   isActive: boolean;
+  isFavorite?: boolean; // ⭐ Favorites support
   createdAt: string;
   updatedAt: string;
 }

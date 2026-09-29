@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   Box,
   Typography,
@@ -40,6 +40,9 @@ import CloseIcon from "@mui/icons-material/Close";
 import ViewModuleIcon from "@mui/icons-material/ViewModule";
 import FormatListBulletedIcon from "@mui/icons-material/FormatListBulleted";
 import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
+import SearchIcon from "@mui/icons-material/Search";
+import StarIcon from "@mui/icons-material/Star";
+import StarBorderIcon from "@mui/icons-material/StarBorder";
 import { keyframes } from "@mui/system";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../../../store";
@@ -49,7 +52,8 @@ import {
   processMasterTransactionAction,
   getMasterAccountTransactionsAction,
   getPendingSettlementsAction,
-  deletePendingSettlementAction // ⭐ ❌ Delete pending action import kiya
+  deletePendingSettlementAction,
+  toggleMasterAccountFavoriteAction
 } from "../../../../Actions/Auth/paymentHistoryAction";
 
 // 🌟 Blinking Animations
@@ -66,8 +70,7 @@ const flashRedAnimation = keyframes`
 
 const AccountSettlementPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
-  
-  // ⭐ Redux state se backend ki list nikal rahe hain
+
   const { masterAccounts, masterTransactions, loading, pendingSettlementsList } = useSelector(
     (state: RootState) => state.paymentHistoryReducer
   );
@@ -77,13 +80,15 @@ const AccountSettlementPage: React.FC = () => {
   const [isBlinking, setIsBlinking] = useState<boolean>(false);
   const [activePendingId, setActivePendingId] = useState<number | null>(null);
 
+  // ⭐ Search State
+  const [searchQuery, setSearchQuery] = useState("");
+
   const [openCreate, setOpenCreate] = useState(false);
   const [newAcc, setNewAcc] = useState({ name: "", phone: "", accountType: "General" });
 
   const [openTxn, setOpenTxn] = useState(false);
   const [selectedAcc, setSelectedAcc] = useState<any>(null);
-  
-  // ⭐ Form payload me pendingSettlementId add kiya
+
   const [txnPayload, setTxnPayload] = useState({
     amount: "",
     type: "CREDIT",
@@ -96,18 +101,45 @@ const AccountSettlementPage: React.FC = () => {
   const [openHistory, setOpenHistory] = useState(false);
   const [historyAcc, setHistoryAcc] = useState<any>(null);
 
-  // 1. Initial Load: Accounts aur Pending Queue dono fetch karo
   useEffect(() => {
     dispatch(getMasterAccountsAction());
     dispatch(getPendingSettlementsAction());
   }, [dispatch]);
 
-  // 🟢 Pending Ticket par click hone par value set karna
+  // ⭐ Backend Toggle Favorite Logic
+  const handleToggleFavorite = async (e: React.MouseEvent, id: number) => {
+    e.stopPropagation();
+    await dispatch(toggleMasterAccountFavoriteAction(id));
+  };
+
+  // ⭐ Process Accounts (Search + DB isFavorite first, then Alphabetical)
+  const processedAccounts = useMemo(() => {
+    if (!masterAccounts) return [];
+    let list = [...masterAccounts];
+
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      list = list.filter(acc =>
+        acc.name.toLowerCase().includes(query) ||
+        (acc.phone && acc.phone.includes(query)) ||
+        acc.accountType.toLowerCase().includes(query)
+      );
+    }
+
+    return list.sort((a, b) => {
+      const aFav = Boolean(a.isFavorite);
+      const bFav = Boolean(b.isFavorite);
+      if (aFav && !bFav) return -1;
+      if (!aFav && bFav) return 1;
+      return a.name.localeCompare(b.name);
+    });
+  }, [masterAccounts, searchQuery]);
+
   const handlePendingChipClick = (pendingItem: any) => {
     setGlobalAmount(pendingItem.amount.toString());
     setIsBlinking(true);
     setActivePendingId(pendingItem.id);
-    
+
     setTxnPayload(prev => ({
       ...prev,
       amount: pendingItem.amount.toString(),
@@ -116,12 +148,10 @@ const AccountSettlementPage: React.FC = () => {
     }));
   };
 
-  // ⭐ ❌ Pending Ticket ko delete karne ka handler (Cross Icon Click)
   const handleDeletePendingItem = async (e: React.MouseEvent, id: number) => {
-    e.stopPropagation(); // Chip click trigger na ho isliye roka
+    e.stopPropagation();
     await dispatch(deletePendingSettlementAction(id));
-    
-    // Agar wahi ticket active thi, toh state reset kar do
+
     if (activePendingId === id) {
       setGlobalAmount("");
       setIsBlinking(false);
@@ -130,7 +160,6 @@ const AccountSettlementPage: React.FC = () => {
     }
   };
 
-  // Agar manually amount change kiya toh ticket unselect ho jayega
   const handleGlobalAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setGlobalAmount(val);
@@ -170,7 +199,7 @@ const AccountSettlementPage: React.FC = () => {
       paymentMode: txnPayload.paymentMode as any,
       reason: txnPayload.reason,
       destAccountId: txnPayload.type === "TRANSFER" ? Number(txnPayload.destAccountId) : undefined,
-      pendingSettlementId: txnPayload.pendingSettlementId !== null ? txnPayload.pendingSettlementId : undefined 
+      pendingSettlementId: txnPayload.pendingSettlementId !== null ? txnPayload.pendingSettlementId : undefined
     };
 
     const res = await dispatch(processMasterTransactionAction(payload));
@@ -179,7 +208,7 @@ const AccountSettlementPage: React.FC = () => {
       setGlobalAmount("");
       setIsBlinking(false);
       setActivePendingId(null);
-      
+
       setTxnPayload({
         amount: "",
         type: "CREDIT",
@@ -221,7 +250,7 @@ const AccountSettlementPage: React.FC = () => {
 
   return (
     <Paper elevation={4} sx={{ p: { xs: 1, sm: 3 }, borderRadius: 4, background: "#f8f9fa", width: "100%", minHeight: "80vh" }}>
-      
+
       {/* 🚀 1. PENDING SETTLEMENT QUEUE FROM BACKEND */}
       {(pendingSettlementsList && pendingSettlementsList.length > 0) && (
         <Box sx={{ mb: 3, p: 2, bgcolor: "#fff3e0", borderRadius: 3, border: "1px solid #ffe0b2", display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
@@ -237,15 +266,14 @@ const AccountSettlementPage: React.FC = () => {
                 key={item.id}
                 label={`₹${Number(item.amount).toLocaleString()} - ${item.sourceDetails.substring(0, 25)}...`}
                 onClick={() => handlePendingChipClick(item)}
-                // ⭐ ❌ Yahan Delete icon (delete button) add kar diya hai
                 onDelete={(e) => handleDeletePendingItem(e, item.id)}
                 deleteIcon={
-                  <CloseIcon 
-                    sx={{ 
-                      fontSize: "16px !important", 
-                      color: "white !important", 
-                      "&:hover": { color: "#ffcdd2 !important" } 
-                    }} 
+                  <CloseIcon
+                    sx={{
+                      fontSize: "16px !important",
+                      color: "white !important",
+                      "&:hover": { color: "#ffcdd2 !important" }
+                    }}
                   />
                 }
                 sx={{
@@ -306,16 +334,39 @@ const AccountSettlementPage: React.FC = () => {
       {/* 🚀 TAB 1: ACCOUNTS CARDS VIEW */}
       {currentTab === 0 && (
         <>
+          <Box display="flex" justifyContent="flex-end" mb={3}>
+            <TextField
+              size="small"
+              placeholder="Search by name, phone or type..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon color="primary" />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{ width: { xs: "100%", sm: "300px" }, backgroundColor: "white", borderRadius: 1 }}
+            />
+          </Box>
+
           {loading && !masterAccounts ? (
             <Box display="flex" justifyContent="center" py={5}><CircularProgress /></Box>
+          ) : processedAccounts.length === 0 ? (
+            <Box display="flex" justifyContent="center" py={5}>
+              <Typography color="text.secondary">No accounts found matching your search.</Typography>
+            </Box>
           ) : (
             <Grid container spacing={3}>
-              {(masterAccounts || []).map((acc) => (
+              {processedAccounts.map((acc) => (
                 <Grid key={acc.id}>
-                  <Card 
+                  <Card
                     onClick={() => handleCardClick(acc)}
-                    sx={{ 
-                      borderRadius: 3, cursor: "pointer", transition: "all 0.3s ease",
+                    sx={{
+                      borderRadius: 3,
+                      cursor: "pointer",
+                      transition: "all 0.3s ease",
                       border: isBlinking ? "2px solid #4caf50" : "1px solid #e0e0e0",
                       animation: isBlinking ? `${blinkAnimation} 1.5s infinite` : "none",
                       "&:hover": { transform: "translateY(-5px)", boxShadow: "0 8px 20px rgba(0,0,0,0.12)" }
@@ -323,10 +374,15 @@ const AccountSettlementPage: React.FC = () => {
                   >
                     <CardContent sx={{ pb: "16px !important" }}>
                       <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-                        <Typography variant="h6" fontWeight={700} color="primary.main">{acc.name}</Typography>
+                        <Box display="flex" alignItems="center" gap={0.5}>
+                          <IconButton size="small" onClick={(e) => handleToggleFavorite(e, acc.id)} sx={{ p: 0.5 }}>
+                            {acc.isFavorite ? <StarIcon sx={{ color: "#ffb300" }} /> : <StarBorderIcon color="action" />}
+                          </IconButton>
+                          <Typography variant="h6" fontWeight={700} color="primary.main">{acc.name}</Typography>
+                        </Box>
                         <Chip label={acc.accountType} size="small" sx={{ fontWeight: 600, fontSize: "0.7rem" }} color={acc.accountType === "Cash" ? "success" : "info"} />
                       </Box>
-                      <Typography variant="body2" color="text.secondary" mb={2}>{acc.phone ? `📱 ${acc.phone}` : "No phone linked"}</Typography>
+                      <Typography variant="body2" color="text.secondary" mb={2} pl={4}>{acc.phone ? `📱 ${acc.phone}` : "No phone linked"}</Typography>
                       <Box display="flex" justifyContent="space-between" alignItems="flex-end" mt={2} pt={2} sx={{ borderTop: "1px dashed #cfd8dc" }}>
                         <Box>
                           <Typography variant="caption" color="text.secondary" fontWeight={600} display="block">Current Balance</Typography>
@@ -369,6 +425,7 @@ const AccountSettlementPage: React.FC = () => {
                         <Typography variant="body2" fontWeight={600} color={tx.type === "TRANSFER" ? "primary.main" : "text.primary"}>
                           {tx.type === "TRANSFER" ? `Transfer ⇆ ${tx.linkedAccountName}` : tx.reason || (tx.type === "CREDIT" ? "Deposit" : "Withdrawal")}
                         </Typography>
+                        {tx.type !== "TRANSFER" && tx.reason && <Typography variant="caption" color="text.secondary" fontStyle="italic">{tx.reason}</Typography>}
                       </TableCell>
                       <TableCell><Chip label={tx.paymentMode} size="small" variant="outlined" /></TableCell>
                       <TableCell sx={{ color: "success.main", fontWeight: 700 }}>{tx.type === "CREDIT" ? `+ ₹${Number(tx.amount).toLocaleString()}` : "-"}</TableCell>
@@ -385,22 +442,33 @@ const AccountSettlementPage: React.FC = () => {
         </Paper>
       )}
 
-      {/* 🚀 MODALS (CREATE ACCOUNT, TRANSACTION, HISTORY) */}
+      {/* 🚀 MODAL 1: CREATE ACCOUNT */}
       <Dialog open={openCreate} onClose={() => setOpenCreate(false)} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ fontWeight: 700, borderBottom: "1px solid #eee", display: "flex", justifyContent: "space-between" }}>Create Master Account<IconButton onClick={() => setOpenCreate(false)} size="small"><CloseIcon /></IconButton></DialogTitle>
+        <DialogTitle sx={{ fontWeight: 700, borderBottom: "1px solid #eee", display: "flex", justifyContent: "space-between" }}>
+          Create Master Account
+          <IconButton onClick={() => setOpenCreate(false)} size="small"><CloseIcon /></IconButton>
+        </DialogTitle>
         <DialogContent sx={{ mt: 2, display: "flex", flexDirection: "column", gap: 2 }}>
-          <TextField label="Account Name" fullWidth value={newAcc.name} onChange={(e) => setNewAcc({...newAcc, name: e.target.value})} />
-          <TextField label="Phone (Optional)" fullWidth value={newAcc.phone} onChange={(e) => setNewAcc({...newAcc, phone: e.target.value})} />
+          <TextField label="Account Name" fullWidth value={newAcc.name} onChange={(e) => setNewAcc({ ...newAcc, name: e.target.value })} />
+          <TextField label="Phone (Optional)" fullWidth value={newAcc.phone} onChange={(e) => setNewAcc({ ...newAcc, phone: e.target.value })} />
           <FormControl fullWidth>
             <InputLabel>Account Type</InputLabel>
-            <Select value={newAcc.accountType} label="Account Type" onChange={(e) => setNewAcc({...newAcc, accountType: e.target.value})}>
-              <MenuItem value="Cash">Cash Account</MenuItem><MenuItem value="Bank">Bank Account</MenuItem><MenuItem value="Customer">Customer</MenuItem><MenuItem value="Carting">Carting</MenuItem><MenuItem value="General">General</MenuItem>
+            <Select value={newAcc.accountType} label="Account Type" onChange={(e) => setNewAcc({ ...newAcc, accountType: e.target.value })}>
+              <MenuItem value="Cash">Cash Account</MenuItem>
+              <MenuItem value="Bank">Bank Account</MenuItem>
+              <MenuItem value="Customer">Customer</MenuItem>
+              <MenuItem value="Carting">Carting</MenuItem>
+              <MenuItem value="General">General</MenuItem>
             </Select>
           </FormControl>
         </DialogContent>
-        <DialogActions sx={{ p: 2 }}><Button onClick={() => setOpenCreate(false)}>Cancel</Button><Button onClick={handleCreateSubmit} variant="contained">Save</Button></DialogActions>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setOpenCreate(false)}>Cancel</Button>
+          <Button onClick={handleCreateSubmit} variant="contained">Save</Button>
+        </DialogActions>
       </Dialog>
 
+      {/* 🚀 MODAL 2: TRANSACTION */}
       <Dialog open={openTxn} onClose={() => setOpenTxn(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
         <DialogTitle sx={{ bgcolor: "#f4f6f8", fontWeight: 700, pb: 2 }}>
           Transact with: <span style={{ color: "#1976d2" }}>{selectedAcc?.name}</span>
@@ -409,15 +477,15 @@ const AccountSettlementPage: React.FC = () => {
         <DialogContent sx={{ mt: 2, display: "flex", flexDirection: "column", gap: 2.5 }}>
           <Box sx={{ p: 1.5, bgcolor: "#fff3e0", borderRadius: 2, border: "1px solid #ffe0b2" }}>
             <Typography variant="caption" fontWeight={700} color="#e65100">1. Action Type</Typography>
-            <RadioGroup row value={txnPayload.type} onChange={(e) => setTxnPayload({...txnPayload, type: e.target.value})}>
-              <FormControlLabel value="CREDIT" control={<Radio color="success" />} label={<span style={{fontWeight: 600, color: "#2e7d32"}}>Add (+)</span>} />
-              <FormControlLabel value="DEBIT" control={<Radio color="error" />} label={<span style={{fontWeight: 600, color: "#d32f2f"}}>Withdraw (-)</span>} />
-              <FormControlLabel value="TRANSFER" control={<Radio color="primary" />} label={<span style={{fontWeight: 600, color: "#1565c0"}}>Transfer ({"->"})</span>} />
+            <RadioGroup row value={txnPayload.type} onChange={(e) => setTxnPayload({ ...txnPayload, type: e.target.value })}>
+              <FormControlLabel value="CREDIT" control={<Radio color="success" />} label={<span style={{ fontWeight: 600, color: "#2e7d32" }}>Add (+)</span>} />
+              <FormControlLabel value="DEBIT" control={<Radio color="error" />} label={<span style={{ fontWeight: 600, color: "#d32f2f" }}>Withdraw (-)</span>} />
+              <FormControlLabel value="TRANSFER" control={<Radio color="primary" />} label={<span style={{ fontWeight: 600, color: "#1565c0" }}>Transfer ({"->"})</span>} />
             </RadioGroup>
           </Box>
           <Box sx={{ p: 1.5, bgcolor: "#e3f2fd", borderRadius: 2, border: "1px solid #bbdefb" }}>
             <Typography variant="caption" fontWeight={700} color="#1565c0">2. Payment Mode</Typography>
-            <RadioGroup row value={txnPayload.paymentMode} onChange={(e) => setTxnPayload({...txnPayload, paymentMode: e.target.value})}>
+            <RadioGroup row value={txnPayload.paymentMode} onChange={(e) => setTxnPayload({ ...txnPayload, paymentMode: e.target.value })}>
               <FormControlLabel value="Cash" control={<Radio />} label="Cash" />
               <FormControlLabel value="Online" control={<Radio />} label="Online / Bank" />
             </RadioGroup>
@@ -425,23 +493,23 @@ const AccountSettlementPage: React.FC = () => {
           {txnPayload.type === "TRANSFER" && (
             <FormControl fullWidth>
               <InputLabel>Transfer To</InputLabel>
-              <Select value={txnPayload.destAccountId} label="Transfer To" onChange={(e) => setTxnPayload({...txnPayload, destAccountId: e.target.value})}>
+              <Select value={txnPayload.destAccountId} label="Transfer To" onChange={(e) => setTxnPayload({ ...txnPayload, destAccountId: e.target.value })}>
                 {(masterAccounts || []).filter(a => a.id !== selectedAcc?.id).map(acc => (
                   <MenuItem key={acc.id} value={acc.id}>{acc.name} (Bal: ₹{Number(acc.balance).toLocaleString("en-IN")})</MenuItem>
                 ))}
               </Select>
             </FormControl>
           )}
-          <TextField label="Amount (₹)" type="number" fullWidth value={txnPayload.amount} onChange={(e) => setTxnPayload({...txnPayload, amount: e.target.value})} InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment>, sx: { fontSize: "1.2rem", fontWeight: "bold" } }} />
-          <TextField label="Reason / Note" fullWidth value={txnPayload.reason} onChange={(e) => setTxnPayload({...txnPayload, reason: e.target.value})} />
+          <TextField label="Amount (₹)" type="number" fullWidth value={txnPayload.amount} onChange={(e) => setTxnPayload({ ...txnPayload, amount: e.target.value })} InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment>, sx: { fontSize: "1.2rem", fontWeight: "bold" } }} />
+          <TextField label="Reason / Note" fullWidth value={txnPayload.reason} onChange={(e) => setTxnPayload({ ...txnPayload, reason: e.target.value })} />
         </DialogContent>
         <DialogActions sx={{ p: 2, bgcolor: "#f9fafb" }}>
           <Button onClick={() => setOpenTxn(false)}>Cancel</Button>
           <Button onClick={handleTxnSubmit} variant="contained" disabled={loading} startIcon={<SyncAltIcon />} sx={{ bgcolor: txnPayload.type === "DEBIT" ? "#d32f2f" : "#2e7d32" }}>Confirm</Button>
         </DialogActions>
       </Dialog>
-      
-      {/* 🚀 MODAL 3 (HISTORY TIMELINE) */}
+
+      {/* 🚀 MODAL 3: HISTORY TIMELINE */}
       <Dialog open={openHistory} onClose={() => setOpenHistory(false)} maxWidth="md" fullWidth>
         <DialogTitle sx={{ bgcolor: "#f4f6f8", fontWeight: 700, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <Box>History: <span style={{ color: "#1976d2" }}>{historyAcc?.name}</span></Box>

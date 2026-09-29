@@ -12,7 +12,7 @@ import {
   CreateMasterAccountRequest,
   ProcessMasterTransactionRequest,
   CLEAR_PENDING_SETTLEMENT,
-  GET_PENDING_SETTLEMENTS // ⭐ Added exact constant
+  GET_PENDING_SETTLEMENTS
 } from "../../ActionType/paymentHistoryTypes/paymentHistoryTypes";
 import { AppDispatch } from "../../store";
 import { 
@@ -23,6 +23,7 @@ import {
   getMasterAccountsService,
   processMasterTransactionService,
   getMasterAccountTransactionsService,
+  toggleMasterAccountFavoriteService, // ⭐ Naya Import
   // ⭐ PENDING SETTLEMENT SERVICES
   addPendingSettlementService,
   getPendingSettlementsService,
@@ -105,6 +106,23 @@ export const getMasterAccountsAction = () => async (dispatch: AppDispatch) => {
   }
 };
 
+// ⭐ NAYA ACTION: Favorite Toggle Karne Ke Liye
+export const toggleMasterAccountFavoriteAction = (accountId: number) => async (dispatch: AppDispatch) => {
+  try {
+    const response = await toggleMasterAccountFavoriteService(accountId);
+    
+    // Status update hone ke baad automatically accounts list fetch karo 
+    // Taaki favorited account list me sabse upar aa jaye
+    await dispatch(getMasterAccountsAction());
+
+    return { success: true, msg: response.msg };
+  } catch (error: any) {
+    const msg = error?.response?.data?.msg || error.message || "Failed to update favorite status";
+    dispatch({ type: ERROR, payload: { msg } });
+    return { success: false, msg };
+  }
+};
+
 export const processMasterTransactionAction = (payload: ProcessMasterTransactionRequest) => async (dispatch: AppDispatch) => {
   try {
     const response = await processMasterTransactionService(payload);
@@ -112,7 +130,7 @@ export const processMasterTransactionAction = (payload: ProcessMasterTransaction
     
     // Transaction success ke baad dono lists refresh karein
     await dispatch(getMasterAccountsAction());
-    await dispatch(getPendingSettlementsAction()); // ⭐ Settle hone ke baad list auto-refresh hogi
+    await dispatch(getPendingSettlementsAction()); 
 
     return { success: true, msg: response.msg };
   } catch (error: any) {
@@ -140,7 +158,6 @@ export const getMasterAccountTransactionsAction = (accountId: number) => async (
 export const setPendingSettlementAction = (amount: number, sourceDetails: string) => async (dispatch: AppDispatch) => {
   try {
     await addPendingSettlementService({ amount, sourceDetails });
-    // Add hone ke baad turant fresh list manga lo taaki UI par multiple blink ho sakein
     dispatch(getPendingSettlementsAction()); 
   } catch (error: any) {
     console.error("Failed to add pending settlement:", error);
@@ -152,7 +169,7 @@ export const getPendingSettlementsAction = () => async (dispatch: AppDispatch) =
   try {
     const response = await getPendingSettlementsService();
     dispatch({
-      type: GET_PENDING_SETTLEMENTS, // ⭐ Exact constant use kiya
+      type: GET_PENDING_SETTLEMENTS,
       payload: response.data
     });
   } catch (error: any) {
@@ -167,10 +184,8 @@ export const clearPendingSettlementAction = () => (dispatch: AppDispatch) => {
 
 export const deletePendingSettlementAction = (id: number) => async (dispatch: AppDispatch) => {
   try {
-    // 💡 Note: Is service ko hum next step me auth service file me likhenge
     await deletePendingSettlementService(id);
     
-    // Delete hone ke baad queue ko turant refresh karo taaki ticket gayab ho jaye
     dispatch(getPendingSettlementsAction());
     return { success: true };
   } catch (error: any) {

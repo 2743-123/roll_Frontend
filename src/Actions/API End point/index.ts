@@ -43,12 +43,17 @@ export const API_SETTLE_PAYMENT_RECOVERY = `${ENVIRONMENT_VARIABLES.Base_API_URL
 export const API_CREATE_MASTER_ACCOUNT = `${ENVIRONMENT_VARIABLES.Base_API_URL}/payment-history/master-account`;
 export const API_GET_MASTER_ACCOUNTS = `${ENVIRONMENT_VARIABLES.Base_API_URL}/payment-history/master-account`;
 export const API_PROCESS_MASTER_TRANSACTION = `${ENVIRONMENT_VARIABLES.Base_API_URL}/payment-history/master-transaction`;
-export const API_GET_MASTER_TRANSACTIONS = `${ENVIRONMENT_VARIABLES.Base_API_URL}/payment-history/master-account`; // Note: Frontend se API call karte waqt iske aage `/${accountId}/transactions` lagayenge
+
+// Backend URL format: /api/payment-history/master-account/:accountId/transactions
+export const API_GET_MASTER_TRANSACTIONS = `${ENVIRONMENT_VARIABLES.Base_API_URL}/payment-history/master-account`; 
+
+// Backend URL format: /api/payment-history/master-account/favorite/:accountId
+export const API_TOGGLE_MASTER_ACCOUNT_FAVORITE = `${ENVIRONMENT_VARIABLES.Base_API_URL}/payment-history/master-account/favorite`;
 
 /* ================= ⭐ PENDING SETTLEMENT QUEUE (NEW) ================= */
 export const API_ADD_PENDING_SETTLEMENT = `${ENVIRONMENT_VARIABLES.Base_API_URL}/payment-history/pending-settlement`;
 export const API_GET_PENDING_SETTLEMENTS = `${ENVIRONMENT_VARIABLES.Base_API_URL}/payment-history/pending-settlement`;
-export const API_DELETE_PENDING_SETTLEMENT = `${ENVIRONMENT_VARIABLES.Base_API_URL}/payment-history/pending-settlement/:id`; // ❌ YE NAYA URL ADD KIYA HAI 
+export const API_DELETE_PENDING_SETTLEMENT = `${ENVIRONMENT_VARIABLES.Base_API_URL}/payment-history/pending-settlement/:id`; 
 
 /* ================= AI ASSISTANT ================= */
 export const API_AI_COMMAND = `${ENVIRONMENT_VARIABLES.Base_API_URL}/ai/command`;

@@ -99,9 +99,6 @@ const paymentHistoryReducer = (
         pendingSettlementsList: action.payload, 
       };
 
-    // ⭐ Naya case: Agar aap chahen toh action payload se id filter kar sakte hain, 
-    // par kyunki hum action ke baad `getPendingSettlementsAction()` call kar rahe hain, 
-    // ye auto-refresh ho jayega. Phir bhi safety ke liye ise rakh sakte hain.
     case "DELETE_PENDING_SETTLEMENT_SUCCESS":
       return {
         ...state,
